@@ -3,7 +3,6 @@ import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute, { RequireRole } from "./auth/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
 import AddEmployeePage from "./pages/AddEmployeePage";
-import MenuPage from "./pages/MenuPage";
 import Registration from "./pages/Registration";
 import NewOrderPage from "./pages/NewOrderPage";
 import POSLayout from "./components/POSLayout";
@@ -23,7 +22,6 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<POSLayout />}>
               <Route path="/home" element={<HomePage />} />
-              <Route path="/menu" element={<MenuPage />} />
               <Route path="/new-order" element={<NewOrderPage />} />
               <Route path="/settings/categories" element={<CategoriesPage />} />
               <Route path="/settings/menus" element={<MenuManagePage />} />
