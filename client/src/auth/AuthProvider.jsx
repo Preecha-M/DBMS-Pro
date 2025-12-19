@@ -1,53 +1,39 @@
 import { useEffect, useState } from "react";
-import { AuthContext } from "./AuthContext";
 import api from "../api/api";
+import { AuthContext } from "./AuthContext"; 
 
-export function AuthProvider({ children }) {
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  function hasAccessTokenCookie() {
-  return document.cookie.split("; ").some((c) => c.startsWith("accessToken="));
-}
 
-  async function fetchMe() {
+  const fetchMe = async () => {
     try {
-      const res = await api.get("/api/auth/me");
-      setUser(res.data.user);
-    } catch (err) {
-      if (err?.response?.status === 401) {
-        setUser(null);
-        return;
-      }
-      console.error(err);
+      const { data } = await api.get("/auth/me");
+      setUser(data.user);
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-  if (!hasAccessTokenCookie()) {
-    setUser(null);
-    setLoading(false);
-    return;
-  }
-  fetchMe();
-}, []);
-
+    fetchMe();
+  }, []);
 
   const login = async (username, password) => {
-    const res = await api.post("/api/auth/login", { username, password });
-    setUser(res.data.user);
+    await api.post("/auth/login", { username, password });
+    await fetchMe();
   };
 
   const logout = async () => {
-    await api.post("/api/auth/logout");
+    await api.post("/auth/logout");
     setUser(null);
   };
-  
+
   return (
     <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};

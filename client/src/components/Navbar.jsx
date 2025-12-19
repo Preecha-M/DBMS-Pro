@@ -1,29 +1,38 @@
 import { useAuth } from "../auth/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  if (!user) return null;
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login", { replace: true });
-    
 
+  if (!user) return null;
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login", { replace: true });
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
   };
 
   return (
-    <div style={{ padding: 12, borderBottom: "1px solid #ddd", display: "flex", justifyContent: "space-between" }}>
-      <div>POS</div>
-
-      {user ? (
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <span>{user.username} ({user.role})</span>
-          <button onClick={handleLogout} style={{ padding: "6px 10px", borderRadius: 10, cursor: "pointer" }}>
-            Logout
-          </button>
+    <nav className="navbar-container">
+      <Link to="/menu" style={{ textDecoration: 'none' }}>
+        <div className="navbar-logo">
+          Easy<span>POS</span>
         </div>
-      ) : null}
-    </div>
+      </Link>
+
+      <div className="navbar-user-info">
+        <div className="user-badge">
+          {user.username} <span style={{ color: '#888', marginLeft: 5 }}>({user.role})</span>
+        </div>
+        
+        <button onClick={handleLogout} className="btn-logout">
+          Logout
+        </button>
+      </div>
+    </nav>
   );
 }

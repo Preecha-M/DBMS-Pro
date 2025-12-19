@@ -1,23 +1,26 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./useAuth";
 
-export default function ProtectedRoute() {
+const ProtectedRoute = () => {
   const { user, loading } = useAuth();
 
-  if (loading) return null;
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
+  return <Outlet />;
+};
+
+export const RequireRole = ({ roles = [] }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+
+  if (roles.length > 0 && !roles.includes(user.role)) {
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;
-}
-export function RequireRole({ roles }) {
-  const { user } = useAuth();
+};
 
-  if (!roles.includes(user?.role)) {
-    return <Navigate to="/menu" replace />;
-  }
-
-  return <Outlet />;
-}
+export default ProtectedRoute;
