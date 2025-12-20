@@ -17,119 +17,119 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
 
-const app = express();
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
-app.use(cookieParser());
+// const app = express();
+// app.use(cors({ origin: true, credentials: true }));
+// app.use(express.json());
+// app.use(cookieParser());
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl:
-    process.env.DATABASE_SSL === "true"
-      ? { rejectUnauthorized: false }
-      : undefined,
-});
+// const pool = new Pool({
+//   connectionString: process.env.DATABASE_URL,
+//   ssl:
+//     process.env.DATABASE_SSL === "true"
+//       ? { rejectUnauthorized: false }
+//       : undefined,
+// });
 
-pool.connect((err, client, release) => {
-  if (err) {
-    return console.error("Error acquiring client", err.stack);
-  }
-  console.log("Successfully connected to Render PostgreSQL (SSL)!");
-  release();
-});
+// pool.connect((err, client, release) => {
+//   if (err) {
+//     return console.error("Error acquiring client", err.stack);
+//   }
+//   console.log("Successfully connected to Render PostgreSQL (SSL)!");
+//   release();
+// });
 
-function signToken(payload) {
-  return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
-  });
-}
+// function signToken(payload) {
+//   return jwt.sign(payload, process.env.JWT_SECRET, {
+//     expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+//   });
+// }
 
-function authRequired(req, res, next) {
-  const token = req.cookies?.accessToken;
-  if (!token) return res.status(401).json({ message: "Unauthorized" });
+// function authRequired(req, res, next) {
+//   const token = req.cookies?.accessToken;
+//   if (!token) return res.status(401).json({ message: "Unauthorized" });
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch {
-    return res.status(401).json({ message: "Invalid token" });
-  }
-}
+//   try {
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     req.user = decoded;
+//     next();
+//   } catch {
+//     return res.status(401).json({ message: "Invalid token" });
+//   }
+// }
 
-function rolesAllowed(...roles) {
-  return (req, res, next) => {
-    if (!req.user?.role) return res.status(403).json({ message: "Forbidden" });
-    if (!roles.includes(req.user.role))
-      return res.status(403).json({ message: "Forbidden" });
-    next();
-  };
-}
+// function rolesAllowed(...roles) {
+//   return (req, res, next) => {
+//     if (!req.user?.role) return res.status(403).json({ message: "Forbidden" });
+//     if (!roles.includes(req.user.role))
+//       return res.status(403).json({ message: "Forbidden" });
+//     next();
+//   };
+// }
 
-function cookieOptions() {
-  const secure = (process.env.COOKIE_SECURE || "false") === "true";
-  const sameSite = process.env.COOKIE_SAMESITE || "lax";
-  return {
-    httpOnly: true,
-    secure,
-    sameSite,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  };
-}
+// function cookieOptions() {
+//   const secure = (process.env.COOKIE_SECURE || "false") === "true";
+//   const sameSite = process.env.COOKIE_SAMESITE || "lax";
+//   return {
+//     httpOnly: true,
+//     secure,
+//     sameSite,
+//     maxAge: 7 * 24 * 60 * 60 * 1000,
+//   };
+// }
 
-app.get("/api/health", (_, res) => res.json({ ok: true }));
+// app.get("/api/health", (_, res) => res.json({ ok: true }));
 
 // 1) Auth
 
-app.post("/api/auth/login", async (req, res) => {
-  const { username, password } = req.body || {};
-  if (!username || !password)
-    return res.status(400).json({ message: "username/password required" });
+// app.post("/api/auth/login", async (req, res) => {
+//   const { username, password } = req.body || {};
+//   if (!username || !password)
+//     return res.status(400).json({ message: "username/password required" });
 
-  const client = await pool.connect();
-  try {
-    const q = `SELECT employee_id, username, password, role, status
-              FROM employee WHERE username=$1`;
-    const { rows } = await client.query(q, [username]);
-    const emp = rows[0];
-    if (!emp) return res.status(401).json({ message: "Invalid credentials" });
+//   const client = await pool.connect();
+//   try {
+//     const q = `SELECT employee_id, username, password, role, status
+//               FROM employee WHERE username=$1`;
+//     const { rows } = await client.query(q, [username]);
+//     const emp = rows[0];
+//     if (!emp) return res.status(401).json({ message: "Invalid credentials" });
 
-    if ((emp.status || "").toLowerCase() === "resigned") {
-      return res.status(401).json({ message: "Employee resigned" });
-    }
+//     if ((emp.status || "").toLowerCase() === "resigned") {
+//       return res.status(401).json({ message: "Employee resigned" });
+//     }
 
-    const ok = await bcrypt.compare(password, emp.password);
-    if (!ok) return res.status(401).json({ message: "Invalid credentials" });
+//     const ok = await bcrypt.compare(password, emp.password);
+//     if (!ok) return res.status(401).json({ message: "Invalid credentials" });
 
-    const token = signToken({
-      employee_id: emp.employee_id,
-      username: emp.username,
-      role: emp.role || "Staff",
-    });
+//     const token = signToken({
+//       employee_id: emp.employee_id,
+//       username: emp.username,
+//       role: emp.role || "Staff",
+//     });
 
-    res.cookie("accessToken", token, cookieOptions());
-    return res.json({
-      message: "Login successfully.",
-      user: {
-        employee_id: emp.employee_id,
-        username: emp.username,
-        role: emp.role,
-        status: emp.status,
-      },
-    });
-  } finally {
-    client.release();
-  }
-});
+//     res.cookie("accessToken", token, cookieOptions());
+//     return res.json({
+//       message: "Login successfully.",
+//       user: {
+//         employee_id: emp.employee_id,
+//         username: emp.username,
+//         role: emp.role,
+//         status: emp.status,
+//       },
+//     });
+//   } finally {
+//     client.release();
+//   }
+// });
 
-app.post("/api/auth/logout", (req, res) => {
-  res.clearCookie("accessToken");
-  res.json({ message: "Logout successfully." });
-});
+// app.post("/api/auth/logout", (req, res) => {
+//   res.clearCookie("accessToken");
+//   res.json({ message: "Logout successfully." });
+// });
 
-app.get("/api/auth/me", authRequired, (req, res) => {
-  res.json({ user: req.user });
-});
+// app.get("/api/auth/me", authRequired, (req, res) => {
+//   res.json({ user: req.user });
+// });
 
 // 2) Employees (Admin/Manager)
 
