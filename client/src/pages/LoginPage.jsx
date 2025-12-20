@@ -14,7 +14,7 @@ export default function LoginPage() {
 
     try {
       await login(form.username.trim(), form.password);
-      navigate("/menu", { replace: true });
+      navigate("/home", { replace: true });
     } catch (err) {
       setError(err?.response?.data?.message || "เข้าสู่ระบบไม่สำเร็จ");
     }

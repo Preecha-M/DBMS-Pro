@@ -40,10 +40,9 @@ export default function AddEmployeePage() {
         education: form.education || null,
       };
 
-      const res = await api.post("/api/employees", payload);
+      const res = await api.post("/employees", payload);
       setMsg(`เพิ่มพนักงานสำเร็จ: ${res.data.username} (${res.data.role})`);
 
-      // reset บางส่วน
       setForm((p) => ({ ...p, username: "", password: "" }));
     } catch (err) {
       const m = err?.response?.data?.message || "เพิ่มพนักงานไม่สำเร็จ";
