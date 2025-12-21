@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import api from "../api/api";
+import api from "../db/api";
 
 export default function Registration() {
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ export default function Registration() {
   const onSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post("/api/employees", { ...form, role: "Staff", status: "Active" });
+      await api.post("/employees", { ...form, role: "Staff", status: "Active" });
       alert("ลงทะเบียนพนักงานสำเร็จ");
       navigate("/login");
     } catch (err) {

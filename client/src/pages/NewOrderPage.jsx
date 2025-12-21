@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import api from "../api/api";
+import api from "../db/api";
 
 export default function NewOrderPage() {
   const [params, setParams] = useSearchParams();

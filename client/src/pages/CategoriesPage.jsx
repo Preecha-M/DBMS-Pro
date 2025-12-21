@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import api from "../api/api";
+import api from "../db/api";
 
 export default function CategoriesPage() {
   const [items, setItems] = useState([]);
