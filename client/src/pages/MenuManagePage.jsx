@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import api from "../api/api";
+import api from "../db/api";
 
 const FALLBACK_IMG = "https://cdn-icons-png.flaticon.com/512/924/924514.png";
 

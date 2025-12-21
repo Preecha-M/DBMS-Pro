@@ -1,5 +1,5 @@
 import { useState } from "react";
-import api from "../api/api";
+import api from "../db/api";
 
 export default function AddEmployeePage() {
   const [form, setForm] = useState({
