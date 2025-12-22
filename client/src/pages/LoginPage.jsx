@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
+import welcomeImg from "../assets/welcome.jpg";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -24,7 +25,7 @@ export default function LoginPage() {
     <div className="auth-container">
       <div className="auth-image-side">
         <img
-          src="https://cdni.iconscout.com/illustration/premium/thumb/login-page-4437043-3684811.png"
+          src={welcomeImg}
           alt="Login"
         />
       </div>

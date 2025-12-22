@@ -47,24 +47,14 @@ export default function Sidebar() {
       {cats.map((c) => (
         <button
           key={c.category_id}
-          className={`sidebar-item ${Number(c.category_id) === activeCatId ? "active" : ""}`}
+          className={`sidebar-item ${Number(c.category_id) === activeCatId ? 'active' : ''}`}
           type="button"
           onClick={() => navigate(`/new-order?cat=${c.category_id}`)}
         >
-          <div className="sidebar-icon-box">{c.icon || "•"}</div>
-          <div>{c.category_name}</div>
+          <div className="sidebar-icon-box">{c.icon || '•'}</div>
+          <div className="sidebar-label">{c.category_name}</div>
         </button>
       ))}
-
-      <button
-        type="button"
-        className="sidebar-item"
-        style={{ marginTop: "auto", paddingBottom: 18 }}
-        onClick={() => navigate("/cashier")}
-      >
-        <div className="sidebar-icon-box">🧾</div>
-        <div>Table</div>
-      </button>
     </aside>
   )
 }
