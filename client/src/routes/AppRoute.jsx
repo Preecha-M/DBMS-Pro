@@ -12,6 +12,7 @@ import ProtectedRoute from "../routes/ProtectedRoute";
 import RequireRole from "../auth/RequireRole";
 
 import MainLayout from "../layouts/MainLayout";
+import DashboardPage from "../pages/dashboard/DashboardPage";
 
 const AppRoute = () => {
   return (
@@ -25,8 +26,10 @@ const AppRoute = () => {
           <Route path="/new-order" element={<NewOrderPage />} />
           <Route path="/settings/categories" element={<CategoriesPage />} />
           <Route path="/settings/menus" element={<MenuManagePage />} />
+          
           <Route element={<RequireRole roles={["Admin"]} />}>
             <Route path="/employees/new" element={<AddEmployeePage />} />
+            <Route path="/dashboard" element={<DashboardPage/>} />
           </Route>
 
           <Route path="/orders" element={<div className="page-pad">Orders (coming soon)</div>} />
