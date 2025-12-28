@@ -8,31 +8,31 @@ import TopCategoriesGraph from "./components/TopCategoriesGraph"
 const DashboardPage = () => {
   return (
     <div className='page-pad'>
-      <div className='grid grid-cols-1 gap-3'>
+      <div className='grid grid-cols-1 gap-6'>
         
         <div className='flex items-center justify-between'>
-          <h2 className='text-xl font-semibold'>Dashboard</h2>
+          <h2 className='text-2xl font-semibold'>Dashboard</h2>
           <div>Filter</div>
         </div>
         
-        <div className='bg-white'>
+        <div>
           <Totalbar/>
         </div>
         
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-          <div className='lg:col-span-2 bg-white'>
+          <div className='lg:col-span-2'>
             <SaleStatisticGraph/>
           </div>
-          <div className='lg:col-span-1 bg-white'>
+          <div className='lg:col-span-1'>
             <MemberStatisticGraph/>
           </div>
         </div>
         
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-          <div className='lg:col-span-2 bg-white'>
+          <div className='lg:col-span-2'>
             <TopMenuTable/>
           </div>
-          <div className='lg:col-span-1 bg-white'>
+          <div className='lg:col-span-1'>
             <TopCategoriesGraph/>
           </div>
         </div>

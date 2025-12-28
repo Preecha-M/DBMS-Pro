@@ -43,7 +43,7 @@ export default function Sidebar() {
   if (!user) return null;
   
   return (
-    <aside className="sidebar-nav">
+    <aside className="min-h-screen w-[100px] bg-white border-r border-[#E5E6EB] flex flex-col items-center py-3 gap-3">
       {cats.map((c) => (
         <button
           key={c.category_id}

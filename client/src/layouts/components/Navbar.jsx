@@ -32,7 +32,7 @@ export default function Navbar() {
   if (!user) return null;
 
   return (
-    <header className="pos-topbar">
+    <header className="h-[70px] w-full bg-white border-b border-[#E5E6EB] px-6 md:px-10 flex items-center justify-between sticky top-0 z-[1000]">
       <div className="pos-brand" onClick={() => navigate("/home")}>
         Easy <span>POS</span>
       </div>
