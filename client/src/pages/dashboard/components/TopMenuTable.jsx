@@ -75,11 +75,11 @@ const TopMenuTable = ({ limit = 5 }) => {
             ) : (
               rows.map((r) => (
                 <tr key={r.rank} className='border-b border-gray-300 last:border-b-0 hover:bg-gray-50'>
-                  <td className='py-2 pr-2 font-medium'>{r.rank}</td>
-                  <td className='py-2 pr-2'>{r.menu_name}</td>
-                  <td className='py-2 pr-2 text-gray-500'>{r.category}</td>
-                  <td className='py-2 pr-2 text-right'>{formatInt(r.total_order)}</td>
-                  <td className='py-2 text-right font-medium'>
+                  <td className='py-3 pr-2 font-medium'>{r.rank}</td>
+                  <td className='py-3 pr-2'>{r.menu_name}</td>
+                  <td className='py-3 pr-2 text-gray-500'>{r.category}</td>
+                  <td className='py-3 pr-2 text-right'>{formatInt(r.total_order)}</td>
+                  <td className='py-3 text-right font-medium'>
                     ฿ {formatMoney(r.total_revenue)}
                   </td>
                 </tr>
