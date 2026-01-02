@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import {
   CartesianGrid,
   LineChart,
@@ -36,29 +36,52 @@ const formatShortDate = (s) => {
   return String(s)
 }
 
-const SaleStatisticGraph = () => {
+const SaleStatisticGraph = ({ params }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [metric, setMetric] = useState("revenue")
   const [rows, setRows] = useState([])
   
+  const query = useMemo(() => {
+    const p = params || {}
+    const q = {}
+    
+    if (p.from) q.from = p.from
+    if (p.to) q.to = p.to
+    if (p.branch_id) q.branch_id = p.branch_id
+    
+    return q
+  }, [params])
+  
   useEffect(() => {
+    let alive = true
+    
     const load = async () => {
       setLoading(true)
       setError("")
       try {
-        setLoading(true)
-        setRows(mockSaleRows)
+        if (alive) {
+          setLoading(true)
+          setRows(mockSaleRows)
+        }
       } catch {
-        setError("โหลดกราฟยอดขายไม่สำเร็จ!")
-        setRows([])
+        if (alive) {
+          setError("โหลดกราฟยอดขายไม่สำเร็จ!")
+          setRows([])
+        }
       } finally {
-        setLoading(false)
+        if (alive) {
+          setLoading(false)
+        }
       }
     }
     
     load()
-  }, [])
+    
+    return () => {
+      alive = false
+    }
+  }, [query])
   
   const activeKey = metric === "revenue" ? "total_revenue" : "total_order"
   

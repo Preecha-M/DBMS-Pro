@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 
 const mockTopMenus = [
   { menu_name: "Americano", category: "Coffee", total_order: 120, total_revenue: 54000 },
@@ -15,27 +15,50 @@ const formatMoney = (v) => {
 
 const formatInt = (v) => Number(v || 0).toLocaleString("th-TH")
 
-const TopMenuTable = ({ limit = 5 }) => {
+const TopMenuTable = ({ params, limit = 5 }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [rows, setRows] = useState([])
   
+  const query = useMemo(() => {
+    const p = params || {}
+    const q = { limit }
+    
+    if (p.from) q.from = p.from
+    if (p.to) q.to = p.to
+    if (p.branch_id) q.branch_id = p.branch_id
+    
+    return q
+  }, [params, limit])
+  
   useEffect(() => {
+    let alive = true
+    
     const loading = async () => {
       setLoading(true)
       setError("")
       try {
-        setRows(mockTopMenus)
+        if (alive) {
+          setRows(mockTopMenus)
+        }
       } catch {
-        setError("โหลดข้อมูลเมนูขายดีไม่สำเร็จ")
-        setRows([])
+        if (alive) {
+          setError("โหลดข้อมูลเมนูขายดีไม่สำเร็จ")
+          setRows([])
+        }
       } finally {
-        setLoading(false)
+        if (alive) {
+          setLoading(false)
+        }
       }
     }
     
     loading()
-  }, [])
+    
+    return () => {
+      alive = false
+    }
+  }, [query])
   
   return (
     <div className='rounded-lg border border-gray-100 bg-white p-4 shadow-sm'>

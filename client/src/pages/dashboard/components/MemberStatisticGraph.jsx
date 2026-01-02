@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 const mockMemberRows = [
@@ -19,29 +19,51 @@ const formatShortDate = (s) => {
   return String(s)
 }
 
-const MemberStatisticGraph = () => {
+const MemberStatisticGraph = ({ params }) => {
   const [loading, setLoading] = useState(true)
   const [error ,setError] = useState("")
   const [metric, setMetric] = useState("new")
   const [rows, setRows] = useState([])
   
+  const query = useMemo(() => {
+    const p = params || {}
+    const q = {}
+    
+    if (p.from) q.from = p.from
+    if (p.to) q.to = p.to
+    if (p.group_by) q.group_by = p.group_by
+    
+    return q
+  }, [params])
+  
   useEffect(() => {
-    setLoading(true)
-    setError("")
+    let alive = true
     
     const load = async () => {
+      setLoading(true)
+      setError("")
       try {
-        setRows(mockMemberRows)
+        if (alive) {
+          setRows(mockMemberRows)
+        }
       } catch {
-      setError("โหลดกราฟสมาชิกไม่สำเร็จ")
-      setRows([])
-    } finally {
-      setLoading(false)
-    }
+        if (alive) {
+          setError("โหลดกราฟสมาชิกไม่สำเร็จ")
+          setRows([])
+        }
+      } finally {
+        if (alive) {
+          setLoading(false)
+        }
+      }
     }
     
     load()
-  }, [])
+    
+    return () => {
+      alive = false
+    }
+  }, [query])
   
   const activeKey = metric === "new" ? "new_member" : "active_member"
   
