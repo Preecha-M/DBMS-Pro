@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 const formatMoney = (v) => {
   const n = Number(v || 0)
@@ -20,32 +20,57 @@ const StatCard = ({ title, value, sub }) => {
   )
 }
 
-const Totalbar = () => {
+const Totalbar = ({ params }) => {
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const [summary, setSummary] = useState({
     total_revenue: 0,
     total_order: 0,
     total_member: 0
   })
   
+  const query = useMemo(() => {
+    const p = params || {}
+    const q = {}
+    
+    if (p.from) q.from = p.from
+    if (p.to) q.to = p.to
+    if (p.branch_id) q.branch_id = p.branch_id
+    
+    return q
+  }, [params])
+  
   useEffect(() => {
+    let alive = true
+    
     const load = async () => {
       setLoading(true)
+      setError("")
       try {
-        setSummary({
-          total_revenue: 0,
-          total_order: 0,
-          total_member: 0
-        })
+        if (alive) {
+          setSummary({
+            total_revenue: 0,
+            total_order: 0,
+            total_member: 0
+          })
+        }
       } catch {
-        setSummary({ total_revenue: 0, total_order: 0, total_member: 0 })
+        if (alive) {
+          setError("โหลดสรุปข้อมูลไม่สำเร็จ")
+          setSummary({ total_revenue: 0, total_order: 0, total_member: 0 })
+        }
       } finally {
-        setLoading(false)
+        if (alive) {
+          setLoading(false)
+        }
       }
     }
     
     load()
-  }, [])
+    return () => {
+      alive = false
+    }
+  }, [query])
   
   if (loading) {
     return (
@@ -62,6 +87,7 @@ const Totalbar = () => {
       <StatCard title="Total Revenue" value={`฿ ${formatMoney(summary.total_revenue)}`} sub="example"/>
       <StatCard title="Total Order" value={formatInt(summary.total_order)} sub="example"/>
       <StatCard title="Total Member" value={formatInt(summary.total_member)}/>
+      {error ? <div className='sm:col-span-3 text-sm text-red-500'>{error}</div> : null}
     </div>
   )
 }

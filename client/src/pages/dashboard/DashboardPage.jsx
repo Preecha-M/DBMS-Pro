@@ -4,6 +4,7 @@ import SaleStatisticGraph from "./components/SaleStatisticGraph"
 import MemberStatisticGraph from "./components/MemberStatisticGraph"
 import TopMenuTable from "./components/TopMenuTable"
 import TopCategoriesGraph from "./components/TopCategoriesGraph"
+import Filterbar from './components/Filterbar'
 
 const DashboardPage = () => {
   return (
@@ -12,7 +13,7 @@ const DashboardPage = () => {
         
         <div className='flex items-center justify-between'>
           <h2 className='text-2xl font-semibold'>Dashboard</h2>
-          <div>Filter</div>
+          <Filterbar/>
         </div>
         
         <div>
