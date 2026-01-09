@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import api from "../../../db/api"
 
 const formatMoney = (v) => {
   const n = Number(v || 0)
@@ -47,11 +48,13 @@ const Totalbar = ({ params }) => {
       setLoading(true)
       setError("")
       try {
+        const res = await api.get("/dashboard/summary?from=2025-10-01")
+        const data = res?.data || {}
         if (alive) {
           setSummary({
-            total_revenue: 0,
-            total_order: 0,
-            total_member: 0
+            total_revenue: data.total_revenue ?? 0,
+            total_order: data.total_order ?? 0,
+            total_member: data.total_member ?? 0
           })
         }
       } catch {
@@ -74,10 +77,10 @@ const Totalbar = ({ params }) => {
   
   if (loading) {
     return (
-      <div className='grid grid-cols-1 sm:grid-cols-3 gap-3'>
-        <div className='h-[92px] rounded-lg bg-gray-100 animate-pulse'/>
-        <div className='h-[92px] rounded-lg bg-gray-100 animate-pulse'/>
-        <div className='h-[92px] rounded-lg bg-gray-100 animate-pulse'/>
+      <div className='grid grid-cols-1 sm:grid-cols-3 gap-6'>
+        <div className='h-[122px] rounded-lg bg-gray-100 animate-pulse'/>
+        <div className='h-[122px] rounded-lg bg-gray-100 animate-pulse'/>
+        <div className='h-[122px] rounded-lg bg-gray-100 animate-pulse'/>
       </div>
     )
   }
