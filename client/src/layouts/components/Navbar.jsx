@@ -34,7 +34,7 @@ export default function Navbar() {
   return (
     <header className="pos-topbar">
       <div className="pos-brand" onClick={() => navigate("/home")}>
-        Easy <span>POS</span>
+        CP <span>POS</span>
       </div>
 
       <nav className="pos-topnav" style={{ flex: 1, justifyContent: "center" }}>

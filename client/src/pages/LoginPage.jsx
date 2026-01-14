@@ -67,12 +67,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="auth-footer">
-          ยังไม่มีบัญชี?{" "}
-          <Link to="/register" className="auth-link">
-            สมัครสมาชิก
-          </Link>
-        </p>
       </div>
     </div>
   );
