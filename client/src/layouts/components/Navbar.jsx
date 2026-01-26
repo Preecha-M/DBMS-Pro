@@ -44,8 +44,8 @@ export default function Navbar() {
         <NavLink to="/orders" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
           Orders
         </NavLink>
-        <NavLink to="/customers" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
-          Customers
+        <NavLink to="/Members" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
+          Members
         </NavLink>
         <NavLink to="/cashier" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
           Cashier
