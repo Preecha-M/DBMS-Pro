@@ -34,7 +34,7 @@ export default function Navbar() {
   return (
     <header className="pos-topbar">
       <div className="pos-brand" onClick={() => navigate("/home")}>
-        Easy <span>POS</span>
+        CP <span>POS</span>
       </div>
 
       <nav className="pos-topnav" style={{ flex: 1, justifyContent: "center" }}>
@@ -44,8 +44,8 @@ export default function Navbar() {
         <NavLink to="/orders" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
           Orders
         </NavLink>
-        <NavLink to="/customers" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
-          Customers
+        <NavLink to="/Members" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
+          Members
         </NavLink>
         <NavLink to="/cashier" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
           Cashier

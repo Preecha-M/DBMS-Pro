@@ -85,17 +85,22 @@ export default function NewOrderPage() {
   const orderNo = saleInfo?.sale_id ? `Order: #${saleInfo.sale_id}` : "Order: -";
 
   const checkMember = async () => {
-    setMemberInfo(null);
-    const raw = memberId.trim();
-    if (!raw) return null;
+  setMemberInfo(null);
+  const phone = memberId.trim();
+  if (!phone) return null; // walk-in
 
-    const id = Number(raw);
-    if (!Number.isFinite(id)) throw new Error("หมายเลขสมาชิกไม่ถูกต้อง");
+  // เรียก backend ด้วย phone
+  const res = await api.get(`/members?phone=${phone}`);
 
-    const res = await api.get(`/members/${id}`);
-    setMemberInfo(res.data);
-    return res.data;
-  };
+  if (!Array.isArray(res.data) || res.data.length === 0) {
+    throw new Error("Member not found");
+  }
+
+  const member = res.data[0]; // ใช้คนแรก
+  setMemberInfo(member);
+  return member;
+};
+
 
   const goConfirm = async () => {
     setError("");
@@ -113,8 +118,8 @@ export default function NewOrderPage() {
         qty,
         earnedPoints,
         paymentMethod,
-        memberId: memberId.trim() ? Number(memberId.trim()) : null,
-        memberName: info?.name || null,
+        memberId: info?.member_id ?? null,
+        memberName: info?.name ?? null,
       };
 
       setOrderSnapshot(snapshot);
