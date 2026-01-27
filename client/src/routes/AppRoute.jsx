@@ -13,6 +13,7 @@ import RequireRole from "../auth/RequireRole";
 
 import MainLayout from "../layouts/MainLayout";
 import Members from "../pages/Members";
+import SalesHistoryPage from "../pages/SalesHistoryPage";
 
 const AppRoute = () => {
   return (
@@ -22,6 +23,7 @@ const AppRoute = () => {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
+
           <Route path="/home" element={<HomePage />} />
           <Route path="/new-order" element={<NewOrderPage />} />
           <Route path="/settings/categories" element={<CategoriesPage />} />
@@ -29,10 +31,10 @@ const AppRoute = () => {
           <Route element={<RequireRole roles={["Admin"]} />}>
             <Route path="/employees/new" element={<AddEmployeePage />} />
           </Route>
-          <Route path="/orders" element={<div className="page-pad">Orders (coming soon)</div>} />
           <Route path="/customers" element={<div className="page-pad">Customers (coming soon)</div>} />
           <Route path="/cashier" element={<div className="page-pad">Cashier (coming soon)</div>} />
           <Route path="/members" element={<Members />} />
+          <Route path="/sales-history" element={<SalesHistoryPage />} />
         </Route>
       </Route>
 

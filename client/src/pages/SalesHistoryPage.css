@@ -1,0 +1,61 @@
+/* scope ด้วย class ครอบหน้า */
+.sales-history-page .sales-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; /* ⭐ กระจาย column */
+}
+
+/* cell spacing */
+.sales-history-page .sales-table th,
+.sales-history-page .sales-table td {
+  padding: 12px 16px;
+  vertical-align: middle;
+  text-align: left;
+}
+
+/* header */
+.sales-history-page .sales-table thead th {
+  font-weight: 600;
+  color: #6C727F;
+  background: #FAFAFA;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* row */
+.sales-history-page .sales-table tbody tr {
+  border-bottom: 1px solid #F0F0F0;
+}
+
+.sales-history-page .sales-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+/* hover */
+.sales-history-page .sales-table tbody tr:hover {
+  background: #FFF7F3;
+}
+
+/* align money */
+.sales-history-page .col-right {
+  text-align: right;
+}
+
+/* payment badge */
+.sales-history-page .payment-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #F4F7FE;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* date block */
+.sales-history-page .date-main {
+  font-weight: 600;
+}
+
+.sales-history-page .date-sub {
+  font-size: 12px;
+  color: #9EA3AE;
+}
