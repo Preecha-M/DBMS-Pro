@@ -136,7 +136,7 @@ export default function SalesHistoryPage() {
                 <tbody>
                   {sales.map((s, index) => (
                     <tr key={s.sale_id}>
-                      <td>{index + 1}</td>
+                      <td>{s.sale_id}</td>
 
                       {/* Date */}
                       <td>
