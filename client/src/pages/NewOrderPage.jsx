@@ -16,6 +16,7 @@ export default function NewOrderPage() {
   const [memberId, setMemberId] = useState("");
   const [memberInfo, setMemberInfo] = useState(null);
   const [orderSnapshot, setOrderSnapshot] = useState(null);
+  const [cashReceived, setCashReceived] = useState("");
 
   const activeCatId = params.get("cat") ? Number(params.get("cat")) : null;
 
@@ -23,10 +24,17 @@ export default function NewOrderPage() {
     setError("");
     setLoading(true);
     try {
-      const [mRes, cRes] = await Promise.all([api.get("/menu"), api.get("/categories")]);
+      const [mRes, cRes] = await Promise.all([
+        api.get("/menu"),
+        api.get("/categories"),
+      ]);
 
       const menuList = Array.isArray(mRes.data) ? mRes.data : [];
-      setMenus(menuList.filter((m) => String(m.status || "").toLowerCase() !== "unavailable"));
+      setMenus(
+        menuList.filter(
+          (m) => String(m.status || "").toLowerCase() !== "unavailable"
+        )
+      );
 
       const catList = Array.isArray(cRes.data) ? cRes.data : [];
       setCats(catList);
@@ -41,7 +49,10 @@ export default function NewOrderPage() {
     load();
   }, []);
 
-  const pillCats = useMemo(() => [{ category_id: null, category_name: "All" }, ...cats], [cats]);
+  const pillCats = useMemo(
+    () => [{ category_id: null, category_name: "All" }, ...cats],
+    [cats]
+  );
 
   const visibleMenus = useMemo(() => {
     if (!activeCatId) return menus;
@@ -52,7 +63,9 @@ export default function NewOrderPage() {
     setCart((prev) => {
       const found = prev.find((x) => x.menu_id === m.menu_id);
       if (!found) return [...prev, { ...m, qty: 1 }];
-      return prev.map((x) => (x.menu_id === m.menu_id ? { ...x, qty: x.qty + 1 } : x));
+      return prev.map((x) =>
+        x.menu_id === m.menu_id ? { ...x, qty: x.qty + 1 } : x
+      );
     });
   };
 
@@ -61,49 +74,88 @@ export default function NewOrderPage() {
       const found = prev.find((x) => x.menu_id === menu_id);
       if (!found) return prev;
       if (found.qty <= 1) return prev.filter((x) => x.menu_id !== menu_id);
-      return prev.map((x) => (x.menu_id === menu_id ? { ...x, qty: x.qty - 1 } : x));
+      return prev.map((x) =>
+        x.menu_id === menu_id ? { ...x, qty: x.qty - 1 } : x
+      );
     });
   };
 
-  const subtotal = useMemo(() => cart.reduce((s, it) => s + Number(it.price || 0) * it.qty, 0), [cart]);
+  const subtotal = useMemo(
+    () => cart.reduce((s, it) => s + Number(it.price || 0) * it.qty, 0),
+    [cart]
+  );
   const qty = useMemo(() => cart.reduce((s, it) => s + it.qty, 0), [cart]);
-  const earnedPoints = useMemo(() => cart.reduce((s, it) => s + Number(it.qty || 0), 0), [cart]);
+  const earnedPoints = useMemo(
+    () => cart.reduce((s, it) => s + Number(it.qty || 0), 0),
+    [cart]
+  );
+
+  const changeAmount = useMemo(() => {
+    if (paymentMethod !== "Cash") return 0;
+    const cash = Number(cashReceived || 0);
+    return Math.max(cash - subtotal, 0);
+  }, [cashReceived, subtotal, paymentMethod]);
 
   const formatDateTime = (iso) => {
     if (!iso) return "";
     const d = new Date(iso);
-    const pad = (n) => String(n).padStart(2, "0");
-    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} | ${pad(d.getHours())}:${pad(
-      d.getMinutes()
-    )}:${pad(d.getSeconds())}`;
+
+    return new Intl.DateTimeFormat("th-TH", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+      timeZone: "Asia/Bangkok",
+    }).format(d);
   };
 
   const invoiceNo = saleInfo?.sale_id
-    ? `Invoice No: ${saleInfo.sale_id} ${formatDateTime(saleInfo.sale_datetime)}`
+    ? `Invoice No: ${saleInfo.sale_id} ${formatDateTime(
+        saleInfo.sale_datetime
+      )}`
     : "Invoice No: -";
 
-  const orderNo = saleInfo?.sale_id ? `Order: #${saleInfo.sale_id}` : "Order: -";
+  const orderNo = saleInfo?.sale_id
+    ? `Order: #${saleInfo.sale_id}`
+    : "Order: -";
 
   const checkMember = async () => {
-  setMemberInfo(null);
-  const phone = memberId.trim();
-  if (!phone) return null; // walk-in
+    setMemberInfo(null);
+    const phone = memberId.trim();
+    if (!phone) return null;
 
-  // เรียก backend ด้วย phone
-  const res = await api.get(`/members?phone=${phone}`);
+    const res = await api.get(`/members?phone=฿{phone}`);
 
-  if (!Array.isArray(res.data) || res.data.length === 0) {
-    throw new Error("Member not found");
-  }
+    if (!Array.isArray(res.data) || res.data.length === 0) {
+      throw new Error("Member not found");
+    }
 
-  const member = res.data[0]; // ใช้คนแรก
-  setMemberInfo(member);
-  return member;
-};
-
+    const member = res.data[0];
+    setMemberInfo(member);
+    return member;
+  };
 
   const goConfirm = async () => {
     setError("");
+
+    if (paymentMethod === "Cash") {
+      if (!cashReceived || cashReceived === "") {
+        setError("กรุณากรอกจำนวนเงินสดที่ลูกค้าให้");
+        return;
+      }
+      if (Number(cashReceived) < subtotal) {
+        setError(
+          `เงินสดไม่พอ! ขาดอีก ${(subtotal - Number(cashReceived)).toFixed(
+            2
+          )} บาท`
+        );
+        return;
+      }
+    }
+
     try {
       const info = await checkMember();
 
@@ -125,7 +177,9 @@ export default function NewOrderPage() {
       setOrderSnapshot(snapshot);
       setStep("CONFIRM");
     } catch (e) {
-      setError(e?.response?.data?.message || e?.message || "ตรวจสอบสมาชิกไม่สำเร็จ");
+      setError(
+        e?.response?.data?.message || e?.message || "ตรวจสอบสมาชิกไม่สำเร็จ"
+      );
     }
   };
 
@@ -133,12 +187,32 @@ export default function NewOrderPage() {
     setError("");
     if (!orderSnapshot?.items?.length) return;
 
+    if (paymentMethod === "Cash") {
+      if (!cashReceived || cashReceived === "") {
+        setError("กรุณากรอกจำนวนเงินสดที่ลูกค้าให้");
+        return;
+      }
+
+      if (Number(cashReceived) < orderSnapshot.subtotal) {
+        setError(
+          `เงินสดไม่พอ! ขาดอีก ${(
+            orderSnapshot.subtotal - Number(cashReceived)
+          ).toFixed(2)} บาท`
+        );
+        return;
+      }
+    }
+
     try {
       const payload = {
         payment_method: paymentMethod,
         discount_amount: 0,
         member_id: orderSnapshot.memberId,
-        items: orderSnapshot.items.map((it) => ({ menu_id: it.menu_id, quantity: it.qty })),
+        cash_received: paymentMethod === "Cash" ? Number(cashReceived) : null,
+        items: orderSnapshot.items.map((it) => ({
+          menu_id: it.menu_id,
+          quantity: it.qty,
+        })),
       };
 
       const res = await api.post("/sales", payload);
@@ -153,6 +227,9 @@ export default function NewOrderPage() {
   const closeAllModals = () => {
     setStep("ORDER");
     setError("");
+    setCashReceived("");
+    setSaleInfo(null);
+    setOrderSnapshot(null);
   };
 
   return (
@@ -163,7 +240,10 @@ export default function NewOrderPage() {
             key={String(c.category_id)}
             type="button"
             className={`filter-pill ${
-              (!c.category_id && !activeCatId) || Number(c.category_id) === activeCatId ? "active" : ""
+              (!c.category_id && !activeCatId) ||
+              Number(c.category_id) === activeCatId
+                ? "active"
+                : ""
             }`}
             onClick={() => {
               if (!c.category_id) setParams({});
@@ -184,24 +264,39 @@ export default function NewOrderPage() {
               {visibleMenus.map((m) => (
                 <div key={m.menu_id} className="product-card">
                   <img
-                    src={m.image_url || "https://cdn-icons-png.flaticon.com/512/924/924514.png"}
+                    src={
+                      m.image_url ||
+                      "https://cdn-icons-png.flaticon.com/512/924/924514.png"
+                    }
                     alt={m.menu_name}
                     className="product-image"
                   />
                   <div className="product-name">{m.menu_name}</div>
-                  <div className="product-price">$ {Number(m.price || 0).toFixed(2)}</div>
+                  <div className="product-price">
+                    ฿ {Number(m.price || 0).toFixed(2)}
+                  </div>
 
                   <div className="product-actions">
-                    <button type="button" className="qty-btn" onClick={() => dec(m.menu_id)}>
+                    <button
+                      type="button"
+                      className="qty-btn"
+                      onClick={() => dec(m.menu_id)}
+                    >
                       -
                     </button>
-                    <button type="button" className="qty-add" onClick={() => inc(m)}>
+                    <button
+                      type="button"
+                      className="qty-add"
+                      onClick={() => inc(m)}
+                    >
                       +
                     </button>
                   </div>
                 </div>
               ))}
-              {visibleMenus.length === 0 && <div className="page-pad">ไม่มีเมนูในหมวดนี้</div>}
+              {visibleMenus.length === 0 && (
+                <div className="page-pad">ไม่มีเมนูในหมวดนี้</div>
+              )}
             </div>
           )}
         </section>
@@ -236,25 +331,40 @@ export default function NewOrderPage() {
               cart.map((it) => (
                 <div key={it.menu_id} className="cart-row">
                   <img
-                    src={it.image_url || "https://cdn-icons-png.flaticon.com/512/924/924514.png"}
+                    src={
+                      it.image_url ||
+                      "https://cdn-icons-png.flaticon.com/512/924/924514.png"
+                    }
                     alt={it.menu_name}
                     className="cart-thumb"
                   />
                   <div className="cart-row-mid">
                     <div className="cart-row-name">{it.menu_name}</div>
-                    <div className="cart-row-sub">$ {Number(it.price || 0).toFixed(2)}</div>
+                    <div className="cart-row-sub">
+                      ฿ {Number(it.price || 0).toFixed(2)}
+                    </div>
 
                     <div className="cart-qty">
-                      <button type="button" className="qty-btn" onClick={() => dec(it.menu_id)}>
+                      <button
+                        type="button"
+                        className="qty-btn"
+                        onClick={() => dec(it.menu_id)}
+                      >
                         -
                       </button>
                       <div className="qty-box">{it.qty}</div>
-                      <button type="button" className="qty-btn" onClick={() => inc(it)}>
+                      <button
+                        type="button"
+                        className="qty-btn"
+                        onClick={() => inc(it)}
+                      >
                         +
                       </button>
                     </div>
                   </div>
-                  <div className="cart-row-right">$ {(Number(it.price || 0) * it.qty).toFixed(2)}</div>
+                  <div className="cart-row-right">
+                    ฿ {(Number(it.price || 0) * it.qty).toFixed(2)}
+                  </div>
                 </div>
               ))
             )}
@@ -268,7 +378,7 @@ export default function NewOrderPage() {
                   Items: {cart.length}, Quantity: {qty}
                 </div>
               </div>
-              <div className="cart-total-money">$ {subtotal.toFixed(0)}</div>
+              <div className="cart-total-money">฿ {subtotal.toFixed(0)}</div>
             </div>
 
             <button
@@ -308,29 +418,58 @@ export default function NewOrderPage() {
 
             <div className="input-group">
               <label>หมายเลขสมาชิก (ไม่ใส่ = Walk-in)</label>
-              <input value={memberId} onChange={(e) => setMemberId(e.target.value)} placeholder="เช่น 12" />
+              <input
+                value={memberId}
+                onChange={(e) => setMemberId(e.target.value)}
+                placeholder="เช่น 12"
+              />
             </div>
 
             <div className="input-group">
               <label>วิธีชำระเงิน</label>
-              <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+              >
                 <option value="Cash">Cash</option>
                 <option value="Credit Card">Credit Card</option>
                 <option value="QR">QR</option>
               </select>
             </div>
+            {paymentMethod === "Cash" && (
+              <div className="input-group">
+                <label>เงินสดที่ลูกค้าให้</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={cashReceived}
+                  onChange={(e) => setCashReceived(e.target.value)}
+                  placeholder="เช่น 500"
+                />
+                <div className="modal-note">
+                  เงินทอน: <b>{changeAmount.toFixed(2)}</b> บาท
+                </div>
+              </div>
+            )}
 
             <div className="modal-note">
               แต้มที่จะได้รับ: <b>{earnedPoints}</b> คะแนน (1 แก้ว = 1 คะแนน)
             </div>
 
-            {error && <div className="auth-error" style={{ marginTop: 10 }}>{error}</div>}
+            {error && (
+              <div className="auth-error" style={{ marginTop: 10 }}>
+                {error}
+              </div>
+            )}
 
             <div className="modal-actions">
               <button className="btn-soft" onClick={closeAllModals}>
                 Cancel
               </button>
-              <button className="btn-primary" onClick={goConfirm}>
+              <button
+                className="btn-primary"
+                onClick={goConfirm}
+              >
                 Next
               </button>
             </div>
@@ -346,7 +485,9 @@ export default function NewOrderPage() {
             </button>
 
             <div className="modal-title center">Order confirmation</div>
-            <div className="modal-sub center">Please confirm the order below to completed payment</div>
+            <div className="modal-sub center">
+              Please confirm the order below to completed payment
+            </div>
 
             <div className="confirm-table">
               <div className="confirm-head">
@@ -360,8 +501,10 @@ export default function NewOrderPage() {
                 <div className="confirm-row" key={it.menu_id}>
                   <div>{it.name}</div>
                   <div className="center">{it.qty}</div>
-                  <div className="right">$ {it.price.toFixed(2)}</div>
-                  <div className="right">$ {(it.price * it.qty).toFixed(2)}</div>
+                  <div className="right">฿ {it.price.toFixed(2)}</div>
+                  <div className="right">
+                    ฿ {(it.price * it.qty).toFixed(2)}
+                  </div>
                 </div>
               ))}
 
@@ -374,7 +517,9 @@ export default function NewOrderPage() {
 
               <div className="confirm-total">
                 <div>Total</div>
-                <div className="right total-money">$ {orderSnapshot.subtotal.toFixed(2)}</div>
+                <div className="right total-money">
+                  ฿ {orderSnapshot.subtotal.toFixed(2)}
+                </div>
               </div>
             </div>
 
@@ -412,10 +557,27 @@ export default function NewOrderPage() {
               <div>
                 <b>Receipt</b>
               </div>
-              <div>Id: {saleInfo?.sale_id ?? "-"}</div>
+              <div>No: {saleInfo?.sale_id ?? "-"}</div>
               <div>
                 Date:{" "}
-                {saleInfo?.sale_datetime ? new Date(saleInfo.sale_datetime).toLocaleString() : "-"}
+                {saleInfo?.sale_datetime
+                  ? new Intl.DateTimeFormat("th-TH", {
+                      year: "numeric",
+                      month: "numeric",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "numeric",
+                      second: "numeric",
+                      hour12: false,
+                      timeZone: "Asia/Bangkok",
+                    }).format(
+                      new Date(
+                        saleInfo.sale_datetime.endsWith("Z")
+                          ? saleInfo.sale_datetime
+                          : saleInfo.sale_datetime + "Z"
+                      )
+                    )
+                  : "-"}
               </div>
               <div>Created by: -</div>
               <div>Payment: {paymentMethod}</div>
@@ -435,7 +597,6 @@ export default function NewOrderPage() {
                 <div className="center">Qty</div>
                 <div className="right">Subtotal</div>
               </div>
-
               {orderSnapshot?.items?.map((it) => (
                 <div className="rt-row" key={it.menu_id}>
                   <div>{it.name}</div>
@@ -443,24 +604,57 @@ export default function NewOrderPage() {
                   <div className="right">{(it.price * it.qty).toFixed(2)}</div>
                 </div>
               ))}
-
               <div className="rt-total">
                 <div>
                   <b>Grand Total</b>
                 </div>
                 <div className="right">
-                  <b>{orderSnapshot?.subtotal?.toFixed(2)}</b>
+                  <b>
+                    {Number(
+                      saleInfo?.net_total || orderSnapshot?.subtotal || 0
+                    ).toFixed(2)}
+                  </b>
                 </div>
               </div>
-
+              {paymentMethod === "Cash" && (
+                <>
+                  <div
+                    className="rt-total"
+                    style={{ borderTop: "none", paddingTop: 0 }}
+                  >
+                    <div>Cash received</div>
+                    <div className="right">
+                      {Number(
+                        saleInfo?.cash_received || cashReceived || 0
+                      ).toFixed(2)}
+                    </div>
+                  </div>
+                  <div
+                    className="rt-total"
+                    style={{ borderTop: "none", paddingTop: 0 }}
+                  >
+                    <div>Change</div>
+                    <div className="right">
+                      <b>
+                        {Number(
+                          saleInfo?.change_amount || changeAmount || 0
+                        ).toFixed(2)}
+                      </b>
+                    </div>
+                  </div>
+                </>
+              )}
               <div className="rt-total">
                 <div>Paid</div>
-                <div className="right">{orderSnapshot?.subtotal?.toFixed(2)}</div>
+                <div className="right">
+                  {orderSnapshot?.subtotal?.toFixed(2)}
+                </div>
               </div>
-
               <div className="rt-total">
                 <div>Balance Due</div>
-                <div className="right">{orderSnapshot?.subtotal?.toFixed(2)}</div>
+                <div className="right">
+                  {orderSnapshot?.subtotal?.toFixed(2)}
+                </div>
               </div>
             </div>
 
