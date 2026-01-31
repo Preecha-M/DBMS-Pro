@@ -7,6 +7,7 @@ import NewOrderPage from "../pages/NewOrderPage";
 import HomePage from "../pages/HomePage";
 import LoginPage from "../pages/LoginPage";
 import Registration from "../pages/Registration";
+import CashierPage from "../pages/CashierPage";
 
 import ProtectedRoute from "../routes/ProtectedRoute";
 import RequireRole from "../auth/RequireRole";
@@ -32,7 +33,7 @@ const AppRoute = () => {
             <Route path="/employees/new" element={<AddEmployeePage />} />
           </Route>
           <Route path="/customers" element={<div className="page-pad">Customers (coming soon)</div>} />
-          <Route path="/cashier" element={<div className="page-pad">Cashier (coming soon)</div>} />
+          <Route path="/cashier" element={<CashierPage />} />
           <Route path="/members" element={<Members />} />
           <Route path="/sales-history" element={<SalesHistoryPage />} />
         </Route>

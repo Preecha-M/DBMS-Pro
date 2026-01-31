@@ -1,0 +1,299 @@
+.cashier-page {
+  padding: 24px;
+}
+
+.cashier-page .cashier-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.cashier-page .cashier-title {
+  font-size: 24px;
+  font-weight: 900;
+  color: #19191C;
+}
+
+.cashier-page .cashier-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.cashier-page .cashier-btn {
+  padding: 12px 20px;
+  border-radius: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background: #fff;
+  transition: all 0.2s;
+}
+
+.cashier-page .cashier-btn:hover {
+  background: #fafafa;
+}
+
+.cashier-page .cashier-btn.primary {
+  background: var(--primary-orange);
+  border-color: var(--primary-orange);
+  color: #fff;
+}
+
+.cashier-page .cashier-btn.primary:hover {
+  background: var(--primary-hover);
+}
+
+.cashier-page .cashier-btn.success {
+  background: var(--primary-green);
+  border-color: var(--primary-green);
+  color: #fff;
+}
+
+.cashier-page .cashier-btn.success:hover {
+  background: #189960;
+}
+
+.cashier-page .cashier-status-card {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.cashier-page .status-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.cashier-page .status-badge.open {
+  background: #E8F5E9;
+  color: var(--primary-green);
+}
+
+.cashier-page .status-badge.closed {
+  background: #FFF3E0;
+  color: #F57C00;
+}
+
+.cashier-page .status-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.cashier-page .info-item {
+  padding: 12px;
+  background: #F9FAFB;
+  border-radius: 12px;
+}
+
+.cashier-page .info-label {
+  font-size: 12px;
+  color: #9EA3AE;
+  margin-bottom: 4px;
+}
+
+.cashier-page .info-value {
+  font-size: 18px;
+  font-weight: 900;
+  color: #19191C;
+}
+
+.cashier-page .info-value.highlight {
+  color: var(--primary-orange);
+}
+
+.cashier-page .cashier-summary-card {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 24px;
+}
+
+.cashier-page .summary-title {
+  font-size: 18px;
+  font-weight: 900;
+  margin-bottom: 16px;
+  color: #19191C;
+}
+
+.cashier-page .summary-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.cashier-page .summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+  background: #F9FAFB;
+}
+
+.cashier-page .summary-row.total {
+  background: #FDF0EC;
+  border: 1px solid var(--primary-orange);
+  font-weight: 900;
+}
+
+.cashier-page .summary-label {
+  font-weight: 700;
+  color: #6C727F;
+}
+
+.cashier-page .summary-value {
+  font-weight: 900;
+  color: #19191C;
+}
+
+.cashier-page .summary-row.total .summary-label,
+.cashier-page .summary-row.total .summary-value {
+  color: var(--primary-orange);
+}
+
+/* Modal Styles - Scoped to cashier page */
+.cashier-page .cashier-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.cashier-page .cashier-modal-card {
+  width: 520px;
+  max-width: 92vw;
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  padding: 24px;
+  position: relative;
+}
+
+.cashier-page .cashier-modal-card.wide {
+  width: 680px;
+}
+
+.cashier-page .cashier-modal-x {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: #fff;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cashier-page .cashier-modal-title {
+  font-weight: 1000;
+  font-size: 20px;
+  margin-bottom: 8px;
+  color: #19191C;
+}
+
+.cashier-page .cashier-modal-subtitle {
+  color: #9EA3AE;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.cashier-page .cashier-input-group {
+  margin-bottom: 20px;
+}
+
+.cashier-page .cashier-input-group label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 8px;
+  font-weight: 700;
+  color: #19191C;
+}
+
+.cashier-page .cashier-input-group input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+.cashier-page .cashier-input-group input:focus {
+  outline: none;
+  border-color: var(--primary-orange);
+}
+
+.cashier-page .cashier-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.cashier-page .cashier-error {
+  color: #dc3545;
+  background: #fff5f5;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.cashier-page .cashier-success {
+  color: var(--primary-green);
+  background: #E8F5E9;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.cashier-page .payment-breakdown {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.cashier-page .payment-breakdown-title {
+  font-size: 14px;
+  font-weight: 900;
+  color: #6C727F;
+  margin-bottom: 12px;
+}
+
+.cashier-page .payment-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #F9FAFB;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.cashier-page .payment-item-label {
+  font-weight: 700;
+  color: #6C727F;
+}
+
+.cashier-page .payment-item-value {
+  font-weight: 900;
+  color: #19191C;
+}

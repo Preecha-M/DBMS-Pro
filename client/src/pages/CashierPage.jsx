@@ -1,0 +1,453 @@
+import { useEffect, useState } from "react";
+import api from "../db/api";
+import "./CashierPage.css";
+
+export default function CashierPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  
+  const [currentRound, setCurrentRound] = useState(null);
+  const [isRoundOpen, setIsRoundOpen] = useState(false);
+  
+  const [showOpenModal, setShowOpenModal] = useState(false);
+  const [showCloseModal, setShowCloseModal] = useState(false);
+  
+  const [openingCash, setOpeningCash] = useState("");
+  
+  const [salesSummary, setSalesSummary] = useState({
+    totalSales: 0,
+    cashSales: 0,
+    creditCardSales: 0,
+    qrSales: 0,
+    totalTransactions: 0,
+  });
+
+  useEffect(() => {
+    loadCurrentRound();
+  }, []);
+
+  useEffect(() => {
+    if (!isRoundOpen || !currentRound) {
+      return;
+    }
+
+    loadSalesSummary(currentRound.opened_at);
+
+    const interval = setInterval(() => {
+      loadSalesSummary(currentRound.opened_at);
+    }, 5000); 
+
+    return () => clearInterval(interval);
+  }, [isRoundOpen, currentRound]);
+
+  const loadCurrentRound = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await api.get("/sales-round/current");
+      
+      if (res.data) {
+        setCurrentRound(res.data);
+        setIsRoundOpen(true);
+        await loadSalesSummary(res.data.opened_at);
+      } else {
+        setIsRoundOpen(false);
+        setCurrentRound(null);
+      }
+    } catch (e) {
+      setError(e?.response?.data?.message || "โหลดข้อมูลไม่สำเร็จ");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadSalesSummary = async (startDate) => {
+    try {
+      const res = await api.get("/sales");
+      const sales = Array.isArray(res.data) ? res.data : [];
+      
+      let todaySales = [];
+      
+      if (currentRound && currentRound.round_id) {
+        todaySales = sales.filter((sale) => {
+          return sale.round_id === currentRound.round_id;
+        });
+      }
+
+      const summary = {
+        totalSales: 0,
+        cashSales: 0,
+        creditCardSales: 0,
+        qrSales: 0,
+        totalTransactions: todaySales.length,
+      };
+
+      todaySales.forEach((sale) => {
+        const amount = Number(sale.net_total || 0);
+        summary.totalSales += amount;
+
+        switch (sale.payment_method) {
+          case "Cash":
+            summary.cashSales += amount;
+            break;
+          case "Credit Card":
+            summary.creditCardSales += amount;
+            break;
+          case "QR":
+            summary.qrSales += amount;
+            break;
+        }
+      });
+
+      setSalesSummary(summary);
+    } catch (e) {
+      console.error("Failed to load sales summary:", e);
+    }
+  };
+
+  const handleOpenRound = async () => {
+    setError("");
+    setSuccess("");
+
+    if (!openingCash || openingCash === "") {
+      setError("กรุณากรอกจำนวนเงินสดเริ่มต้น");
+      return;
+    }
+
+    if (Number(openingCash) < 0) {
+      setError("จำนวนเงินสดต้องมากกว่าหรือเท่ากับ 0");
+      return;
+    }
+
+    try {
+      const res = await api.post("/sales-round/open", {
+        opening_cash: Number(openingCash),
+      });
+
+      const round = res.data;
+
+      setCurrentRound(round);
+      setIsRoundOpen(true);
+      setShowOpenModal(false);
+      setOpeningCash("");
+      setSuccess("เปิดรอบการขายสำเร็จ");
+      
+      await loadSalesSummary(round.opened_at);
+    } catch (e) {
+      setError(e?.response?.data?.message || "เปิดรอบการขายไม่สำเร็จ");
+    }
+  };
+
+  const handleCloseRound = async () => {
+    setError("");
+    setSuccess("");
+
+    if (!currentRound) {
+      setError("ไม่พบรอบการขายที่เปิดอยู่");
+      return;
+    }
+
+    try {
+      await api.put(`/sales-round/${currentRound.round_id}/close`, {
+        closing_cash: expectedCash,
+        notes: null,
+      });
+      
+      setIsRoundOpen(false);
+      setCurrentRound(null);
+      setShowCloseModal(false);
+      setSuccess("ปิดรอบการขายสำเร็จ");
+      
+      setSalesSummary({
+        totalSales: 0,
+        cashSales: 0,
+        creditCardSales: 0,
+        qrSales: 0,
+        totalTransactions: 0,
+      });
+    } catch (e) {
+      setError(e?.response?.data?.message || "ปิดรอบการขายไม่สำเร็จ");
+    }
+  };
+
+  const formatCurrency = (amount) => {
+    return `฿${Number(amount).toLocaleString("th-TH", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
+  const formatDateTime = (isoString) => {
+    if (!isoString) return "-";
+    const date = new Date(isoString);
+    return new Intl.DateTimeFormat("th-TH", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "Asia/Bangkok",
+    }).format(date);
+  };
+
+  const expectedCash = currentRound
+    ? Number(currentRound.opening_cash) + salesSummary.cashSales
+    : 0;
+
+  if (loading) {
+    return <div className="cashier-page">กำลังโหลด...</div>;
+  }
+
+  return (
+    <div className="cashier-page">
+      <div className="cashier-header">
+        <h1 className="cashier-title">แคชเชียร์ (Cashier)</h1>
+        <div className="cashier-actions">
+          {!isRoundOpen ? (
+            <button
+              className="cashier-btn primary"
+              onClick={() => setShowOpenModal(true)}
+            >
+              เปิดรอบการขาย
+            </button>
+          ) : (
+            <button
+              className="cashier-btn success"
+              onClick={() => setShowCloseModal(true)}
+            >
+              ปิดยอด
+            </button>
+          )}
+        </div>
+      </div>
+
+      {error && <div className="cashier-error">{error}</div>}
+      {success && <div className="cashier-success">{success}</div>}
+
+      <div className="cashier-status-card">
+        <span className={`status-badge ${isRoundOpen ? "open" : "closed"}`}>
+          {isRoundOpen ? "🟢 รอบการขายเปิดอยู่" : "🔴 รอบการขายปิด"}
+        </span>
+
+        {isRoundOpen && currentRound ? (
+          <div className="status-info">
+            <div className="info-item">
+              <div className="info-label">เงินสดเริ่มต้น</div>
+              <div className="info-value">
+                {formatCurrency(currentRound.opening_cash)}
+              </div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">เวลาเปิดรอบ</div>
+              <div className="info-value">
+                {formatDateTime(currentRound.opened_at)}
+              </div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">ยอดขายรวม</div>
+              <div className="info-value highlight">
+                {formatCurrency(salesSummary.totalSales)}
+              </div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">จำนวนธุรกรรม</div>
+              <div className="info-value">{salesSummary.totalTransactions}</div>
+            </div>
+          </div>
+        ) : (
+          <p style={{ color: "#9EA3AE", marginTop: 12 }}>
+            กรุณาเปิดรอบการขายเพื่อเริ่มต้นการทำงาน
+          </p>
+        )}
+      </div>
+
+      {isRoundOpen && (
+        <div className="cashier-summary-card">
+          <h2 className="summary-title">สรุปยอดขาย</h2>
+          <div className="summary-grid">
+            <div className="summary-row">
+              <span className="summary-label">ยอดขายเงินสด (Cash)</span>
+              <span className="summary-value">
+                {formatCurrency(salesSummary.cashSales)}
+              </span>
+            </div>
+            <div className="summary-row">
+              <span className="summary-label">ยอดขายบัตรเครดิต (Credit Card)</span>
+              <span className="summary-value">
+                {formatCurrency(salesSummary.creditCardSales)}
+              </span>
+            </div>
+            <div className="summary-row">
+              <span className="summary-label">ยอดขาย QR Code</span>
+              <span className="summary-value">
+                {formatCurrency(salesSummary.qrSales)}
+              </span>
+            </div>
+            <div className="summary-row total">
+              <span className="summary-label">ยอดรวมทั้งหมด</span>
+              <span className="summary-value">
+                {formatCurrency(salesSummary.totalSales)}
+              </span>
+            </div>
+            <div className="summary-row">
+              <span className="summary-label">เงินสดที่ควรมี</span>
+              <span className="summary-value">
+                {formatCurrency(expectedCash)}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showOpenModal && (
+        <div className="cashier-modal-backdrop">
+          <div className="cashier-modal-card">
+            <button
+              className="cashier-modal-x"
+              onClick={() => {
+                setShowOpenModal(false);
+                setError("");
+                setOpeningCash("");
+              }}
+            >
+              ×
+            </button>
+
+            <h2 className="cashier-modal-title">เปิดรอบการขาย</h2>
+            <p className="cashier-modal-subtitle">
+              กรุณากรอกจำนวนเงินสดที่มีในลิ้นชักเงินสดตอนเริ่มต้นวัน
+            </p>
+
+            {error && <div className="cashier-error">{error}</div>}
+
+            <div className="cashier-input-group">
+              <label>จำนวนเงินสดเริ่มต้น (บาท)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={openingCash}
+                onChange={(e) => setOpeningCash(e.target.value)}
+                placeholder="เช่น 5000.00"
+                autoFocus
+              />
+            </div>
+
+            <div className="cashier-modal-actions">
+              <button
+                className="cashier-btn"
+                onClick={() => {
+                  setShowOpenModal(false);
+                  setError("");
+                  setOpeningCash("");
+                }}
+              >
+                ยกเลิก
+              </button>
+              <button className="cashier-btn primary" onClick={handleOpenRound}>
+                เปิดรอบการขาย
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCloseModal && (
+        <div className="cashier-modal-backdrop">
+          <div className="cashier-modal-card wide">
+            <button
+              className="cashier-modal-x"
+              onClick={() => {
+                setShowCloseModal(false);
+                setError("");
+              }}
+            >
+              ×
+            </button>
+
+            <h2 className="cashier-modal-title">ปิดยอดรอบการขาย</h2>
+            <p className="cashier-modal-subtitle">
+              สรุปยอดขายประจำวัน - กรุณาตรวจสอบความถูกต้องก่อนปิดรอบ
+            </p>
+
+            {error && <div className="cashier-error">{error}</div>}
+
+            <div className="payment-breakdown">
+              <div className="payment-breakdown-title">รายละเอียดยอดขาย</div>
+              
+              <div className="payment-item">
+                <span className="payment-item-label">เงินสดเริ่มต้น</span>
+                <span className="payment-item-value">
+                  {formatCurrency(currentRound?.opening_cash || 0)}
+                </span>
+              </div>
+
+              <div className="payment-item">
+                <span className="payment-item-label">ยอดขายเงินสด</span>
+                <span className="payment-item-value">
+                  {formatCurrency(salesSummary.cashSales)}
+                </span>
+              </div>
+
+              <div className="payment-item">
+                <span className="payment-item-label">ยอดขายบัตรเครดิต</span>
+                <span className="payment-item-value">
+                  {formatCurrency(salesSummary.creditCardSales)}
+                </span>
+              </div>
+
+              <div className="payment-item">
+                <span className="payment-item-label">ยอดขาย QR Code</span>
+                <span className="payment-item-value">
+                  {formatCurrency(salesSummary.qrSales)}
+                </span>
+              </div>
+
+              <div className="payment-item" style={{ background: "#FDF0EC", marginTop: 12 }}>
+                <span className="payment-item-label" style={{ color: "var(--primary-orange)" }}>
+                  <strong>เงินสดที่ควรมีในลิ้นชัก</strong>
+                </span>
+                <span className="payment-item-value" style={{ color: "var(--primary-orange)" }}>
+                  <strong>{formatCurrency(expectedCash)}</strong>
+                </span>
+              </div>
+
+              <div className="payment-item" style={{ background: "#E8F5E9", marginTop: 8 }}>
+                <span className="payment-item-label" style={{ color: "var(--primary-green)" }}>
+                  <strong>ยอดขายรวมทั้งหมด</strong>
+                </span>
+                <span className="payment-item-value" style={{ color: "var(--primary-green)" }}>
+                  <strong>{formatCurrency(salesSummary.totalSales)}</strong>
+                </span>
+              </div>
+
+              <div className="payment-item">
+                <span className="payment-item-label">จำนวนธุรกรรม</span>
+                <span className="payment-item-value">
+                  {salesSummary.totalTransactions} รายการ
+                </span>
+              </div>
+            </div>
+
+            <div className="cashier-modal-actions">
+              <button
+                className="cashier-btn"
+                onClick={() => {
+                  setShowCloseModal(false);
+                  setError("");
+                }}
+              >
+                ยกเลิก
+              </button>
+              <button className="cashier-btn success" onClick={handleCloseRound}>
+                ยืนยันปิดรอบการขาย
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
