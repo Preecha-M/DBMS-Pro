@@ -8,6 +8,7 @@ export default function NewOrderPage() {
   const [menus, setMenus] = useState([]);
   const [cats, setCats] = useState([]);
   const [cart, setCart] = useState([]);
+  const [promotions, setPromotions] = useState([]);
   const [saleInfo, setSaleInfo] = useState(null);
   const [error, setError] = useState("");
 
@@ -17,6 +18,7 @@ export default function NewOrderPage() {
   const [memberInfo, setMemberInfo] = useState(null);
   const [orderSnapshot, setOrderSnapshot] = useState(null);
   const [cashReceived, setCashReceived] = useState("");
+  const [selectedPromoId, setSelectedPromoId] = useState("");
 
   const activeCatId = params.get("cat") ? Number(params.get("cat")) : null;
 
@@ -24,9 +26,10 @@ export default function NewOrderPage() {
     setError("");
     setLoading(true);
     try {
-      const [mRes, cRes] = await Promise.all([
+      const [mRes, cRes, pRes] = await Promise.all([
         api.get("/menu"),
         api.get("/categories"),
+        api.get("/promotions"),
       ]);
 
       const menuList = Array.isArray(mRes.data) ? mRes.data : [];
@@ -38,6 +41,9 @@ export default function NewOrderPage() {
 
       const catList = Array.isArray(cRes.data) ? cRes.data : [];
       setCats(catList);
+      
+      const promoList = Array.isArray(pRes.data) ? pRes.data : [];
+      setPromotions(promoList);
     } catch (e) {
       setError(e?.response?.data?.message || "โหลดข้อมูลไม่สำเร็จ");
     } finally {
@@ -90,11 +96,47 @@ export default function NewOrderPage() {
     [cart]
   );
 
+  const selectedPromo = useMemo(() => {
+    if (!selectedPromoId) return null;
+    return promotions.find(p => p.promotion_id === Number(selectedPromoId)) || null;
+  }, [promotions, selectedPromoId]);
+
+  const discountAmount = useMemo(() => {
+    if (!selectedPromo) return 0;
+    
+    const promoMenuIds = Array.isArray(selectedPromo.menu_ids) ? selectedPromo.menu_ids.map(Number) : [];
+    
+    let applicableItems = cart;
+    if (promoMenuIds.length > 0) {
+      applicableItems = cart.filter(it => promoMenuIds.includes(it.menu_id));
+    }
+    
+    const applicableQty = applicableItems.reduce((s, it) => s + it.qty, 0);
+    const applicableTotal = applicableItems.reduce((s, it) => s + (Number(it.price || 0) * it.qty), 0);
+    
+    const minQty = Number(selectedPromo.min_quantity || 1);
+    
+    if (applicableQty < minQty) return 0; // Does not meet minimum quantity condition
+    
+    const dType = selectedPromo.discount_type || 'AMOUNT';
+    const dValue = Number(selectedPromo.discount_value || 0);
+    
+    let discount = 0;
+    if (dType === 'PERCENTAGE') {
+      discount = applicableTotal * (dValue / 100);
+    } else {
+      discount = dValue;
+    }
+    
+    return Math.min(discount, applicableTotal);
+  }, [selectedPromo, cart]);
+
   const changeAmount = useMemo(() => {
     if (paymentMethod !== "Cash") return 0;
     const cash = Number(cashReceived || 0);
-    return Math.max(cash - subtotal, 0);
-  }, [cashReceived, subtotal, paymentMethod]);
+    const net = subtotal - Number(discountAmount || 0);
+    return Math.max(cash - net, 0);
+  }, [cashReceived, subtotal, paymentMethod, discountAmount]);
 
   const formatDateTime = (iso) => {
     if (!iso) return "";
@@ -142,13 +184,14 @@ export default function NewOrderPage() {
     setError("");
 
     if (paymentMethod === "Cash") {
+      const net = subtotal - Number(discountAmount || 0);
       if (!cashReceived || cashReceived === "") {
         setError("กรุณากรอกจำนวนเงินสดที่ลูกค้าให้");
         return;
       }
-      if (Number(cashReceived) < subtotal) {
+      if (Number(cashReceived) < net) {
         setError(
-          `เงินสดไม่พอ! ขาดอีก ${(subtotal - Number(cashReceived)).toFixed(
+          `เงินสดไม่พอ! ขาดอีก ${(net - Number(cashReceived)).toFixed(
             2
           )} บาท`
         );
@@ -170,6 +213,8 @@ export default function NewOrderPage() {
         qty,
         earnedPoints,
         paymentMethod,
+        discountAmount: Number(discountAmount || 0),
+        selectedPromo,
         memberId: info?.member_id ?? null,
         memberName: info?.name ?? null,
       };
@@ -188,15 +233,16 @@ export default function NewOrderPage() {
     if (!orderSnapshot?.items?.length) return;
 
     if (paymentMethod === "Cash") {
+      const net = orderSnapshot.subtotal - orderSnapshot.discountAmount;
       if (!cashReceived || cashReceived === "") {
         setError("กรุณากรอกจำนวนเงินสดที่ลูกค้าให้");
         return;
       }
 
-      if (Number(cashReceived) < orderSnapshot.subtotal) {
+      if (Number(cashReceived) < net) {
         setError(
           `เงินสดไม่พอ! ขาดอีก ${(
-            orderSnapshot.subtotal - Number(cashReceived)
+            net - Number(cashReceived)
           ).toFixed(2)} บาท`
         );
         return;
@@ -206,7 +252,8 @@ export default function NewOrderPage() {
     try {
       const payload = {
         payment_method: paymentMethod,
-        discount_amount: 0,
+        discount_amount: orderSnapshot.discountAmount,
+        promotion_id: orderSnapshot.selectedPromo?.promotion_id ?? null,
         member_id: orderSnapshot.memberId,
         cash_received: paymentMethod === "Cash" ? Number(cashReceived) : null,
         items: orderSnapshot.items.map((it) => ({
@@ -228,6 +275,7 @@ export default function NewOrderPage() {
     setStep("ORDER");
     setError("");
     setCashReceived("");
+    setSelectedPromoId("");
     setSaleInfo(null);
     setOrderSnapshot(null);
   };
@@ -426,6 +474,35 @@ export default function NewOrderPage() {
             </div>
 
             <div className="input-group">
+              <label>โปรโมชั่น</label>
+              <select
+                value={selectedPromoId}
+                onChange={(e) => setSelectedPromoId(e.target.value)}
+              >
+                <option value="">-- ไม่ใช้โปรโมชั่น --</option>
+                {promotions.map(p => {
+                  const subtext = p.discount_type === 'PERCENTAGE' ? `ลด ${p.discount_value}%` : `ลด ฿${p.discount_value}`;
+                  return (
+                    <option key={p.promotion_id} value={p.promotion_id}>
+                      {p.promotion_name} ({subtext})
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            {selectedPromo && (
+              <div className="modal-note" style={{ marginTop: 8 }}>
+                เงื่อนไข: {selectedPromo.discount_type === 'PERCENTAGE' ? `ลด ${Number(selectedPromo.discount_value)}%` : `ลด ${Number(selectedPromo.discount_value)} ฿`} 
+                {` | ขั้นต่ำ ${selectedPromo.min_quantity} แก้ว`}
+                {selectedPromo.menu_ids?.length > 0 && ` | เฉพาะเมนูที่ร่วมรายการ`}
+                <span style={{ display: 'block', color: 'var(--primary-orange)', marginTop: 4 }}>
+                  หักส่วนลด: <b>{discountAmount > 0 ? `-${discountAmount.toFixed(2)} บาท` : 'ยังไม่เข้าเงื่อนไข'}</b>
+                </span>
+              </div>
+            )}
+
+            <div className="input-group" style={{ marginTop: 12 }}>
               <label>วิธีชำระเงิน</label>
               <select
                 value={paymentMethod}
@@ -515,10 +592,19 @@ export default function NewOrderPage() {
                 </div>
               </div>
 
+              {orderSnapshot.discountAmount > 0 && (
+                <div className="confirm-sum">
+                  <div className="muted">Promotion Discount</div>
+                  <div className="right" style={{ color: "var(--primary-orange)" }}>
+                    -฿ {orderSnapshot.discountAmount.toFixed(2)}
+                  </div>
+                </div>
+              )}
+
               <div className="confirm-total">
-                <div>Total</div>
+                <div>Net Total</div>
                 <div className="right total-money">
-                  ฿ {orderSnapshot.subtotal.toFixed(2)}
+                  ฿ {(orderSnapshot.subtotal - orderSnapshot.discountAmount).toFixed(2)}
                 </div>
               </div>
             </div>
@@ -605,13 +691,27 @@ export default function NewOrderPage() {
                 </div>
               ))}
               <div className="rt-total">
+                <div>Total</div>
+                <div className="right">
+                  {Number(orderSnapshot?.subtotal || 0).toFixed(2)}
+                </div>
+              </div>
+              {Number(saleInfo?.discount_amount || orderSnapshot?.discountAmount || 0) > 0 && (
+                <div className="rt-total" style={{ borderTop: "none", paddingTop: 0 }}>
+                  <div>Discount</div>
+                  <div className="right">
+                    -{Number(saleInfo?.discount_amount || orderSnapshot?.discountAmount || 0).toFixed(2)}
+                  </div>
+                </div>
+              )}
+              <div className="rt-total" style={{ borderTop: "none", paddingTop: 0 }}>
                 <div>
                   <b>Grand Total</b>
                 </div>
                 <div className="right">
                   <b>
                     {Number(
-                      saleInfo?.net_total || orderSnapshot?.subtotal || 0
+                      saleInfo?.net_total || (orderSnapshot?.subtotal - (orderSnapshot?.discountAmount || 0)) || 0
                     ).toFixed(2)}
                   </b>
                 </div>
@@ -647,13 +747,13 @@ export default function NewOrderPage() {
               <div className="rt-total">
                 <div>Paid</div>
                 <div className="right">
-                  {orderSnapshot?.subtotal?.toFixed(2)}
+                  {Number(saleInfo?.net_total || (orderSnapshot?.subtotal - (orderSnapshot?.discountAmount || 0)) || 0).toFixed(2)}
                 </div>
               </div>
               <div className="rt-total">
                 <div>Balance Due</div>
                 <div className="right">
-                  {orderSnapshot?.subtotal?.toFixed(2)}
+                  0.00
                 </div>
               </div>
             </div>

@@ -7,7 +7,8 @@ const RequireRole = ({ roles = [] }) => {
   if (loading) return <div>Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
 
-  if (roles.length > 0 && !roles.includes(user.role)) {
+  const hasRole = roles.map(r => String(r).toLowerCase()).includes(String(user.role).toLowerCase());
+  if (roles.length > 0 && !hasRole) {
     return <Navigate to="/" replace />;
   }
 

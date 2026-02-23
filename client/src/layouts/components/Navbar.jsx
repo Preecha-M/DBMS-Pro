@@ -10,7 +10,7 @@ export default function Navbar() {
   
   const [openUser, setOpenUser] = useState(false);
   
-  const isAdmin = ["Admin", "Manager"].includes(user.role);
+  const isAdmin = ["admin", "manager"].includes(String(user?.role || "").toLowerCase());
   
   useEffect(() => {
     const onDoc = (e) => {
@@ -67,7 +67,24 @@ export default function Navbar() {
             Categories
           </NavLink>
         )}
+        {isAdmin && (
+          <NavLink
+            to="/inventory"
+            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}
+          >
+            Inventory
+          </NavLink>
+        )}
+        {isAdmin && (
+          <NavLink
+            to="/settings/promotions"
+            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}
+          >
+            Promotions
+          </NavLink>
+        )}
       </nav>
+
 
       <div className="pos-topactions">
         <button className="pos-neworder-btn" onClick={goNewOrder}>

@@ -8,6 +8,8 @@ import HomePage from "../pages/HomePage";
 import LoginPage from "../pages/LoginPage";
 import Registration from "../pages/Registration";
 import CashierPage from "../pages/CashierPage";
+import InventoryPage from "../pages/InventoryPage";
+import PromotionsPage from "../pages/PromotionsPage";
 
 import ProtectedRoute from "../routes/ProtectedRoute";
 import RequireRole from "../auth/RequireRole";
@@ -31,6 +33,10 @@ const AppRoute = () => {
           <Route path="/settings/menus" element={<MenuManagePage />} />
           <Route element={<RequireRole roles={["Admin"]} />}>
             <Route path="/employees/new" element={<AddEmployeePage />} />
+          </Route>
+          <Route element={<RequireRole roles={["Admin", "Manager"]} />}>
+            <Route path="/inventory" element={<InventoryPage />} />
+            <Route path="/settings/promotions" element={<PromotionsPage />} />
           </Route>
           <Route path="/customers" element={<div className="page-pad">Customers (coming soon)</div>} />
           <Route path="/cashier" element={<CashierPage />} />
