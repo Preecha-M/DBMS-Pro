@@ -132,7 +132,7 @@ export default function PromotionsPage() {
       {error && <div className="auth-error" style={{ marginTop: 12 }}>{error}</div>}
 
       <div className="promo-page-grid">
-        <form onSubmit={onSubmit} className="card" style={{ padding: 16 }}>
+        <form onSubmit={onSubmit} className="card promo-form-panel" style={{ padding: 16 }}>
           <div style={{ fontWeight: 900, marginBottom: 12 }}>
             {editingId ? "แก้ไขโปรโมชั่น" : "เพิ่มโปรโมชั่นใหม่"}
           </div>
