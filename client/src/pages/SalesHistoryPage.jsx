@@ -121,58 +121,60 @@ export default function SalesHistoryPage() {
                 ไม่พบข้อมูลการขาย
               </div>
             ) : (
-              <table className="sales-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Date</th>
-                    <th>Member</th>
-                    <th>Employee</th>
-                    <th>Payment</th>
-                    <th className="col-right">Net Total</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {sales.map((s, index) => (
-                    <tr key={s.sale_id}>
-                      <td>{s.sale_id}</td>
-
-                      {/* Date */}
-                      <td>
-                        <div className="date-main">
-                          {formatDate(s.sale_datetime)}
-                        </div>
-                        <div className="date-sub">
-                          {formatTime(s.sale_datetime)}
-                        </div>
-                      </td>
-
-                      <td>{s.member_name || "-"}</td>
-
-                      <td>{s.employee_username}</td>
-
-                      {/* Payment */}
-                      <td>
-                        <span className="payment-badge">
-                          {s.payment_method}
-                        </span>
-                      </td>
-
-                      {/* Net total */}
-                      <td
-                        className="col-right"
-                        style={{
-                          fontWeight: 700,
-                          color: "var(--primary-orange)",
-                        }}
-                      >
-                        ฿{Number(s.net_total).toLocaleString()}
-                      </td>
+              <div className="table-container">
+                <table className="sales-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Date</th>
+                      <th>Member</th>
+                      <th>Employee</th>
+                      <th>Payment</th>
+                      <th className="col-right">Net Total</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+
+                  <tbody>
+                    {sales.map((s, index) => (
+                      <tr key={s.sale_id}>
+                        <td>{s.sale_id}</td>
+
+                        {/* Date */}
+                        <td>
+                          <div className="date-main">
+                            {formatDate(s.sale_datetime)}
+                          </div>
+                          <div className="date-sub">
+                            {formatTime(s.sale_datetime)}
+                          </div>
+                        </td>
+
+                        <td>{s.member_name || "-"}</td>
+
+                        <td>{s.employee_username}</td>
+
+                        {/* Payment */}
+                        <td>
+                          <span className="payment-badge">
+                            {s.payment_method}
+                          </span>
+                        </td>
+
+                        {/* Net total */}
+                        <td
+                          className="col-right"
+                          style={{
+                            fontWeight: 700,
+                            color: "var(--primary-orange)",
+                          }}
+                        >
+                          ฿{Number(s.net_total).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         )}

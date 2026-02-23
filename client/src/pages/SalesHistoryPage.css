@@ -19,6 +19,14 @@
   color: #6C727F;
   background: #FAFAFA;
   border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.sales-history-page .table-container {
+  overflow-y: auto;
+  max-height: 60vh;
 }
 
 /* row */
