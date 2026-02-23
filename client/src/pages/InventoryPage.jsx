@@ -3,11 +3,12 @@ import api from "../db/api";
 import "./InventoryPage.css";
 
 export default function InventoryPage() {
-  const [tab, setTab] = useState("withdraw"); // withdraw | add | orders
+  const [tab, setTab] = useState("withdraw"); // withdraw | add | orders | transactions
   const [ingredients, setIngredients] = useState([]);
   const [orders, setOrders] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -47,11 +48,21 @@ export default function InventoryPage() {
     }
   };
 
+  const loadTransactions = async () => {
+    try {
+      const res = await api.get("/ingredients/transactions");
+      setTransactions(res.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     loadIngredients();
     loadOrders();
     loadCategories();
     loadSuppliers();
+    loadTransactions();
   }, [tab]);
 
   // Withdraw State
@@ -108,6 +119,15 @@ export default function InventoryPage() {
     }
   };
 
+  const formatDate = (dt) =>
+    new Date(dt).toLocaleString("th-TH", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
   return (
     <div className="page-pad">
       <h2 style={{ marginBottom: 20 }}>จัดการคลังวัตถุดิบ (Inventory)</h2>
@@ -121,6 +141,9 @@ export default function InventoryPage() {
         </div>
         <div className={`inv-tab ${tab === "orders" ? "active" : ""}`} onClick={() => { setTab("orders"); setError(""); setSuccess(""); }}>
           สั่งซื้อ/สถานะ
+        </div>
+        <div className={`inv-tab ${tab === "transactions" ? "active" : ""}`} onClick={() => { setTab("transactions"); setError(""); setSuccess(""); }}>
+          ประวัติการเคลื่อนไหวสต๊อก
         </div>
       </div>
 
@@ -220,6 +243,51 @@ export default function InventoryPage() {
                 </tr>
               ))}
               {orders.length === 0 && <tr><td colSpan="5" style={{ textAlign: "center" }}>ไม่มีข้อมูลการสั่งซื้อ</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {tab === "transactions" && (
+        <div className="card" style={{ padding: 24 }}>
+          <table className="inv-table">
+            <thead>
+              <tr>
+                <th>วันที่</th>
+                <th>วัตถุดิบ (ID)</th>
+                <th>ชื่อวัตถุดิบ</th>
+                <th>ประเภท</th>
+                <th>จำนวนที่ขยับ</th>
+                <th>หมายเหตุ / อ้างอิง</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactions.map(t => (
+                <tr key={t.transaction_id}>
+                  <td>{formatDate(t.transaction_date)}</td>
+                  <td>{t.ingredient_id}</td>
+                  <td>{t.ingredient?.ingredient_name || "-"}</td>
+                  <td>
+                    <span style={{ 
+                      padding: '2px 8px', borderRadius: 4, fontSize: 12, fontWeight: 'bold',
+                      backgroundColor: t.transaction_type === 'IN' ? '#e6f4ea' : '#fce8e6',
+                      color: t.transaction_type === 'IN' ? '#1e8e3e' : '#d93025'
+                    }}>
+                      {t.transaction_type}
+                    </span>
+                  </td>
+                  <td style={{ 
+                    fontWeight: 'bold', 
+                    color: t.quantity > 0 ? '#1e8e3e' : '#d93025'
+                  }}>
+                    {t.quantity > 0 ? `+${t.quantity}` : t.quantity} {t.ingredient?.unit || ""}
+                  </td>
+                  <td className="muted">
+                    {t.notes} {t.reference_id ? `(#${t.reference_id})` : ''}
+                  </td>
+                </tr>
+              ))}
+              {transactions.length === 0 && <tr><td colSpan="6" style={{ textAlign: "center" }}>ไม่มีประวัติการเคลื่อนไหวสต๊อก</td></tr>}
             </tbody>
           </table>
         </div>

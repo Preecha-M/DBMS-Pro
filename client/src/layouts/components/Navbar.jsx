@@ -69,6 +69,14 @@ export default function Navbar() {
         )}
         {isAdmin && (
           <NavLink
+            to="/settings/options"
+            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}
+          >
+            Options
+          </NavLink>
+        )}
+        {isAdmin && (
+          <NavLink
             to="/inventory"
             className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}
           >

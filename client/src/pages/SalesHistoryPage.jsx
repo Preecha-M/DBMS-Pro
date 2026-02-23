@@ -125,7 +125,7 @@ export default function SalesHistoryPage() {
                 <table className="sales-table">
                   <thead>
                     <tr>
-                      <th>#</th>
+                      <th>Receipt #</th>
                       <th>Date</th>
                       <th>Member</th>
                       <th>Employee</th>
@@ -137,7 +137,7 @@ export default function SalesHistoryPage() {
                   <tbody>
                     {sales.map((s, index) => (
                       <tr key={s.sale_id}>
-                        <td>{s.sale_id}</td>
+                        <td>{s.receipt_number || s.sale_id}</td>
 
                         {/* Date */}
                         <td>

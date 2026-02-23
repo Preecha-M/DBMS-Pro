@@ -10,6 +10,7 @@ import Registration from "../pages/Registration";
 import CashierPage from "../pages/CashierPage";
 import InventoryPage from "../pages/InventoryPage";
 import PromotionsPage from "../pages/PromotionsPage";
+import OptionAdminPage from "../pages/OptionAdminPage";
 
 import ProtectedRoute from "../routes/ProtectedRoute";
 import RequireRole from "../auth/RequireRole";
@@ -37,6 +38,7 @@ const AppRoute = () => {
           <Route element={<RequireRole roles={["Admin", "Manager"]} />}>
             <Route path="/inventory" element={<InventoryPage />} />
             <Route path="/settings/promotions" element={<PromotionsPage />} />
+            <Route path="/settings/options" element={<OptionAdminPage />} />
           </Route>
           <Route path="/customers" element={<div className="page-pad">Customers (coming soon)</div>} />
           <Route path="/cashier" element={<CashierPage />} />

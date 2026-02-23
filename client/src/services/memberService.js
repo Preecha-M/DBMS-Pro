@@ -5,3 +5,6 @@ export const searchMember = (phone) =>
 
 export const createMember = (data) =>
   api.post("/members", data);
+
+export const getPointsHistory = (id) =>
+  api.get(`/members/${id}/points-history`);

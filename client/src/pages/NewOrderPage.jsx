@@ -9,8 +9,11 @@ export default function NewOrderPage() {
   const [cats, setCats] = useState([]);
   const [cart, setCart] = useState([]);
   const [promotions, setPromotions] = useState([]);
+  const [optionGroups, setOptionGroups] = useState([]);
   const [saleInfo, setSaleInfo] = useState(null);
   const [error, setError] = useState("");
+
+  const [selectingItem, setSelectingItem] = useState(null);
 
   const [step, setStep] = useState("ORDER");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
@@ -19,6 +22,7 @@ export default function NewOrderPage() {
   const [orderSnapshot, setOrderSnapshot] = useState(null);
   const [cashReceived, setCashReceived] = useState("");
   const [selectedPromoId, setSelectedPromoId] = useState("");
+  const [nextSaleId, setNextSaleId] = useState(1);
 
   const activeCatId = params.get("cat") ? Number(params.get("cat")) : null;
 
@@ -26,10 +30,12 @@ export default function NewOrderPage() {
     setError("");
     setLoading(true);
     try {
-      const [mRes, cRes, pRes] = await Promise.all([
+      const [mRes, cRes, pRes, optRes, salesRes] = await Promise.all([
         api.get("/menu"),
         api.get("/categories"),
         api.get("/promotions"),
+        api.get("/menu-options/groups"),
+        api.get("/sales"), // Assuming this endpoint returns a list of sales or latest sales
       ]);
 
       const menuList = Array.isArray(mRes.data) ? mRes.data : [];
@@ -44,6 +50,19 @@ export default function NewOrderPage() {
       
       const promoList = Array.isArray(pRes.data) ? pRes.data : [];
       setPromotions(promoList);
+
+      const optGroups = Array.isArray(optRes.data) ? optRes.data : [];
+      setOptionGroups(optGroups);
+
+      // Extract the highest sale_id to determine the next one
+      let nextId = 1;
+      if (salesRes.data && Array.isArray(salesRes.data) && salesRes.data.length > 0) {
+        // Find the maximum sale_id from the results
+        const maxId = Math.max(...salesRes.data.map(s => Number(s.sale_id) || 0));
+        nextId = maxId + 1;
+      }
+      setNextSaleId(nextId);
+
     } catch (e) {
       setError(e?.response?.data?.message || "โหลดข้อมูลไม่สำเร็จ");
     } finally {
@@ -65,29 +84,74 @@ export default function NewOrderPage() {
     return menus.filter((m) => Number(m.category_id) === activeCatId);
   }, [menus, activeCatId]);
 
-  const inc = (m) => {
-    setCart((prev) => {
-      const found = prev.find((x) => x.menu_id === m.menu_id);
-      if (!found) return [...prev, { ...m, qty: 1 }];
-      return prev.map((x) =>
-        x.menu_id === m.menu_id ? { ...x, qty: x.qty + 1 } : x
-      );
-    });
+  const handleProductSelect = (m) => {
+    if (optionGroups.length > 0) {
+      setSelectingItem({ ...m, selectedOptions: [] });
+    } else {
+      addToCart(m, []);
+    }
   };
 
-  const dec = (menu_id) => {
+  const addToCart = (m, options) => {
     setCart((prev) => {
-      const found = prev.find((x) => x.menu_id === menu_id);
+      // Find if there's an existing item with the exact same menu_id and options
+      const existingItemIndex = prev.findIndex(item => {
+        if (item.menu_id !== m.menu_id) return false;
+        
+        const itemOpts = item.options || [];
+        const newOpts = options || [];
+        
+        if (itemOpts.length !== newOpts.length) return false;
+        
+        // Sort option IDs and compare them to ensure they represent the exact same selections
+        const itemOptIds = itemOpts.map(o => o.item_id).sort().join(',');
+        const newOptIds = newOpts.map(o => o.item_id).sort().join(',');
+        
+        return itemOptIds === newOptIds;
+      });
+
+      if (existingItemIndex >= 0) {
+        // Increment quantity of the existing identical item
+        const newCart = [...prev];
+        newCart[existingItemIndex] = {
+          ...newCart[existingItemIndex],
+          qty: newCart[existingItemIndex].qty + 1
+        };
+        return newCart;
+      }
+
+      // Generate a unique ID for the new cart item combination
+      const cartItemId = m.menu_id + "_" + Date.now() + Math.random().toString(36).slice(2,5);
+      return [...prev, { ...m, cartItemId, qty: 1, options }];
+    });
+    setSelectingItem(null);
+  };
+
+  const inc = (cartItem) => {
+    setCart((prev) =>
+      prev.map((x) =>
+        x.cartItemId === cartItem.cartItemId ? { ...x, qty: x.qty + 1 } : x
+      )
+    );
+  };
+
+  const dec = (cartItemId) => {
+    setCart((prev) => {
+      const found = prev.find((x) => x.cartItemId === cartItemId);
       if (!found) return prev;
-      if (found.qty <= 1) return prev.filter((x) => x.menu_id !== menu_id);
+      if (found.qty <= 1) return prev.filter((x) => x.cartItemId !== cartItemId);
       return prev.map((x) =>
-        x.menu_id === menu_id ? { ...x, qty: x.qty - 1 } : x
+        x.cartItemId === cartItemId ? { ...x, qty: x.qty - 1 } : x
       );
     });
   };
 
   const subtotal = useMemo(
-    () => cart.reduce((s, it) => s + Number(it.price || 0) * it.qty, 0),
+    () => cart.reduce((s, it) => {
+      let itemPrice = Number(it.price || 0);
+      let optionsPrice = it.options?.reduce((optSum, opt) => optSum + Number(opt.additional_price || 0), 0) || 0;
+      return s + ((itemPrice + optionsPrice) * it.qty);
+    }, 0),
     [cart]
   );
   const qty = useMemo(() => cart.reduce((s, it) => s + it.qty, 0), [cart]);
@@ -112,7 +176,11 @@ export default function NewOrderPage() {
     }
     
     const applicableQty = applicableItems.reduce((s, it) => s + it.qty, 0);
-    const applicableTotal = applicableItems.reduce((s, it) => s + (Number(it.price || 0) * it.qty), 0);
+    const applicableTotal = applicableItems.reduce((s, it) => {
+      let itemPrice = Number(it.price || 0);
+      let optionsPrice = it.options?.reduce((optSum, opt) => optSum + Number(opt.additional_price || 0), 0) || 0;
+      return s + ((itemPrice + optionsPrice) * it.qty);
+    }, 0);
     
     const minQty = Number(selectedPromo.min_quantity || 1);
     
@@ -154,22 +222,24 @@ export default function NewOrderPage() {
     }).format(d);
   };
 
+  const tempInvoice = `INV-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${String(nextSaleId).padStart(4, "0")}`;
+
   const invoiceNo = saleInfo?.sale_id
-    ? `Invoice No: ${saleInfo.sale_id} ${formatDateTime(
+    ? `Invoice No: ${saleInfo.receipt_number || saleInfo.sale_id} ${formatDateTime(
         saleInfo.sale_datetime
       )}`
-    : "Invoice No: -";
+    : `Invoice No: ${tempInvoice} (Pending)`;
 
   const orderNo = saleInfo?.sale_id
-    ? `Order: #${saleInfo.sale_id}`
-    : "Order: -";
+    ? `Order: ${saleInfo.receipt_number || saleInfo.sale_id}`
+    : `Order: ${tempInvoice}`;
 
   const checkMember = async () => {
     setMemberInfo(null);
     const phone = memberId.trim();
     if (!phone) return null;
 
-    const res = await api.get(`/members?phone=฿{phone}`);
+    const res = await api.get(`/members?phone=${encodeURIComponent(phone)}`);
 
     if (!Array.isArray(res.data) || res.data.length === 0) {
       throw new Error("Member not found");
@@ -208,6 +278,8 @@ export default function NewOrderPage() {
           name: it.menu_name,
           qty: it.qty,
           price: Number(it.price || 0),
+          options: it.options || [],
+          cartItemId: it.cartItemId,
         })),
         subtotal,
         qty,
@@ -256,9 +328,11 @@ export default function NewOrderPage() {
         promotion_id: orderSnapshot.selectedPromo?.promotion_id ?? null,
         member_id: orderSnapshot.memberId,
         cash_received: paymentMethod === "Cash" ? Number(cashReceived) : null,
+        receipt_number: tempInvoice,
         items: orderSnapshot.items.map((it) => ({
           menu_id: it.menu_id,
           quantity: it.qty,
+          options: it.options || [] // Pass options to the API
         })),
       };
 
@@ -272,6 +346,9 @@ export default function NewOrderPage() {
   };
 
   const closeAllModals = () => {
+    if (saleInfo) {
+      setNextSaleId(prev => prev + 1);
+    }
     setStep("ORDER");
     setError("");
     setCashReceived("");
@@ -328,14 +405,7 @@ export default function NewOrderPage() {
                     <button
                       type="button"
                       className="qty-btn"
-                      onClick={() => dec(m.menu_id)}
-                    >
-                      -
-                    </button>
-                    <button
-                      type="button"
-                      className="qty-add"
-                      onClick={() => inc(m)}
+                      onClick={() => handleProductSelect(m)}
                     >
                       +
                     </button>
@@ -377,7 +447,7 @@ export default function NewOrderPage() {
               <div className="cart-empty">ยังไม่มีสินค้าในออเดอร์</div>
             ) : (
               cart.map((it) => (
-                <div key={it.menu_id} className="cart-row">
+                <div key={it.cartItemId} className="cart-row">
                   <img
                     src={
                       it.image_url ||
@@ -396,7 +466,7 @@ export default function NewOrderPage() {
                       <button
                         type="button"
                         className="qty-btn"
-                        onClick={() => dec(it.menu_id)}
+                        onClick={() => dec(it.cartItemId)}
                       >
                         -
                       </button>
@@ -411,7 +481,12 @@ export default function NewOrderPage() {
                     </div>
                   </div>
                   <div className="cart-row-right">
-                    ฿ {(Number(it.price || 0) * it.qty).toFixed(2)}
+                    <div style={{ textAlign: "right" }}>฿ {((Number(it.price || 0) + (it.options?.reduce((s,o)=>s+Number(o.additional_price||0),0)||0)) * it.qty).toFixed(2)}</div>
+                    {it.options && it.options.length > 0 && (
+                      <div style={{ fontSize: 11, color: "#9EA3AE", textAlign: "right", marginTop: 4 }}>
+                        {it.options.map(o => o.option_name).join(", ")}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
@@ -455,6 +530,67 @@ export default function NewOrderPage() {
         </aside>
       </div>
 
+      {selectingItem && (
+        <div className="modal-backdrop">
+          <div className="modal-card">
+            <button className="modal-x" onClick={() => setSelectingItem(null)}>
+              ×
+            </button>
+            <div className="modal-title">เลือกตัวเลือกสำหรับ: {selectingItem.menu_name}</div>
+            <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: 8 }}>
+              {optionGroups.map(group => (
+                <div key={group.group_id} style={{ marginBottom: 16 }}>
+                  <div style={{ fontWeight: 600, marginBottom: 8 }}>{group.group_name}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+                    {group.menu_option_item && group.menu_option_item.map(opt => {
+                      const isSelected = selectingItem.selectedOptions.some(o => o.item_id === opt.item_id);
+                      return (
+                        <label key={opt.item_id} style={{ 
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+                          padding: '12px', border: '1px solid ' + (isSelected ? 'var(--primary-green)' : '#ddd'),
+                          borderRadius: 8, cursor: 'pointer', background: isSelected ? '#f1f8e9' : '#fff'
+                        }}>
+                          <div>
+                            <input 
+                              type="checkbox" 
+                              checked={isSelected}
+                              onChange={(e) => {
+                                let newOpts = [...selectingItem.selectedOptions];
+                                if (e.target.checked) {
+                                  newOpts.push({
+                                    item_id: opt.item_id,
+                                    option_name: opt.item_name,
+                                    additional_price: Number(opt.additional_price || 0)
+                                  });
+                                } else {
+                                  newOpts = newOpts.filter(o => o.item_id !== opt.item_id);
+                                }
+                                setSelectingItem({...selectingItem, selectedOptions: newOpts});
+                              }}
+                              style={{ marginRight: 8, transform: 'scale(1.2)' }}
+                            />
+                            {opt.item_name}
+                          </div>
+                          <div style={{ color: Number(opt.additional_price) > 0 ? 'var(--primary-orange)' : '#888', fontWeight: 600 }}>
+                            {Number(opt.additional_price) > 0 ? `+${opt.additional_price} ฿` : 'ฟรี'}
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="modal-actions" style={{ marginTop: 24 }}>
+              <button className="btn-primary" style={{ width: '100%' }} onClick={() => addToCart(selectingItem, selectingItem.selectedOptions)}>
+                เพิ่มลงตะกร้า (รอเพิ่ม {selectingItem.selectedOptions.reduce((s, o) => s + o.additional_price, 0)} ฿)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {step === "PAYMENT" && (
         <div className="modal-backdrop">
           <div className="modal-card">
@@ -465,11 +601,11 @@ export default function NewOrderPage() {
             <div className="modal-title">Payment</div>
 
             <div className="input-group">
-              <label>หมายเลขสมาชิก (ไม่ใส่ = Walk-in)</label>
+              <label>เบอร์โทรศัพท์สมาชิก (ไม่ใส่ = Walk-in)</label>
               <input
                 value={memberId}
                 onChange={(e) => setMemberId(e.target.value)}
-                placeholder="เช่น 12"
+                placeholder="เช่น 0891234567"
               />
             </div>
 
@@ -574,8 +710,8 @@ export default function NewOrderPage() {
                 <div>SUBTOTAL</div>
               </div>
 
-              {orderSnapshot.items.map((it) => (
-                <div className="confirm-row" key={it.menu_id}>
+              {orderSnapshot.items.map((it, idx) => (
+                <div className="confirm-row" key={it.cartItemId || it.menu_id + '_' + idx}>
                   <div>{it.name}</div>
                   <div className="center">{it.qty}</div>
                   <div className="right">฿ {it.price.toFixed(2)}</div>
@@ -630,6 +766,7 @@ export default function NewOrderPage() {
       {step === "RECEIPT" && (saleInfo || orderSnapshot) && (
         <div className="modal-backdrop">
           <div className="modal-card receipt print-area">
+            {/* ... receipt content ... */}
             <button className="modal-x no-print" onClick={closeAllModals}>
               ×
             </button>
@@ -643,7 +780,7 @@ export default function NewOrderPage() {
               <div>
                 <b>Receipt</b>
               </div>
-              <div>No: {saleInfo?.sale_id ?? "-"}</div>
+              <div>No: {saleInfo?.receipt_number || saleInfo?.sale_id || tempInvoice}</div>
               <div>
                 Date:{" "}
                 {saleInfo?.sale_datetime
@@ -683,8 +820,8 @@ export default function NewOrderPage() {
                 <div className="center">Qty</div>
                 <div className="right">Subtotal</div>
               </div>
-              {orderSnapshot?.items?.map((it) => (
-                <div className="rt-row" key={it.menu_id}>
+              {orderSnapshot?.items?.map((it, idx) => (
+                <div className="rt-row" key={it.cartItemId || it.menu_id + '_' + idx}>
                   <div>{it.name}</div>
                   <div className="center">{it.qty}</div>
                   <div className="right">{(it.price * it.qty).toFixed(2)}</div>

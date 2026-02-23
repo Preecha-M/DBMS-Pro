@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { searchMember, createMember } from "../services/memberService";
+import { useState, useEffect } from "react";
+import { searchMember, createMember, getPointsHistory } from "../services/memberService";
 import "../index.css";
 
 export default function Members() {
@@ -10,10 +10,23 @@ export default function Members() {
   const [newPhone, setNewPhone] = useState("");
   const [gender, setGender] = useState("MALE");
 
+  const [historyModal, setHistoryModal] = useState({ open: false, member: null, history: [] });
+
+  const loadMembers = async (searchPhone = "") => {
+    try {
+      const res = await searchMember(searchPhone);
+      setMembers(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    loadMembers("");
+  }, []);
+
   const handleSearch = async () => {
-    if (!phone) return;
-    const res = await searchMember(phone);
-    setMembers(res.data);
+    loadMembers(phone);
   };
 
   const handleCreate = async () => {
@@ -29,13 +42,33 @@ export default function Members() {
     setNewPhone("");
     setGender("MALE");
 
-    const res = await searchMember(newPhone);
-    setMembers(res.data);
+    // Clear search phone state and reload all members so the newly added one is visible
+    setPhone("");
+    loadMembers("");
   };
 
+  const handleViewHistory = async (member) => {
+    try {
+      const res = await getPointsHistory(member.member_id);
+      setHistoryModal({ open: true, member, history: res.data });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load points history");
+    }
+  };
+
+  const formatDate = (dt) =>
+    new Date(dt).toLocaleString("th-TH", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
   return (
-    <div className="page-content">
-      <div className="page-pad">
+    <div className="pos-page" style={{ padding: 24, paddingBottom: 0 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
 
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
@@ -119,46 +152,108 @@ export default function Members() {
         </div>
 
         {/* Result */}
-        <div className="card page-pad">
+        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
           <h2 style={{ fontWeight: 900, marginBottom: 12 }}>
             📋 รายชื่อสมาชิก
           </h2>
 
-          <table className="confirm-table">
-            <thead className="confirm-head">
-              <tr>
-                <th>ชื่อ</th>
-                <th className="center">เบอร์โทร</th>
-                <th className="center">เพศ</th>
-                <th className="right">แต้ม</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.length === 0 && (
-                <tr className="confirm-row">
-                  <td colSpan="4" className="center muted">
-                    ไม่พบข้อมูลสมาชิก
-                  </td>
+          <div style={{ flex: 1, overflowY: "auto", border: "1px solid var(--border-color)", borderRadius: 8 }}>
+            <table className="inv-table">
+              <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f8f9fc' }}>
+                <tr>
+                  <th>ชื่อ</th>
+                  <th className="center">เบอร์โทร</th>
+                  <th className="center">เพศ</th>
+                  <th className="right">แต้ม</th>
+                  <th className="center">จัดการ</th>
                 </tr>
-              )}
+              </thead>
+              <tbody>
+                {members.length === 0 && (
+                  <tr>
+                    <td colSpan="5" className="center muted" style={{ textAlign: "center", padding: 20 }}>
+                      ไม่พบข้อมูลสมาชิก
+                    </td>
+                  </tr>
+                )}
 
-              {members.map((m) => (
-                <tr key={m.member_id} className="confirm-row">
-                  <td>{m.name}</td>
-                  <td className="center">{m.phone}</td>
-                  <td className="center">
-                    {m.gender === "MALE" && "👨 ชาย"}
-                    {m.gender === "FEMALE" && "👩 หญิง"}
-                    {m.gender === "OTHER" && "⚧ อื่น ๆ"}
-                  </td>
-                  <td className="right">{m.points}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                {members.map((m) => (
+                  <tr key={m.member_id}>
+                    <td>{m.name}</td>
+                    <td className="center">{m.phone}</td>
+                    <td className="center">
+                      <span style={{ 
+                        padding: '4px 8px', borderRadius: 4, fontSize: 12, fontWeight: 600,
+                        backgroundColor: m.gender === 'MALE' ? '#e3f2fd' : m.gender === 'FEMALE' ? '#fce4ec' : '#f5f5f5',
+                        color: m.gender === 'MALE' ? '#1976d2' : m.gender === 'FEMALE' ? '#c2185b' : '#616161'
+                      }}>
+                        {m.gender === "MALE" ? "👨 ชาย" : m.gender === "FEMALE" ? "👩 หญิง" : "⚧ อื่น ๆ"}
+                      </span>
+                    </td>
+                    <td className="right" style={{ fontWeight: 'bold', color: 'var(--primary-orange)', fontSize: 16 }}>{m.points}</td>
+                    <td className="center">
+                      <button className="btn-secondary" style={{ padding: '4px 12px', fontSize: 13, borderRadius: 6 }} onClick={() => handleViewHistory(m)}>ดูประวัติแต้ม</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
       </div>
+
+      {historyModal.open && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999
+        }}>
+          <div className="card" style={{ width: 600, maxHeight: '80vh', overflowY: 'auto', padding: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h2 style={{ fontWeight: 900 }}>ประวัติแต้ม - คุณ {historyModal.member?.name}</h2>
+              <button onClick={() => setHistoryModal({ open: false, member: null, history: [] })} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>✖</button>
+            </div>
+            
+            {historyModal.history.length === 0 ? (
+              <p className="muted center">ไม่มีประวัติการได้/ใช้แต้ม</p>
+            ) : (
+              <table className="confirm-table">
+                <thead className="confirm-head">
+                  <tr>
+                    <th>วันที่</th>
+                    <th>ประเภท</th>
+                    <th>รายการอ้างอิง</th>
+                    <th className="right">จำนวนแต้ม</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historyModal.history.map(h => (
+                    <tr key={h.transaction_id} className="confirm-row">
+                      <td>{formatDate(h.transaction_date)}</td>
+                      <td>
+                        <span style={{ 
+                          padding: '2px 8px', borderRadius: 4, fontSize: 12, fontWeight: 'bold',
+                          backgroundColor: h.points_change > 0 ? '#e6f4ea' : '#fce8e6',
+                          color: h.points_change > 0 ? '#1e8e3e' : '#d93025'
+                        }}>
+                          {h.transaction_type === 'EARN' ? 'สะสม' : 'ใช้งาน'}
+                        </span>
+                      </td>
+                      <td className="muted">{h.sale?.receipt_number || h.notes || "-"}</td>
+                      <td className="right" style={{ 
+                        fontWeight: 'bold', 
+                        color: h.points_change > 0 ? '#1e8e3e' : '#d93025'
+                      }}>
+                        {h.points_change > 0 ? `+${h.points_change}` : h.points_change}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
