@@ -11,6 +11,15 @@ export default function InventoryPage() {
   const [transactions, setTransactions] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  
+  // Create Order State
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [orderSupplier, setOrderSupplier] = useState("");
+  const [orderItems, setOrderItems] = useState([]);
+
+  // Create Supplier State
+  const [showSupplierModal, setShowSupplierModal] = useState(false);
+  const [supplierForm, setSupplierForm] = useState({ supplier_name: "", contact: "" });
 
   const loadIngredients = async () => {
     try {
@@ -32,7 +41,7 @@ export default function InventoryPage() {
 
   const loadCategories = async () => {
     try {
-      const res = await api.get("/categories");
+      const res = await api.get("/ingredients/categories");
       setCategories(res.data);
     } catch (e) {
       console.error(e);
@@ -119,6 +128,74 @@ export default function InventoryPage() {
     }
   };
 
+  // Create Order Handlers
+  const handleOpenOrderModal = () => {
+    setOrderSupplier("");
+    setOrderItems([]);
+    setShowOrderModal(true);
+    setError("");
+  };
+
+  const handleAddOrderItem = () => {
+    setOrderItems([...orderItems, { ingredient_id: "", quantity: 1, unit_cost: 0 }]);
+  };
+
+  const handleRemoveOrderItem = (index) => {
+    setOrderItems(orderItems.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateOrderItem = (index, field, value) => {
+    const newItems = [...orderItems];
+    newItems[index][field] = value;
+    setOrderItems(newItems);
+  };
+
+  const handleCreateOrder = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    
+    // Validate
+    if (!orderSupplier) return setError("กรุณาเลือกซัพพลายเออร์");
+    if (orderItems.length === 0) return setError("กรุณาเพิ่มรายการวัตถุดิบอย่างน้อย 1 รายการ");
+    if (orderItems.some(it => !it.ingredient_id || it.quantity <= 0)) {
+      return setError("กรุณากรอกข้อมูลวัตถุดิบและจำนวนให้ถูกต้อง");
+    }
+
+    try {
+      await api.post("/orders", {
+        supplier_id: Number(orderSupplier),
+        items: orderItems.map(it => ({
+          ingredient_id: it.ingredient_id,
+          quantity: Number(it.quantity),
+          unit_cost: Number(it.unit_cost)
+        }))
+      });
+      setSuccess("สร้างใบสั่งซื้อสำเร็จ");
+      setShowOrderModal(false);
+      loadOrders();
+    } catch (e) {
+      setError(e?.response?.data?.message || "เกิดข้อผิดพลาดในการสร้างใบสั่งซื้อ");
+    }
+  };
+
+  const handleAddSupplier = async (e) => {
+    e.preventDefault();
+    setError(""); setSuccess("");
+    try {
+      const res = await api.post("/suppliers", supplierForm);
+      setSuccess("เพิ่มซัพพลายเออร์สำเร็จ");
+      setShowSupplierModal(false);
+      setSupplierForm({ supplier_name: "", contact: "" });
+      loadSuppliers();
+      if (res.data?.supplier_id) {
+        setOrderSupplier(res.data.supplier_id);
+      }
+    } catch (e) {
+      setError(e?.response?.data?.message || "เกิดข้อผิดพลาด");
+    }
+  };
+
   const formatDate = (dt) =>
     new Date(dt).toLocaleString("th-TH", {
       day: "2-digit",
@@ -138,6 +215,9 @@ export default function InventoryPage() {
         </div>
         <div className={`inv-tab ${tab === "add" ? "active" : ""}`} onClick={() => { setTab("add"); setError(""); setSuccess(""); }}>
           เพิ่มวัตถุดิบใหม่
+        </div>
+        <div className={`inv-tab ${tab === "add_supplier" ? "active" : ""}`} onClick={() => { setTab("add_supplier"); setError(""); setSuccess(""); }}>
+          เพิ่มซัพพลายเออร์ใหม่
         </div>
         <div className={`inv-tab ${tab === "orders" ? "active" : ""}`} onClick={() => { setTab("orders"); setError(""); setSuccess(""); }}>
           สั่งซื้อ/สถานะ
@@ -166,7 +246,21 @@ export default function InventoryPage() {
             </div>
             <div className="input-group">
               <label>จำนวนที่เบิก</label>
-              <input type="number" min="1" value={wdQty} onChange={e => setWdQty(e.target.value)} required />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input 
+                  type="number" 
+                  min="1" 
+                  value={wdQty} 
+                  onChange={e => setWdQty(e.target.value)} 
+                  required 
+                  style={{ flex: 1 }}
+                />
+                {wdId && (
+                  <span style={{ fontWeight: 'bold', color: 'var(--primary-green)' }}>
+                    {ingredients.find(i => i.ingredient_id === wdId)?.unit || ""}
+                  </span>
+                )}
+              </div>
             </div>
             <button type="submit" className="pos-neworder-btn" style={{ width: "100%", marginTop: 12 }}>ยืนยันการเบิก</button>
           </form>
@@ -210,8 +304,27 @@ export default function InventoryPage() {
         </div>
       )}
 
+      {tab === "add_supplier" && (
+        <div className="card inv-form-container" style={{ padding: 24 }}>
+          <form onSubmit={handleAddSupplier}>
+            <div className="input-group">
+              <label>ชื่อซัพพลายเออร์</label>
+              <input value={supplierForm.supplier_name} onChange={e => setSupplierForm(p => ({ ...p, supplier_name: e.target.value }))} required />
+            </div>
+            <div className="input-group">
+              <label>ข้อมูลติดต่อ (เบอร์โทร / อีเมล)</label>
+              <input value={supplierForm.contact} onChange={e => setSupplierForm(p => ({ ...p, contact: e.target.value }))} />
+            </div>
+            <button type="submit" className="pos-neworder-btn" style={{ width: "100%", marginTop: 12 }}>บันทึกชื่อซัพพลายเออร์</button>
+          </form>
+        </div>
+      )}
+
       {tab === "orders" && (
         <div className="card" style={{ padding: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+            <button className="pos-neworder-btn" onClick={handleOpenOrderModal}>+ สร้างใบสั่งซื้อใหม่</button>
+          </div>
           <table className="inv-table">
             <thead>
               <tr>
@@ -290,6 +403,99 @@ export default function InventoryPage() {
               {transactions.length === 0 && <tr><td colSpan="6" style={{ textAlign: "center" }}>ไม่มีประวัติการเคลื่อนไหวสต๊อก</td></tr>}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {showOrderModal && (
+        <div className="modal-backdrop">
+          <div className="modal-card wide">
+            <button className="modal-x" onClick={() => setShowOrderModal(false)}>×</button>
+            <div className="modal-title">สร้างใบสั่งซื้อใหม่</div>
+            <form onSubmit={handleCreateOrder}>
+              <div className="input-group">
+                <label>ออเดอร์ไปยังซัพพลายเออร์</label>
+                <select value={orderSupplier} onChange={e => setOrderSupplier(e.target.value)} required>
+                  <option value="">-- เลือกซัพพลายเออร์ --</option>
+                  {suppliers.map(s => (
+                    <option key={s.supplier_id} value={s.supplier_id}>{s.supplier_name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ marginTop: 24, marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontWeight: 'bold' }}>รายการวัตถุดิบ</div>
+                <button type="button" className="btn-soft" style={{ padding: '4px 12px' }} onClick={handleAddOrderItem}>
+                  + เพิ่มรายการ
+                </button>
+              </div>
+
+              {orderItems.length === 0 && (
+                <div style={{ padding: 16, textAlign: 'center', background: '#f8f9fa', borderRadius: 8, color: '#6c757d' }}>
+                  ยังไม่มีรายการวัตถุดิบ
+                </div>
+              )}
+
+              {orderItems.map((item, index) => {
+                const selectedIngredient = ingredients.find(i => i.ingredient_id === item.ingredient_id);
+                const unit = selectedIngredient?.unit || "";
+                
+                return (
+                  <div key={index} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 12, alignItems: 'end', marginBottom: 12, background: '#f8f9fa', padding: 12, borderRadius: 8 }}>
+                    <div>
+                      <label style={{ fontSize: 12, color: '#6c757d' }}>วัตถุดิบ</label>
+                      <select 
+                        value={item.ingredient_id} 
+                        onChange={e => handleUpdateOrderItem(index, 'ingredient_id', e.target.value)}
+                        required
+                        style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+                      >
+                        <option value="">-- เลือก --</option>
+                        {ingredients.map(ig => (
+                          <option key={ig.ingredient_id} value={ig.ingredient_id}>{ig.ingredient_name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 12, color: '#6c757d' }}>จำนวน {unit ? `(${unit})` : ''}</label>
+                      <input 
+                        type="number" 
+                        min="1" 
+                        value={item.quantity} 
+                        onChange={e => handleUpdateOrderItem(index, 'quantity', e.target.value)}
+                        required
+                        style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 12, color: '#6c757d' }}>ราคา/หน่วย</label>
+                      <input 
+                        type="number" 
+                        min="0" 
+                        step="0.01"
+                        value={item.unit_cost} 
+                        onChange={e => handleUpdateOrderItem(index, 'unit_cost', e.target.value)}
+                        style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+                      />
+                    </div>
+                    <div>
+                      <button 
+                        type="button" 
+                        onClick={() => handleRemoveOrderItem(index)}
+                        style={{ background: '#ffebee', color: '#c62828', border: 'none', padding: '8px 12px', borderRadius: 4, cursor: 'pointer' }}
+                      >
+                        ลบ
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div className="modal-actions" style={{ marginTop: 24 }}>
+                <button type="button" className="btn-soft" onClick={() => setShowOrderModal(false)}>ยกเลิก</button>
+                <button type="submit" className="btn-primary">ยืนยันการสั่งซื้อ</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

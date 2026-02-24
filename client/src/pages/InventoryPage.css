@@ -6,14 +6,16 @@
 .inv-tab {
   padding: 10px 20px;
   border-radius: 8px;
-  background: var(--bg-card);
-  color: var(--text-muted);
+  background: #fff;
+  border: 1px solid var(--border-color);
+  color: #6C727F;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 }
 .inv-tab.active {
-  background: var(--accent);
+  background: var(--primary-orange);
+  border-color: var(--primary-orange);
   color: #fff;
 }
 .inv-form-container {
