@@ -10,7 +10,7 @@ export default function Navbar() {
   
   const [openUser, setOpenUser] = useState(false);
   
-  const isAdmin = ["Admin", "Manager"].includes(user.role);
+  const isAdmin = ["admin", "manager"].includes(String(user?.role || "").toLowerCase());
   
   useEffect(() => {
     const onDoc = (e) => {
@@ -34,14 +34,13 @@ export default function Navbar() {
   return (
     <header className="h-[70px] w-full bg-white border-b border-[#E5E6EB] px-6 md:px-10 flex items-center justify-between sticky top-0 z-[1000]">
       <div className="pos-brand" onClick={() => navigate("/home")}>
-        Easy <span>POS</span>
+        CP <span>POS</span>
       </div>
 
       <nav className="pos-topnav" style={{ flex: 1, justifyContent: "center" }}>
         <NavLink to="/home" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
           Home
         </NavLink>
-        
         {isAdmin && (
           <NavLink
             to="/dashboard"
@@ -54,8 +53,11 @@ export default function Navbar() {
         <NavLink to="/orders" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
           Orders
         </NavLink>
-        <NavLink to="/customers" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
-          Customers
+        <NavLink to="/sales-history" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
+          Sales History
+        </NavLink>
+        <NavLink to="/Members" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
+          Members
         </NavLink>
         <NavLink to="/cashier" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
           Cashier
@@ -77,7 +79,32 @@ export default function Navbar() {
             Categories
           </NavLink>
         )}
+        {isAdmin && (
+          <NavLink
+            to="/settings/options"
+            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}
+          >
+            Options
+          </NavLink>
+        )}
+        {isAdmin && (
+          <NavLink
+            to="/inventory"
+            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}
+          >
+            Inventory
+          </NavLink>
+        )}
+        {isAdmin && (
+          <NavLink
+            to="/settings/promotions"
+            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}
+          >
+            Promotions
+          </NavLink>
+        )}
       </nav>
+
 
       <div className="pos-topactions">
         <button className="pos-neworder-btn" onClick={goNewOrder}>

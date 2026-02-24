@@ -4,7 +4,8 @@ import { useAuth } from "./useAuth";
 const RequireRole = ({ roles = [] }) => {
   const { user } = useAuth();
 
-  if (roles.length > 0 && !roles.includes(user.role)) {
+  const hasRole = roles.map(r => String(r).toLowerCase()).includes(String(user.role).toLowerCase());
+  if (roles.length > 0 && !hasRole) {
     return <Navigate to="/" replace />;
   }
 

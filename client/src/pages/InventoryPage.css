@@ -1,0 +1,43 @@
+.inventory-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.inv-tab {
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.inv-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+.inv-form-container {
+  max-width: 600px;
+}
+.inv-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+.inv-table th, .inv-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+.inv-table th {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.inv-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.inv-badge.pending { background: #fff3cd; color: #856404; }
+.inv-badge.received { background: #d4edda; color: #155724; }

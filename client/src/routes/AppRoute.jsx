@@ -7,12 +7,18 @@ import NewOrderPage from "../pages/NewOrderPage";
 import HomePage from "../pages/HomePage";
 import LoginPage from "../pages/LoginPage";
 import Registration from "../pages/Registration";
+import CashierPage from "../pages/CashierPage";
+import InventoryPage from "../pages/InventoryPage";
+import PromotionsPage from "../pages/PromotionsPage";
+import OptionAdminPage from "../pages/OptionAdminPage";
 
 import ProtectedRoute from "../routes/ProtectedRoute";
 import RequireRole from "../auth/RequireRole";
 
 import MainLayout from "../layouts/MainLayout";
 import DashboardPage from "../pages/dashboard/DashboardPage";
+import Members from "../pages/Members";
+import SalesHistoryPage from "../pages/SalesHistoryPage";
 
 const AppRoute = () => {
   return (
@@ -22,6 +28,7 @@ const AppRoute = () => {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
+
           <Route path="/home" element={<HomePage />} />
           <Route path="/new-order" element={<NewOrderPage />} />
           <Route path="/settings/categories" element={<CategoriesPage />} />
@@ -31,10 +38,15 @@ const AppRoute = () => {
             <Route path="/employees/new" element={<AddEmployeePage />} />
             <Route path="/dashboard" element={<DashboardPage/>} />
           </Route>
-
-          <Route path="/orders" element={<div className="page-pad">Orders (coming soon)</div>} />
+          <Route element={<RequireRole roles={["Admin", "Manager"]} />}>
+            <Route path="/inventory" element={<InventoryPage />} />
+            <Route path="/settings/promotions" element={<PromotionsPage />} />
+            <Route path="/settings/options" element={<OptionAdminPage />} />
+          </Route>
           <Route path="/customers" element={<div className="page-pad">Customers (coming soon)</div>} />
-          <Route path="/cashier" element={<div className="page-pad">Cashier (coming soon)</div>} />
+          <Route path="/cashier" element={<CashierPage />} />
+          <Route path="/members" element={<Members />} />
+          <Route path="/sales-history" element={<SalesHistoryPage />} />
         </Route>
       </Route>
 
