@@ -157,7 +157,7 @@ export default function Members() {
             📋 รายชื่อสมาชิก
           </h2>
 
-          <div style={{ border: "1px solid var(--border-color)", borderRadius: 8 }}>
+          <div className="overflow-x-auto" style={{ border: "1px solid var(--border-color)", borderRadius: 8 }}>
             <table className="inv-table">
               <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f8f9fc' }}>
                 <tr>

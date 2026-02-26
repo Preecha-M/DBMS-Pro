@@ -325,7 +325,8 @@ export default function InventoryPage() {
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
             <button className="pos-neworder-btn" onClick={handleOpenOrderModal}>+ สร้างใบสั่งซื้อใหม่</button>
           </div>
-          <table className="inv-table">
+          <div className="overflow-x-auto">
+            <table className="inv-table">
             <thead>
               <tr>
                 <th>รหัสใบสั่งซื้อ</th>
@@ -358,12 +359,14 @@ export default function InventoryPage() {
               {orders.length === 0 && <tr><td colSpan="5" style={{ textAlign: "center" }}>ไม่มีข้อมูลการสั่งซื้อ</td></tr>}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
       {tab === "transactions" && (
         <div className="card" style={{ padding: 24 }}>
-          <table className="inv-table">
+          <div className="overflow-x-auto">
+            <table className="inv-table">
             <thead>
               <tr>
                 <th>วันที่</th>
@@ -403,6 +406,7 @@ export default function InventoryPage() {
               {transactions.length === 0 && <tr><td colSpan="6" style={{ textAlign: "center" }}>ไม่มีประวัติการเคลื่อนไหวสต๊อก</td></tr>}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

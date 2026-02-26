@@ -110,7 +110,7 @@ export default function OptionAdminPage() {
       {error && <div className="auth-error" style={{ marginBottom: 16 }}>{error}</div>}
       {success && <div style={{ background: "#d4edda", color: "#155724", padding: 12, borderRadius: 8, marginBottom: 16 }}>{success}</div>}
 
-      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
         {/* left col: Groups */}
         <div className="card" style={{ flex: 1, padding: 20 }}>
           <h3>หัวข้อตัวเลือก</h3>
@@ -162,7 +162,8 @@ export default function OptionAdminPage() {
                 
                 {/* Items in this group */}
                 {g.menu_option_item && g.menu_option_item.length > 0 ? (
-                  <table className="inv-table" style={{ fontSize: 13 }}>
+                  <div className="overflow-x-auto">
+                    <table className="inv-table" style={{ fontSize: 13, minWidth: 400 }}>
                     <thead>
                       <tr>
                         <th>ชื่อตัวเลือก</th>
@@ -181,7 +182,8 @@ export default function OptionAdminPage() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                    </table>
+                  </div>
                 ) : (
                   <div style={{ fontSize: 13, color: '#999' }}>ไม่มีตัวเลือกย่อย</div>
                 )}

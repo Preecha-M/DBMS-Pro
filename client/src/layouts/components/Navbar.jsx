@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
 import api from "../../db/api";
-import { Bell } from "lucide-react";
+import { Bell, Menu, X } from "lucide-react";
 
 export default function Navbar() {
   const { user, logout } = useAuth()
@@ -13,6 +13,7 @@ export default function Navbar() {
   
   const [openUser, setOpenUser] = useState(false);
   const [openNotif, setOpenNotif] = useState(false);
+  const [openMenu, setOpenMenu] = useState(false);
   const [lowStockItems, setLowStockItems] = useState([]);
   
   const isAdmin = ["admin", "manager"].includes(String(user?.role || "").toLowerCase());
@@ -46,28 +47,37 @@ export default function Navbar() {
 
   return (
     <header className="pos-topbar">
-      <div className="pos-brand" onClick={() => navigate("/home")}>
-        CP <span>POS</span>
+      <div className="pos-topbar-left">
+        <button 
+          className="mobile-menu-btn" 
+          onClick={() => setOpenMenu(!openMenu)}
+        >
+          {openMenu ? <X size={24} color="#19191C" /> : <Menu size={24} color="#19191C" />}
+        </button>
+
+        <div className="pos-brand" onClick={() => navigate("/home")}>
+          CP <span>POS</span>
+        </div>
       </div>
 
-      <nav className="pos-topnav" style={{ flex: 1, justifyContent: "center" }}>
-        <NavLink to="/home" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
+      <nav className={`pos-topnav ${openMenu ? 'mobile-open' : ''}`}>
+        <NavLink to="/home" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}>
           Home
         </NavLink>
-        <NavLink to="/sales-history" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
+        <NavLink to="/sales-history" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}>
           Sales History
         </NavLink>
-        <NavLink to="/Members" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
+        <NavLink to="/Members" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}>
           Members
         </NavLink>
-        <NavLink to="/cashier" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}>
+        <NavLink to="/cashier" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}>
           Cashier
         </NavLink>
 
         {isAdmin && (
           <NavLink
             to="/settings/menus"
-            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}
+            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}
           >
             Menus
           </NavLink>
@@ -75,7 +85,7 @@ export default function Navbar() {
         {isAdmin && (
           <NavLink
             to="/settings/categories"
-            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}
+            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}
           >
             Categories
           </NavLink>
@@ -83,7 +93,7 @@ export default function Navbar() {
         {isAdmin && (
           <NavLink
             to="/settings/options"
-            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}
+            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}
           >
             Options
           </NavLink>
@@ -91,7 +101,7 @@ export default function Navbar() {
         {isAdmin && (
           <NavLink
             to="/inventory"
-            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}
+            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}
           >
             Inventory
           </NavLink>
@@ -99,7 +109,7 @@ export default function Navbar() {
         {isAdmin && (
           <NavLink
             to="/settings/promotions"
-            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`}
+            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}
           >
             Promotions
           </NavLink>

@@ -345,3 +345,31 @@
   font-weight: 900;
   color: #19191C;
 }
+
+@media (max-width: 820px) {
+  .cashier-page .cashier-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .cashier-page .cashier-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .cashier-page .cashier-tabs {
+    flex-wrap: wrap;
+  }
+  .cashier-page .cashier-tab-btn {
+    flex: 1;
+    text-align: center;
+  }
+  .cashier-page .status-info {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .cashier-page .status-info {
+    grid-template-columns: 1fr;
+  }
+}
