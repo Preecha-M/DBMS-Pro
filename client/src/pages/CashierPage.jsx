@@ -9,6 +9,9 @@ export default function CashierPage() {
   
   const [currentRound, setCurrentRound] = useState(null);
   const [isRoundOpen, setIsRoundOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("current"); // "current" | "history"
+  const [historyRounds, setHistoryRounds] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   
   const [showOpenModal, setShowOpenModal] = useState(false);
   const [showCloseModal, setShowCloseModal] = useState(false);
@@ -61,6 +64,24 @@ export default function CashierPage() {
       setLoading(false);
     }
   };
+
+  const loadHistoryRounds = async () => {
+    setLoadingHistory(true);
+    try {
+      const res = await api.get("/sales-round");
+      setHistoryRounds(res.data);
+    } catch (e) {
+      console.error("Failed to load history rounds", e);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "history") {
+      loadHistoryRounds();
+    }
+  }, [activeTab]);
 
   const loadSalesSummary = async (startDate) => {
     try {
@@ -204,21 +225,37 @@ export default function CashierPage() {
     <div className="cashier-page">
       <div className="cashier-header">
         <h1 className="cashier-title">แคชเชียร์ (Cashier)</h1>
+        <div className="cashier-tabs">
+          <button 
+            className={`cashier-tab-btn ${activeTab === "current" ? "active" : ""}`}
+            onClick={() => setActiveTab("current")}
+          >
+            รอบปัจจุบัน
+          </button>
+          <button 
+            className={`cashier-tab-btn ${activeTab === "history" ? "active" : ""}`}
+            onClick={() => setActiveTab("history")}
+          >
+            ประวัติรอบการขาย
+          </button>
+        </div>
         <div className="cashier-actions">
-          {!isRoundOpen ? (
-            <button
-              className="cashier-btn primary"
-              onClick={() => setShowOpenModal(true)}
-            >
-              เปิดรอบการขาย
-            </button>
-          ) : (
-            <button
-              className="cashier-btn success"
-              onClick={() => setShowCloseModal(true)}
-            >
-              ปิดยอด
-            </button>
+          {activeTab === "current" && (
+            !isRoundOpen ? (
+              <button
+                className="cashier-btn primary"
+                onClick={() => setShowOpenModal(true)}
+              >
+                เปิดรอบการขาย
+              </button>
+            ) : (
+              <button
+                className="cashier-btn success"
+                onClick={() => setShowCloseModal(true)}
+              >
+                ปิดยอด
+              </button>
+            )
           )}
         </div>
       </div>
@@ -226,7 +263,9 @@ export default function CashierPage() {
       {error && <div className="cashier-error">{error}</div>}
       {success && <div className="cashier-success">{success}</div>}
 
-      <div className="cashier-status-card">
+      {activeTab === "current" ? (
+        <>
+          <div className="cashier-status-card">
         <span className={`status-badge ${isRoundOpen ? "open" : "closed"}`}>
           {isRoundOpen ? "🟢 รอบการขายเปิดอยู่" : "🔴 รอบการขายปิด"}
         </span>
@@ -298,6 +337,59 @@ export default function CashierPage() {
               </span>
             </div>
           </div>
+        </div>
+      )}
+      </>
+      ) : (
+        <div className="cashier-history-card">
+          <h2 className="summary-title" style={{ marginBottom: 16 }}>ประวัติรอบการขายทั้งหมด</h2>
+          {loadingHistory ? (
+            <div>กำลังโหลดข้อมูล...</div>
+          ) : historyRounds.length === 0 ? (
+            <div style={{ color: "#9EA3AE", textAlign: "center", padding: "40px 0" }}>
+              ยังไม่มีประวัติรอบการขาย
+            </div>
+          ) : (
+            <div className="table-container">
+              <table className="inv-table">
+                <thead>
+                  <tr>
+                    <th>เวลาเปิดรอบ</th>
+                    <th>เวลาปิดรอบ</th>
+                    <th>ผู้เปิด / ผู้ปิด</th>
+                    <th>เงินสดเริ่มต้น</th>
+                    <th>ยอดขายรวม</th>
+                    <th style={{ textAlign: "right" }}>สถานะ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historyRounds.map((hr) => (
+                    <tr key={hr.round_id}>
+                      <td>{formatDateTime(hr.opened_at)}</td>
+                      <td>{hr.closed_at ? formatDateTime(hr.closed_at) : "-"}</td>
+                      <td>
+                        <div style={{ fontSize: 13 }}>
+                          <strong>เปิด:</strong> {hr.opened_by_username || "-"}
+                        </div>
+                        <div style={{ fontSize: 13, color: "#666" }}>
+                          <strong>ปิด:</strong> {hr.closed_by_username || "-"}
+                        </div>
+                      </td>
+                      <td>{formatCurrency(hr.opening_cash)}</td>
+                      <td style={{ fontWeight: 600, color: "var(--primary-green)" }}>
+                        {formatCurrency(hr.total_sales || 0)}
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <span className={`status-badge ${hr.status === "open" ? "open" : "closed"}`} style={{ padding: "4px 8px", fontSize: 12 }}>
+                          {hr.status === "open" ? "เปิดอยู่" : "ปิดแล้ว"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 

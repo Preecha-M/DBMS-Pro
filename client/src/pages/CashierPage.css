@@ -20,6 +20,36 @@
   gap: 12px;
 }
 
+.cashier-page .cashier-tabs {
+  display: flex;
+  gap: 8px;
+  background: #f1f3f5;
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.cashier-page .cashier-tab-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-weight: 700;
+  color: #6C727F;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.cashier-page .cashier-tab-btn:hover {
+  color: #19191C;
+}
+
+.cashier-page .cashier-tab-btn.active {
+  background: white;
+  color: var(--primary-orange);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
 .cashier-page .cashier-btn {
   padding: 12px 20px;
   border-radius: 14px;
@@ -54,12 +84,27 @@
   background: #189960;
 }
 
-.cashier-page .cashier-status-card {
+.cashier-page .cashier-status-card,
+.cashier-page .cashier-history-card {
   background: #fff;
   border: 1px solid var(--border-color);
   border-radius: 18px;
   padding: 24px;
   margin-bottom: 24px;
+}
+
+.cashier-page .cashier-history-card .table-container {
+  max-height: 500px;
+  overflow-y: auto;
+  border-radius: 8px;
+}
+
+.cashier-page .cashier-history-card .inv-table th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #f1f3f5; /* Light gray background to hide scrolling rows underneath */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Adds a slight shadow to separate header from content */
 }
 
 .cashier-page .status-badge {
