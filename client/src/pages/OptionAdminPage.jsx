@@ -4,26 +4,32 @@ import "./OptionAdminPage.css";
 
 export default function OptionAdminPage() {
   const [groups, setGroups] = useState([]);
+  const [menus, setMenus] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const [groupName, setGroupName] = useState("");
+  const [selectedMenus, setSelectedMenus] = useState([]);
 
-  const loadGroups = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/menu-options/groups");
-      setGroups(res.data);
+      const [groupsRes, menusRes] = await Promise.all([
+        api.get("/menu-options/groups"),
+        api.get("/menu")
+      ]);
+      setGroups(groupsRes.data);
+      setMenus(menusRes.data);
     } catch (e) {
-      setError(e?.response?.data?.message || "โหลดกลุ่มตัวเลือกไม่สำเร็จ");
+      setError(e?.response?.data?.message || "โหลดข้อมูลไม่สำเร็จ");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadGroups();
+    loadData();
   }, []);
 
   const handleAddGroup = async (e) => {
@@ -31,10 +37,14 @@ export default function OptionAdminPage() {
     setError(""); setSuccess("");
     if (!groupName.trim()) return;
     try {
-      await api.post("/menu-options/groups", { group_name: groupName });
+      await api.post("/menu-options/groups", { 
+        group_name: groupName,
+        menu_ids: selectedMenus
+      });
       setSuccess("เพิ่มหน้าต่างตัวเลือกสำเร็จ");
       setGroupName("");
-      loadGroups();
+      setSelectedMenus([]);
+      loadData();
     } catch (e) {
       setError(e?.response?.data?.message || "Error");
     }
@@ -46,7 +56,7 @@ export default function OptionAdminPage() {
     try {
       await api.delete(`/menu-options/groups/${id}`);
       setSuccess("ลบกลุ่มตัวเลือกสำเร็จ");
-      loadGroups();
+      loadData();
     } catch (e) {
       setError(e?.response?.data?.message || "Error");
     }
@@ -66,7 +76,7 @@ export default function OptionAdminPage() {
       });
       setSuccess("เพิ่มตัวเลือกสำเร็จ");
       setItemForm({ ...itemForm, item_name: "", additional_price: 0 });
-      loadGroups();
+      loadData();
     } catch (e) {
       setError(e?.response?.data?.message || "Error");
     }
@@ -77,13 +87,21 @@ export default function OptionAdminPage() {
     try {
       await api.delete(`/menu-options/items/${id}`);
       setSuccess("ลบตัวเลือกย่อยสำเร็จ");
-      loadGroups();
+      loadData();
     } catch (e) {
       setError(e?.response?.data?.message || "Error");
     }
   };
 
   if (loading) return <div className="page-pad">กำลังโหลด...</div>;
+
+  const handleMenuSelection = (menuId) => {
+    setSelectedMenus(prev => 
+      prev.includes(menuId) 
+        ? prev.filter(id => id !== menuId)
+        : [...prev, menuId]
+    );
+  };
 
   return (
     <div className="page-pad">
@@ -96,23 +114,50 @@ export default function OptionAdminPage() {
         {/* left col: Groups */}
         <div className="card" style={{ flex: 1, padding: 20 }}>
           <h3>หัวข้อตัวเลือก</h3>
-          <form onSubmit={handleAddGroup} style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-            <input 
-              placeholder="เช่น ระดับความหวาน, Toppings..."
-              value={groupName}
-              onChange={e => setGroupName(e.target.value)}
-              required
-              style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #ddd' }}
-            />
-            <button type="submit" className="pos-neworder-btn">เพิ่มหัวข้อ</button>
+          <form onSubmit={handleAddGroup} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input 
+                placeholder="เช่น ระดับความหวาน, Toppings..."
+                value={groupName}
+                onChange={e => setGroupName(e.target.value)}
+                required
+                style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #ddd' }}
+              />
+              <button type="submit" className="pos-neworder-btn">เพิ่มหัวข้อ</button>
+            </div>
+            
+            <div style={{ marginTop: 8 }}>
+              <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>เลือกเมนูที่ใช้ต้วเลือกนี้:</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, maxHeight: 150, overflowY: 'auto', padding: 8, border: '1px solid #ddd', borderRadius: 8 }}>
+                {menus.map(m => (
+                  <label key={m.menu_id} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', background: selectedMenus.includes(m.menu_id) ? '#e6f4ea' : '#f5f5f5', padding: '4px 8px', borderRadius: 16, fontSize: 13 }}>
+                    <input 
+                      type="checkbox" 
+                      checked={selectedMenus.includes(m.menu_id)}
+                      onChange={() => handleMenuSelection(m.menu_id)}
+                      style={{ margin: 0 }}
+                    />
+                    {m.menu_name}
+                  </label>
+                ))}
+                {menus.length === 0 && <span style={{ color: '#999', fontSize: 13 }}>ไม่พบเมนู</span>}
+              </div>
+            </div>
           </form>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {groups.map(g => (
               <div key={g.group_id} className="option-group-item">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <strong>{g.group_name}</strong>
-                  <button onClick={() => handleDeleteGroup(g.group_id)} style={{ background: 'transparent', border: 'none', color: '#ff4d4f', cursor: 'pointer' }}>ลบ</button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div>
+                    <strong>{g.group_name}</strong>
+                    <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                      ใช้กับ: {g.menu_ids?.length > 0 
+                        ? g.menu_ids.map(id => menus.find(m => m.menu_id === id)?.menu_name || `#${id}`).join(', ')
+                        : 'ทุกเมนู (ไม่ได้ระบุ)'}
+                    </div>
+                  </div>
+                  <button onClick={() => handleDeleteGroup(g.group_id)} style={{ background: 'transparent', border: 'none', color: '#ff4d4f', cursor: 'pointer', padding: 4 }}>ลบ</button>
                 </div>
                 
                 {/* Items in this group */}

@@ -85,8 +85,15 @@ export default function NewOrderPage() {
   }, [menus, activeCatId]);
 
   const handleProductSelect = (m) => {
-    if (optionGroups.length > 0) {
-      setSelectingItem({ ...m, selectedOptions: [] });
+    // Filter option groups to only those that apply to this menu
+    // Option groups apply if menu_ids array is empty (legacy/global) or it explicitly includes this menu ID.
+    const relevantOptionGroups = optionGroups.filter(g => {
+      if (!g.menu_ids || g.menu_ids.length === 0) return true; // Global/Unassigned
+      return g.menu_ids.includes(m.menu_id);
+    });
+
+    if (relevantOptionGroups.length > 0) {
+      setSelectingItem({ ...m, selectedOptions: [], relevantOptionGroups });
     } else {
       addToCart(m, []);
     }
@@ -538,7 +545,7 @@ export default function NewOrderPage() {
             </button>
             <div className="modal-title">เลือกตัวเลือกสำหรับ: {selectingItem.menu_name}</div>
             <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: 8 }}>
-              {optionGroups.map(group => (
+              {selectingItem.relevantOptionGroups?.map(group => (
                 <div key={group.group_id} style={{ marginBottom: 16 }}>
                   <div style={{ fontWeight: 600, marginBottom: 8 }}>{group.group_name}</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
