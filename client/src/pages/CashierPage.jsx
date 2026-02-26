@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../db/api";
+import { io } from "socket.io-client";
+import CashierDashboard from "./CashierDashboard";
 import "./CashierPage.css";
 
 export default function CashierPage() {
@@ -12,11 +14,15 @@ export default function CashierPage() {
   const [activeTab, setActiveTab] = useState("current"); // "current" | "history"
   const [historyRounds, setHistoryRounds] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [selectedHistoryRound, setSelectedHistoryRound] = useState(null);
   
   const [showOpenModal, setShowOpenModal] = useState(false);
   const [showCloseModal, setShowCloseModal] = useState(false);
   
   const [openingCash, setOpeningCash] = useState("");
+  
+  // Create socket connection reference
+  const [socket, setSocket] = useState(null);
   
   const [salesSummary, setSalesSummary] = useState({
     totalSales: 0,
@@ -27,22 +33,36 @@ export default function CashierPage() {
   });
 
   useEffect(() => {
+    // Determine backend URL from API (removing /api path if exists, default to localhost)
+    const backendUrl = api.defaults.baseURL ? api.defaults.baseURL.replace(/\/api$/, '') : 'http://localhost:3000';
+    const newSocket = io(backendUrl);
+    setSocket(newSocket);
+    
+    return () => newSocket.close();
+  }, []);
+
+  useEffect(() => {
     loadCurrentRound();
   }, []);
 
   useEffect(() => {
-    if (!isRoundOpen || !currentRound) {
-      return;
-    }
+    if (!isRoundOpen || !currentRound || !socket) return;
 
+    // Optional legacy update
     loadSalesSummary(currentRound.opened_at);
 
-    const interval = setInterval(() => {
+    const onNewSale = (saleData) => {
+      console.log("WebSocket new-sale received", saleData);
       loadSalesSummary(currentRound.opened_at);
-    }, 5000); 
+      // CashierDashboard handles its own data fetching, but we can update our local summary
+    };
 
-    return () => clearInterval(interval);
-  }, [isRoundOpen, currentRound]);
+    socket.on('new-sale', onNewSale);
+
+    return () => {
+      socket.off('new-sale', onNewSale);
+    };
+  }, [isRoundOpen, currentRound, socket]);
 
   const loadCurrentRound = async () => {
     setLoading(true);
@@ -228,13 +248,19 @@ export default function CashierPage() {
         <div className="cashier-tabs">
           <button 
             className={`cashier-tab-btn ${activeTab === "current" ? "active" : ""}`}
-            onClick={() => setActiveTab("current")}
+            onClick={() => {
+              setActiveTab("current");
+              setSelectedHistoryRound(null);
+            }}
           >
             รอบปัจจุบัน
           </button>
           <button 
             className={`cashier-tab-btn ${activeTab === "history" ? "active" : ""}`}
-            onClick={() => setActiveTab("history")}
+            onClick={() => {
+              setActiveTab("history");
+              setSelectedHistoryRound(null);
+            }}
           >
             ประวัติรอบการขาย
           </button>
@@ -290,10 +316,6 @@ export default function CashierPage() {
                 {formatCurrency(salesSummary.totalSales)}
               </div>
             </div>
-            <div className="info-item">
-              <div className="info-label">จำนวนธุรกรรม</div>
-              <div className="info-value">{salesSummary.totalTransactions}</div>
-            </div>
           </div>
         ) : (
           <p style={{ color: "#9EA3AE", marginTop: 12 }}>
@@ -302,44 +324,28 @@ export default function CashierPage() {
         )}
       </div>
 
-      {isRoundOpen && (
-        <div className="cashier-summary-card">
-          <h2 className="summary-title">สรุปยอดขาย</h2>
-          <div className="summary-grid">
-            <div className="summary-row">
-              <span className="summary-label">ยอดขายเงินสด (Cash)</span>
-              <span className="summary-value">
-                {formatCurrency(salesSummary.cashSales)}
-              </span>
-            </div>
-            <div className="summary-row">
-              <span className="summary-label">ยอดขายบัตรเครดิต (Credit Card)</span>
-              <span className="summary-value">
-                {formatCurrency(salesSummary.creditCardSales)}
-              </span>
-            </div>
-            <div className="summary-row">
-              <span className="summary-label">ยอดขาย QR Code</span>
-              <span className="summary-value">
-                {formatCurrency(salesSummary.qrSales)}
-              </span>
-            </div>
-            <div className="summary-row total">
-              <span className="summary-label">ยอดรวมทั้งหมด</span>
-              <span className="summary-value">
-                {formatCurrency(salesSummary.totalSales)}
-              </span>
-            </div>
-            <div className="summary-row">
-              <span className="summary-label">เงินสดที่ควรมี</span>
-              <span className="summary-value">
-                {formatCurrency(expectedCash)}
-              </span>
-            </div>
-          </div>
-        </div>
+      {isRoundOpen && currentRound && (
+        <CashierDashboard roundId={currentRound.round_id} roundInfo={currentRound} />
       )}
       </>
+      ) : selectedHistoryRound ? (
+        <div className="cashier-history-view">
+          <button 
+            onClick={() => setSelectedHistoryRound(null)}
+            style={{ marginBottom: 16, padding: '8px 16px', borderRadius: 8, border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontWeight: 700 }}
+          >
+            ← กลับไปหน้ารวมประวัติ
+          </button>
+          <div className="cashier-status-card" style={{ marginBottom: 20 }}>
+            <h2 style={{ fontSize: 18, marginBottom: 12 }}>ประวัติรอบเวลา: {formatDateTime(selectedHistoryRound.opened_at)}</h2>
+            <div style={{ display: 'flex', gap: 24, fontSize: 14 }}>
+              <div><strong>ผู้เปิด:</strong> {selectedHistoryRound.opened_by_username}</div>
+              <div><strong>เงินสดเริ่มต้น:</strong> {formatCurrency(selectedHistoryRound.opening_cash)}</div>
+              <div><strong>เงินทอน/ปิดลิ้นชักที่ระบุไว้:</strong> {selectedHistoryRound.closing_cash !== null ? formatCurrency(selectedHistoryRound.closing_cash) : '-'}</div>
+            </div>
+          </div>
+          <CashierDashboard roundId={selectedHistoryRound.round_id} roundInfo={selectedHistoryRound} />
+        </div>
       ) : (
         <div className="cashier-history-card">
           <h2 className="summary-title" style={{ marginBottom: 16 }}>ประวัติรอบการขายทั้งหมด</h2>
@@ -364,7 +370,12 @@ export default function CashierPage() {
                 </thead>
                 <tbody>
                   {historyRounds.map((hr) => (
-                    <tr key={hr.round_id}>
+                    <tr 
+                      key={hr.round_id} 
+                      onClick={() => setSelectedHistoryRound(hr)}
+                      style={{ cursor: 'pointer' }}
+                      className="history-row"
+                    >
                       <td>{formatDateTime(hr.opened_at)}</td>
                       <td>{hr.closed_at ? formatDateTime(hr.closed_at) : "-"}</td>
                       <td>

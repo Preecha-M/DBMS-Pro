@@ -67,8 +67,8 @@ export default function Members() {
     });
 
   return (
-    <div className="pos-page" style={{ padding: 24, paddingBottom: 0 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className="pos-page" style={{ padding: 24, overflowY: "auto", height: "100%", boxSizing: "border-box" }}>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
 
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
@@ -152,12 +152,12 @@ export default function Members() {
         </div>
 
         {/* Result */}
-        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+        <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column' }}>
           <h2 style={{ fontWeight: 900, marginBottom: 12 }}>
             📋 รายชื่อสมาชิก
           </h2>
 
-          <div style={{ flex: 1, overflowY: "auto", border: "1px solid var(--border-color)", borderRadius: 8 }}>
+          <div style={{ border: "1px solid var(--border-color)", borderRadius: 8 }}>
             <table className="inv-table">
               <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f8f9fc' }}>
                 <tr>

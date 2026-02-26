@@ -1,0 +1,160 @@
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.metric-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.metric-title {
+  color: #6C727F;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.metric-value {
+  font-size: 28px;
+  font-weight: 900;
+  color: #19191C;
+}
+
+.metric-value.highlight {
+  color: var(--primary-orange);
+}
+
+.dashboard-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-card,
+.top-products-card,
+.payment-card,
+.category-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid var(--border-color);
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 900;
+  color: #19191C;
+  margin-bottom: 20px;
+}
+
+.empty-text {
+  color: #9EA3AE;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* Top Products */
+.top-products-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.top-product-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #F9FAFB;
+  border-radius: 10px;
+}
+
+.tp-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tp-rank {
+  width: 24px;
+  height: 24px;
+  background: var(--primary-orange);
+  color: #fff;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.tp-name {
+  font-weight: 700;
+  color: #19191C;
+  font-size: 14px;
+}
+
+.tp-right {
+  text-align: right;
+}
+
+.tp-qty {
+  font-size: 12px;
+  color: #6C727F;
+  font-weight: 600;
+}
+
+.tp-rev {
+  font-weight: 900;
+  color: var(--primary-green);
+  font-size: 14px;
+}
+
+/* Payment & Category Splits */
+.payment-row, .category-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.payment-row:last-child, .category-row:last-child {
+  border-bottom: none;
+}
+
+.pm-name, .cat-name {
+  font-weight: 700;
+  color: #6C727F;
+}
+
+.pm-val, .cat-val {
+  font-weight: 900;
+  color: #19191C;
+}

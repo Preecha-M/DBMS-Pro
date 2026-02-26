@@ -6,15 +6,18 @@ export default function SalesHistoryPage() {
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [mode, setMode] = useState("month"); // month | year | custom
+  const [mode, setMode] = useState("day"); // day | month | year | custom
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
 
   const loadSales = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/sales", {
-        params: { mode, month },
-      });
+      const params = { mode };
+      if (mode === "custom") params.month = month;
+      if (mode === "day") params.date = date;
+
+      const res = await api.get("/sales", { params });
       setSales(res.data);
     } catch (err) {
       console.error(err);
@@ -24,7 +27,7 @@ export default function SalesHistoryPage() {
 
   useEffect(() => {
     loadSales();
-  }, [mode, month]);
+  }, [mode, month, date]);
 
   const formatDate = (dt) =>
     new Date(dt).toLocaleDateString("th-TH", {
@@ -55,6 +58,22 @@ export default function SalesHistoryPage() {
             flexWrap: "wrap",
           }}
         >
+          <button
+            className={`filter-pill ${mode === "day" ? "active" : ""}`}
+            onClick={() => setMode("day")}
+          >
+            รายวัน
+          </button>
+
+          {mode === "day" && (
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="input"
+            />
+          )}
+
           <button
             className={`filter-pill ${mode === "month" ? "active" : ""}`}
             onClick={() => setMode("month")}
