@@ -5,7 +5,32 @@ import "./InventoryPage.css";
 
 export default function InventoryPage() {
   const { t } = useTranslation();
-  const [tab, setTab] = useState("withdraw"); // withdraw | add | orders | transactions
+  const [tab, setTab] = useState("withdraw");
+
+  const selectStyle = {
+    width: "100%",
+    padding: "12px 40px 12px 16px",
+    borderRadius: 12,
+    border: "1.5px solid var(--border-color)",
+    fontSize: 14,
+    fontFamily: 'inherit',
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    background: `#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center`,
+    cursor: 'pointer',
+    color: '#19191C',
+    outline: 'none',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+  };
+
+  const selectFocus = (e) => {
+    e.target.style.borderColor = 'var(--primary-orange)';
+    e.target.style.boxShadow = '0 0 0 3px rgba(237,100,45,0.1)';
+  };
+  const selectBlur = (e) => {
+    e.target.style.borderColor = 'var(--border-color)';
+    e.target.style.boxShadow = 'none';
+  };
   const [ingredients, setIngredients] = useState([]);
   const [orders, setOrders] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -209,9 +234,10 @@ export default function InventoryPage() {
 
   return (
     <div className="page-pad">
-      <h2 style={{ marginBottom: 20 }}>{t('inventory.pageTitle')}</h2>
+      <div className="inventory-desktop-wrapper">
+        <h2 style={{ marginBottom: 20 }}>{t('inventory.pageTitle')}</h2>
 
-      <div className="inventory-tabs">
+        <div className="inventory-tabs">
         <div className={`inv-tab ${tab === "withdraw" ? "active" : ""}`} onClick={() => { setTab("withdraw"); setError(""); setSuccess(""); }}>
           {t('inventory.tabWithdraw')}
         </div>
@@ -237,7 +263,7 @@ export default function InventoryPage() {
           <form onSubmit={handleWithdraw}>
             <div className="input-group">
               <label>{t('inventory.selectIngredientLabel')}</label>
-              <select value={wdId} onChange={e => setWdId(e.target.value)} required>
+              <select value={wdId} onChange={e => setWdId(e.target.value)} required style={selectStyle} onFocus={selectFocus} onBlur={selectBlur}>
                 <option value="">{t('inventory.optSelectIngredient')}</option>
                 {ingredients.map(ig => (
                   <option key={ig.ingredient_id} value={ig.ingredient_id}>
@@ -283,7 +309,7 @@ export default function InventoryPage() {
               </div>
               <div className="input-group">
                 <label>{t('inventory.addCategoryLabel')}</label>
-                <select value={addForm.category_code} onChange={e => setAddForm(p => ({ ...p, category_code: e.target.value }))}>
+                <select value={addForm.category_code} onChange={e => setAddForm(p => ({ ...p, category_code: e.target.value }))} style={selectStyle} onFocus={selectFocus} onBlur={selectBlur}>
                   <option value="">{t('inventory.optNoCategory')}</option>
                   {categories.map(c => <option key={c.category_id || c.category_code} value={c.category_id || c.category_code}>{c.category_name}</option>)}
                 </select>
@@ -335,7 +361,7 @@ export default function InventoryPage() {
                 <th>{t('inventory.colOrderDate')}</th>
                 <th>{t('inventory.colOrderSupplier')}</th>
                 <th>{t('inventory.colOrderStatus')}</th>
-                <th>{t('inventory.colOrderAction')}</th>
+                <th style={{ minWidth: 100 }}>{t('inventory.colOrderAction')}</th>
               </tr>
             </thead>
             <tbody>
@@ -351,7 +377,7 @@ export default function InventoryPage() {
                   </td>
                   <td>
                     {String(o.order_status).toLowerCase() !== 'received' && (
-                      <button className="qty-btn" onClick={() => handleUpdateOrderStatus(o.order_id, o.order_status)}>
+                      <button className="btn-soft" onClick={() => handleUpdateOrderStatus(o.order_id, o.order_status)} style={{ whiteSpace: 'nowrap', padding: '5px 12px', fontSize: 13 }}>
                         {t('inventory.btnReceiveItem')}
                       </button>
                     )}
@@ -420,7 +446,7 @@ export default function InventoryPage() {
             <form onSubmit={handleCreateOrder}>
               <div className="input-group">
                 <label>{t('inventory.orderToSupplierLabel')}</label>
-                <select value={orderSupplier} onChange={e => setOrderSupplier(e.target.value)} required>
+                <select value={orderSupplier} onChange={e => setOrderSupplier(e.target.value)} required style={selectStyle} onFocus={selectFocus} onBlur={selectBlur}>
                   <option value="">{t('inventory.optSelectSupplier')}</option>
                   {suppliers.map(s => (
                     <option key={s.supplier_id} value={s.supplier_id}>{s.supplier_name}</option>
@@ -446,14 +472,16 @@ export default function InventoryPage() {
                 const unit = selectedIngredient?.unit || "";
                 
                 return (
-                  <div key={index} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 12, alignItems: 'end', marginBottom: 12, background: '#f8f9fa', padding: 12, borderRadius: 8 }}>
+                  <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12, background: '#f8f9fa', padding: 12, borderRadius: 8 }}>
                     <div>
                       <label style={{ fontSize: 12, color: '#6c757d' }}>{t('inventory.orderItemIngredient')}</label>
                       <select 
                         value={item.ingredient_id} 
                         onChange={e => handleUpdateOrderItem(index, 'ingredient_id', e.target.value)}
                         required
-                        style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+                        style={{ ...selectStyle, padding: '8px 36px 8px 12px' }}
+                        onFocus={selectFocus}
+                        onBlur={selectBlur}
                       >
                         <option value="">{t('inventory.optSelect')}</option>
                         {ingredients.map(ig => (
@@ -461,36 +489,38 @@ export default function InventoryPage() {
                         ))}
                       </select>
                     </div>
-                    <div>
-                      <label style={{ fontSize: 12, color: '#6c757d' }}>{t('inventory.orderItemQty', { unit: unit ? `(${unit})` : '' })}</label>
-                      <input 
-                        type="number" 
-                        min="1" 
-                        value={item.quantity} 
-                        onChange={e => handleUpdateOrderItem(index, 'quantity', e.target.value)}
-                        required
-                        style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: 12, color: '#6c757d' }}>{t('inventory.orderItemCost')}</label>
-                      <input 
-                        type="number" 
-                        min="0" 
-                        step="0.01"
-                        value={item.unit_cost} 
-                        onChange={e => handleUpdateOrderItem(index, 'unit_cost', e.target.value)}
-                        style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                      />
-                    </div>
-                    <div>
-                      <button 
-                        type="button" 
-                        onClick={() => handleRemoveOrderItem(index)}
-                        style={{ background: '#ffebee', color: '#c62828', border: 'none', padding: '8px 12px', borderRadius: 4, cursor: 'pointer' }}
-                      >
-                        {t('inventory.btnDelete')}
-                      </button>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: 12, color: '#6c757d' }}>{t('inventory.orderItemQty', { unit: unit ? `(${unit})` : '' })}</label>
+                        <input 
+                          type="number" 
+                          min="1" 
+                          value={item.quantity} 
+                          onChange={e => handleUpdateOrderItem(index, 'quantity', e.target.value)}
+                          required
+                          style={{ width: '100%', padding: 8, border: '1.5px solid var(--border-color)', borderRadius: 8, fontFamily: 'inherit', fontSize: 14, boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: 12, color: '#6c757d' }}>{t('inventory.orderItemCost')}</label>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          step="0.01"
+                          value={item.unit_cost} 
+                          onChange={e => handleUpdateOrderItem(index, 'unit_cost', e.target.value)}
+                          style={{ width: '100%', padding: 8, border: '1.5px solid var(--border-color)', borderRadius: 8, fontFamily: 'inherit', fontSize: 14, boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      <div style={{ flexShrink: 0 }}>
+                        <button 
+                          type="button" 
+                          onClick={() => handleRemoveOrderItem(index)}
+                          style={{ background: '#ffebee', color: '#c62828', border: 'none', padding: '8px 14px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit', fontSize: 13 }}
+                        >
+                          {t('inventory.btnDelete')}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -505,6 +535,7 @@ export default function InventoryPage() {
         </div>
       )}
 
+      </div>
     </div>
   );
 }

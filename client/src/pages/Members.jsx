@@ -2,9 +2,13 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { searchMember, createMember, getPointsHistory } from "../services/memberService";
 import "../index.css";
+import "./Members.css"; // Added new styles
+
+import { UserPlus, Mars, Venus, CircleDashed, X, ClipboardList, Search } from 'lucide-react';
 
 export default function Members() {
   const { t } = useTranslation();
+  const [showAddModal, setShowAddModal] = useState(false);
   const [phone, setPhone] = useState("");
   const [members, setMembers] = useState([]);
 
@@ -46,6 +50,7 @@ export default function Members() {
 
     // Clear search phone state and reload all members so the newly added one is visible
     setPhone("");
+    setShowAddModal(false);
     loadMembers("");
   };
 
@@ -69,93 +74,83 @@ export default function Members() {
     });
 
   return (
-    <div className="pos-page" style={{ padding: 24, overflowY: "auto", height: "100%", boxSizing: "border-box" }}>
+    <div className="pos-page members-page" style={{ padding: 24, overflowY: "auto", height: "100%", boxSizing: "border-box" }}>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
 
         {/* Header */}
-        <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 900 }}>{t('members.title')}</h1>
-          <p style={{ color: "#8b90a0", marginTop: 6 }}>
-            {t('members.subtitle')}
-          </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <div>
+            <h1 style={{ fontSize: 26, fontWeight: 900 }}>{t('members.title')}</h1>
+            <p style={{ color: "#8b90a0", margin: 0 }}>
+              {t('members.subtitle')}
+            </p>
+          </div>
+          <button className="btn-primary" onClick={() => setShowAddModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <UserPlus size={18} />
+            {t('members.registerMember')}
+          </button>
         </div>
 
-        {/* Search + Register */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 20,
-            marginBottom: 24,
-          }}
-        >
-          {/* Search */}
-          <div className="card page-pad">
-            <h2 style={{ fontWeight: 900, marginBottom: 12 }}>
-              {t('members.searchMember')}
-            </h2>
-
-            <div style={{ display: "flex", gap: 12 }}>
+        {/* Search */}
+        <div className="card page-pad" style={{ marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              position: 'relative',
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <Search
+                size={18}
+                style={{
+                  position: 'absolute',
+                  left: 14,
+                  color: '#9ca3af',
+                  pointerEvents: 'none'
+                }}
+              />
               <input
                 placeholder={t('members.phonePlaceholder')}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                style={{ flex: 1 }}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                style={{
+                  width: '100%',
+                  paddingLeft: 42,
+                  paddingRight: 14,
+                  paddingTop: 12,
+                  paddingBottom: 12,
+                  border: '1.5px solid var(--border-color)',
+                  borderRadius: 12,
+                  fontSize: 14,
+                  outline: 'none',
+                  transition: 'border-color 0.2s, box-shadow 0.2s',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'var(--primary-orange)';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(237,100,45,0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'var(--border-color)';
+                  e.target.style.boxShadow = 'none';
+                }}
               />
-              <button className="btn-primary" onClick={handleSearch}>
-                {t('members.searchBtn')}
-              </button>
             </div>
-          </div>
-
-          {/* Register */}
-          <div className="card page-pad">
-            <h2 style={{ fontWeight: 900, marginBottom: 12 }}>
-              {t('members.registerMember')}
-            </h2>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 12,
-              }}
+            <button
+              className="btn-primary"
+              onClick={handleSearch}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 20px' }}
             >
-              <input
-                placeholder={t('members.namePlaceholder')}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-
-              <input
-                placeholder={t('members.phonePlaceholder')}
-                value={newPhone}
-                onChange={(e) => setNewPhone(e.target.value)}
-              />
-
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-              >
-                <option value="MALE">{t('members.genderMale')}</option>
-                <option value="FEMALE">{t('members.genderFemale')}</option>
-                <option value="OTHER">{t('members.genderOther')}</option>
-              </select>
-
-              <button
-                className="btn-primary"
-                style={{ gridColumn: "span 2" }}
-                onClick={handleCreate}
-              >
-                {t('members.registerBtn')}
-              </button>
-            </div>
+              <Search size={16} />
+              {t('members.searchBtn')}
+            </button>
           </div>
         </div>
 
         {/* Result */}
         <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column' }}>
-          <h2 style={{ fontWeight: 900, marginBottom: 12 }}>
+          <h2 style={{ fontWeight: 900, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ClipboardList size={20} />
             {t('members.memberList')}
           </h2>
 
@@ -182,18 +177,20 @@ export default function Members() {
                 {members.map((m) => (
                   <tr key={m.member_id}>
                     <td>{m.name}</td>
-                    <td className="center">{m.phone}</td>
-                    <td className="center">
+                    <td className="center" data-label={t('members.colPhone')} >{m.phone}</td>
+                    <td className="center" data-label={t('members.colGender')}>
                       <span style={{ 
                         padding: '4px 8px', borderRadius: 4, fontSize: 12, fontWeight: 600,
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
                         backgroundColor: m.gender === 'MALE' ? '#e3f2fd' : m.gender === 'FEMALE' ? '#fce4ec' : '#f5f5f5',
                         color: m.gender === 'MALE' ? '#1976d2' : m.gender === 'FEMALE' ? '#c2185b' : '#616161'
                       }}>
+                        {m.gender === "MALE" ? <Mars size={13} /> : m.gender === "FEMALE" ? <Venus size={13} /> : <CircleDashed size={13} />}
                         {m.gender === "MALE" ? t('members.maleIcon') : m.gender === "FEMALE" ? t('members.femaleIcon') : t('members.otherIcon')}
                       </span>
                     </td>
-                    <td className="right" style={{ fontWeight: 'bold', color: 'var(--primary-orange)', fontSize: 16 }}>{m.points}</td>
-                    <td className="center">
+                    <td className="right" data-label={t('members.colPoints')} style={{ fontWeight: 'bold', color: 'var(--primary-orange)', fontSize: 16 }}>{m.points}</td>
+                    <td className="center" data-label={t('members.colAction')}>
                       <button className="btn-secondary" style={{ padding: '4px 12px', fontSize: 13, borderRadius: 6 }} onClick={() => handleViewHistory(m)}>{t('members.viewHistoryBtn')}</button>
                     </td>
                   </tr>
@@ -253,6 +250,71 @@ export default function Members() {
                 </tbody>
               </table>
             )}
+          </div>
+        </div>
+      )}
+      {/* Add Member Modal */}
+      {showAddModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999
+        }}>
+          <div className="card" style={{ width: 400, maxWidth: '90vw', padding: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ fontWeight: 900, margin: 0 }}>{t('members.registerMember')}</h2>
+              <button 
+                onClick={() => setShowAddModal(false)} 
+                style={{ 
+                  background: 'none', border: 'none', fontSize: 20, cursor: 'pointer',
+                  width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8
+                }}
+              >
+                ✖
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#6C727F' }}>{t('members.colName')}</label>
+                <input
+                  style={{ width: '100%' }}
+                  placeholder={t('members.namePlaceholder')}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#6C727F' }}>{t('members.colPhone')}</label>
+                <input
+                  style={{ width: '100%' }}
+                  placeholder={t('members.phonePlaceholder')}
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#6C727F' }}>{t('members.colGender')}</label>
+                <select
+                  style={{ width: '100%' }}
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                >
+                  <option value="MALE">{t('members.genderMale')}</option>
+                  <option value="FEMALE">{t('members.genderFemale')}</option>
+                  <option value="OTHER">{t('members.genderOther')}</option>
+                </select>
+              </div>
+
+              <button
+                className="btn-primary"
+                style={{ width: '100%', marginTop: 8 }}
+                onClick={handleCreate}
+              >
+                {t('members.registerBtn')}
+              </button>
+            </div>
           </div>
         </div>
       )}

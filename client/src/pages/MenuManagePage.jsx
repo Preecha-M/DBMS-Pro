@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { UploadCloud } from "lucide-react";
 import api from "../db/api";
 
 const FALLBACK_IMG = "https://cdn-icons-png.flaticon.com/512/924/924514.png";
@@ -21,6 +22,10 @@ export default function MenuManagePage() {
     category_id: "",
     image_url: "",
   });
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // ... existing states ...
 
   const load = async () => {
     setError("");
@@ -99,6 +104,12 @@ export default function MenuManagePage() {
     });
   };
 
+  const closeFormModal = () => {
+    setIsModalOpen(false);
+    resetForm();
+    setError("");
+  };
+
   const onPickImage = async (file) => {
     if (!file) return;
 
@@ -149,7 +160,7 @@ export default function MenuManagePage() {
       }
 
       await load();
-      resetForm();
+      closeFormModal();
     } catch (e2) {
       setError(e2?.response?.data?.message || t('menuManage.errSaveFailed'));
     }
@@ -164,15 +175,16 @@ export default function MenuManagePage() {
       category_id: m.category_id ? String(m.category_id) : "",
       image_url: m.image_url || "",
     });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setError("");
+    setIsModalOpen(true);
   };
 
   const onDelete = async (id) => {
+    if (!window.confirm(t('common.confirmDelete', 'Are you sure you want to delete this menu?'))) return;
     setError("");
     try {
       await api.delete(`/menu/${id}`);
       await load();
-      if (editingId === id) resetForm();
     } catch (e) {
       setError(e?.response?.data?.message || t('menuManage.errDeleteFailed'));
     }
@@ -186,212 +198,284 @@ export default function MenuManagePage() {
           justifyContent: "space-between",
           alignItems: "center",
           gap: 12,
+          marginBottom: 16,
         }}
       >
         <h2 style={{ margin: 0 }}>{t('menuManage.pageTitle')}</h2>
-        <button className="pos-logout-btn" onClick={resetForm}>
-          {t('menuManage.btnClear')}
+        <button 
+          className="btn-primary" 
+          onClick={() => {
+            resetForm();
+            setIsModalOpen(true);
+          }}
+        >
+          + {t('menuManage.formTitleAdd')}
         </button>
       </div>
 
-      {error && (
+      {error && !isModalOpen && (
         <div className="auth-error" style={{ marginTop: 12 }}>
           {error}
         </div>
       )}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "360px 1fr",
-          gap: 18,
-          marginTop: 16,
-        }}
-      >
-        <form onSubmit={onSubmit} className="card" style={{ padding: 16 }}>
-          <div style={{ fontWeight: 900, marginBottom: 12 }}>
-            {editingId ? t('menuManage.formTitleEdit') : t('menuManage.formTitleAdd')}
-          </div>
-
-          <div className="input-group">
-            <label>{t('menuManage.labelName')}</label>
-            <input
-              value={form.menu_name}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, menu_name: e.target.value }))
-              }
-              placeholder={t('menuManage.placeholderName')}
-              required
-            />
-          </div>
-
-          <div className="input-group">
-            <label>{t('menuManage.labelPrice')}</label>
-            <input
-              type="number"
-              value={form.price}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, price: e.target.value }))
-              }
-              placeholder={t('menuManage.placeholderPrice')}
-              min="0"
-              step="0.01"
-              required
-            />
-          </div>
-
-          <div className="input-group">
-            <label>{t('menuManage.labelStatus')}</label>
-            <select
-              value={form.status}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, status: e.target.value }))
-              }
-              style={{
-                width: "100%",
-                padding: "12px 16px",
-                borderRadius: 12,
-                border: "1px solid var(--border-color)",
-              }}
-            >
-              <option value="Available">Available</option>
-              <option value="Unavailable">Unavailable</option>
-            </select>
-          </div>
-
-          <div className="input-group">
-            <label>{t('menuManage.labelCategory')}</label>
-            <select
-              value={form.category_id}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, category_id: e.target.value }))
-              }
-              style={{
-                width: "100%",
-                padding: "12px 16px",
-                borderRadius: 12,
-                border: "1px solid var(--border-color)",
-              }}
-            >
-              <option value="">{t('menuManage.optNoCategory')}</option>
-              {categoryOptions.map((c) => (
-                <option key={c.category_id} value={c.category_id}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="input-group">
-            <label>{t('menuManage.labelImage')}</label>
-
-            <div style={{ display: "grid", gap: 10 }}>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => onPickImage(e.target.files?.[0])}
-              />
-
-              <input
-                value={form.image_url}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, image_url: e.target.value }))
-                }
-                placeholder={t('menuManage.placeholderImageLink')}
-              />
-
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+      {loading ? (
+        <div>{t('menuManage.textLoading')}</div>
+      ) : (
+        <div className="menu-grid">
+          {menus.map((m) => (
+            <div key={m.menu_id} className="menu-card">
+              <div className="menu-card-header">
                 <img
-                  src={form.image_url || FALLBACK_IMG}
-                  alt="preview"
-                  style={{
-                    width: 72,
-                    height: 72,
-                    objectFit: "cover",
-                    borderRadius: 14,
-                    border: "1px solid var(--border-color)",
-                    background: "#fff",
-                  }}
+                  src={m.image_url || FALLBACK_IMG}
+                  alt={m.menu_name}
+                  className="menu-card-img"
                 />
-                <div style={{ color: "#9EA3AE", fontSize: 12 }}>
-                  {t('menuManage.textImagePreview')}
+                <div className="menu-card-info">
+                  <div className="menu-card-title">{m.menu_name}</div>
+                  <div className="menu-card-price">฿ {Number(m.price || 0).toFixed(2)}</div>
+                  <div className="menu-card-meta">
+                    {m.status || "-"} · {t('menuManage.textCategory')} {m.category_id ? categoryNameById.get(Number(m.category_id)) || `#${m.category_id}` : "-"}
+                  </div>
                 </div>
               </div>
+
+              <div className="menu-card-actions">
+                <button
+                  className="menu-card-btn"
+                  type="button"
+                  onClick={() => onEdit(m)}
+                >
+                  {t('menuManage.btnEdit')}
+                </button>
+                <button
+                  className="menu-card-btn delete"
+                  type="button"
+                  onClick={() => onDelete(m.menu_id)}
+                >
+                  {t('menuManage.btnDelete')}
+                </button>
+              </div>
             </div>
-          </div>
+          ))}
 
-          <button
-            type="submit"
-            className="pos-neworder-btn"
-            style={{ marginTop: 14, width: "100%" }}
-          >
-            {editingId ? t('menuManage.btnUpdate') : t('menuManage.btnCreate')}
-          </button>
-        </form>
-
-        <div className="card" style={{ padding: 16, overflow: "hidden" }}>
-          <div style={{ fontWeight: 900, marginBottom: 12 }}>{t('menuManage.listTitle')}</div>
-
-          {loading ? (
-            <div>{t('menuManage.textLoading')}</div>
-          ) : (
-            <div style={{ display: "grid", gap: 10 }}>
-              {menus.map((m) => (
-                <div key={m.menu_id} className="cat-row">
-                  <div className="cat-left" style={{ alignItems: "center" }}>
-                    <img
-                      src={m.image_url || FALLBACK_IMG}
-                      alt={m.menu_name}
-                      style={{
-                        width: 54,
-                        height: 54,
-                        borderRadius: 14,
-                        border: "1px solid var(--border-color)",
-                        objectFit: "cover",
-                        background: "#fff",
-                      }}
-                    />
-
-                    <div>
-                      <div className="cat-name">{m.menu_name}</div>
-                      <div className="cat-sub">
-                        ฿ {Number(m.price || 0).toFixed(2)} · {m.status || "-"}
-                        {" · "}
-                        {t('menuManage.textCategory')}{" "}
-                        {m.category_id
-                          ? categoryNameById.get(Number(m.category_id)) ||
-                            `#${m.category_id}`
-                          : "-"}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="cat-actions">
-                    <button
-                      className="qty-btn"
-                      type="button"
-                      onClick={() => onEdit(m)}
-                    >
-                      {t('menuManage.btnEdit')}
-                    </button>
-                    <button
-                      className="qty-btn"
-                      type="button"
-                      onClick={() => onDelete(m.menu_id)}
-                    >
-                      {t('menuManage.btnDelete')}
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              {menus.length === 0 && (
-                <div style={{ color: "#9EA3AE" }}>{t('menuManage.noMenus')}</div>
-              )}
+          {menus.length === 0 && (
+            <div style={{ color: "#9EA3AE", gridColumn: "1 / -1", textAlign: "center", padding: 40 }}>
+              {t('menuManage.noMenus')}
             </div>
           )}
         </div>
-      </div>
+      )}
+
+      {/* Modal Form */}
+      {isModalOpen && (
+        <div className="modal-backdrop">
+          <div className="modal-card">
+            <button className="modal-x" onClick={closeFormModal}>
+              ×
+            </button>
+            
+            <div className="modal-title" style={{ marginBottom: 16 }}>
+              {editingId ? t('menuManage.formTitleEdit') : t('menuManage.formTitleAdd')}
+            </div>
+
+            {error && (
+              <div className="auth-error">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={onSubmit}>
+              <div className="input-group">
+                <label>{t('menuManage.labelName')}</label>
+                <input
+                  value={form.menu_name}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, menu_name: e.target.value }))
+                  }
+                  placeholder={t('menuManage.placeholderName')}
+                  required
+                />
+              </div>
+
+              <div className="input-group">
+                <label>{t('menuManage.labelPrice')}</label>
+                <input
+                  type="number"
+                  value={form.price}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, price: e.target.value }))
+                  }
+                  placeholder={t('menuManage.placeholderPrice')}
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </div>
+
+              <div className="input-group">
+                <label>{t('menuManage.labelStatus')}</label>
+                <select
+                  value={form.status}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, status: e.target.value }))
+                  }
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    borderRadius: 12,
+                    border: "1.5px solid var(--border-color)",
+                    fontSize: 14,
+                    fontFamily: 'inherit',
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                    background: `#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center`,
+                    paddingRight: 40,
+                    cursor: 'pointer',
+                    color: '#19191C',
+                    outline: 'none',
+                    transition: 'border-color 0.2s, box-shadow 0.2s',
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'var(--primary-orange)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(237,100,45,0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'var(--border-color)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                >
+                  <option value="Available">Available</option>
+                  <option value="Unavailable">Unavailable</option>
+                </select>
+              </div>
+
+              <div className="input-group">
+                <label>{t('menuManage.labelCategory')}</label>
+                <select
+                  value={form.category_id}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, category_id: e.target.value }))
+                  }
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    borderRadius: 12,
+                    border: "1.5px solid var(--border-color)",
+                    fontSize: 14,
+                    fontFamily: 'inherit',
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                    background: `#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center`,
+                    paddingRight: 40,
+                    cursor: 'pointer',
+                    color: '#19191C',
+                    outline: 'none',
+                    transition: 'border-color 0.2s, box-shadow 0.2s',
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'var(--primary-orange)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(237,100,45,0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'var(--border-color)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                >
+                  <option value="">{t('menuManage.optNoCategory')}</option>
+                  {categoryOptions.map((c) => (
+                    <option key={c.category_id} value={c.category_id}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="input-group">
+                <label>{t('menuManage.labelImage')}</label>
+                <div style={{ display: "flex", flexDirection: 'column', gap: 10 }}>
+
+                  {/* Custom file upload zone */}
+                  <div
+                    onClick={() => document.getElementById('menu-file-input').click()}
+                    style={{
+                      border: '2px dashed var(--border-color)',
+                      borderRadius: 12,
+                      padding: '16px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      transition: 'border-color 0.2s, background 0.2s',
+                      background: '#fafafa',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--primary-orange)';
+                      e.currentTarget.style.background = '#FFF1EB';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--border-color)';
+                      e.currentTarget.style.background = '#fafafa';
+                    }}
+                  >
+                    <UploadCloud size={22} style={{ color: '#9ca3af', flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>
+                        คลิกเพื่ออัปโหลดรูปภาพ
+                      </div>
+                      <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>
+                        PNG, JPG, WEBP
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    id="menu-file-input"
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => onPickImage(e.target.files?.[0])}
+                  />
+
+                  <input
+                    value={form.image_url}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, image_url: e.target.value }))
+                    }
+                    placeholder={t('menuManage.placeholderImageLink')}
+                  />
+
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <img
+                      src={form.image_url || FALLBACK_IMG}
+                      alt="preview"
+                      style={{
+                        width: 72,
+                        height: 72,
+                        objectFit: "cover",
+                        borderRadius: 14,
+                        border: "1px solid var(--border-color)",
+                        background: "#fff",
+                      }}
+                    />
+                    <div style={{ color: "#9EA3AE", fontSize: 12 }}>
+                      {t('menuManage.textImagePreview')}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="modal-actions" style={{ marginTop: 24 }}>
+                <button type="button" className="btn-soft" onClick={closeFormModal}>
+                  {t('common.cancel', 'Cancel')}
+                </button>
+                <button type="submit" className="btn-primary">
+                  {editingId ? t('menuManage.btnUpdate') : t('menuManage.btnCreate')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

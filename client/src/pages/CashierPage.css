@@ -366,6 +366,107 @@
   .cashier-page .status-info {
     grid-template-columns: 1fr 1fr;
   }
+
+  /* --- Responsive Cashier History Table --- */
+  .cashier-page .cashier-history-card .table-container {
+    overflow-x: hidden; /* Prevent horizontal scroll, we are making it flex cards */
+  }
+
+  .cashier-page .cashier-history-card .inv-table {
+    min-width: 0 !important; /* Override global table min-width */
+    width: 100%;
+  }
+
+  .cashier-page .cashier-history-card .inv-table thead {
+    display: none;
+  }
+
+  .cashier-page .cashier-history-card .inv-table,
+  .cashier-page .cashier-history-card .inv-table tbody,
+  .cashier-page .cashier-history-card .inv-table tr,
+  .cashier-page .cashier-history-card .inv-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left !important;
+  }
+
+  .cashier-page .cashier-history-card .inv-table tbody tr {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    margin-bottom: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.2s;
+  }
+
+  .cashier-page .cashier-history-card .inv-table tbody tr:active {
+    background: #f9fafb;
+  }
+
+  .cashier-page .hide-on-mobile {
+    display: none !important;
+  }
+
+  /* Cells styling */
+  .cashier-page .cashier-history-card .inv-table td {
+    padding: 0;
+    border: none;
+    position: relative;
+    margin-bottom: 8px;
+  }
+
+  /* Specific Cell Placements */
+  .cashier-page .cashier-history-card .inv-table td.col-date {
+    width: 60%;
+    order: 1;
+    font-size: 15px;
+    font-weight: 800;
+    color: #19191C;
+    margin-bottom: 12px;
+  }
+
+  .cashier-page .cashier-history-card .inv-table td.col-status {
+    width: 40%;
+    order: 2;
+    text-align: right !important;
+    margin-bottom: 12px;
+  }
+
+  .cashier-page .cashier-history-card .inv-table td.col-users {
+    width: 100%;
+    order: 3;
+    background: #F9FAFB;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+
+  .cashier-page .cashier-history-card .inv-table td.col-sales {
+    width: 100%;
+    order: 4;
+    font-size: 20px;
+    text-align: right !important;
+    margin-bottom: 0;
+    display: flex;
+    justify-content: flex-end;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  /* Add 'Tap to View' hint underneath total sales */
+  .cashier-page .cashier-history-card .inv-table td.col-sales::after {
+    content: "ดูรายละเอียด ❯";
+    color: var(--primary-orange);
+    font-size: 12px;
+    font-weight: 700;
+    margin-left: 12px;
+  }
 }
 
 @media (max-width: 480px) {

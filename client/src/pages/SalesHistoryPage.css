@@ -53,9 +53,12 @@
   padding: 4px 10px;
   border-radius: 999px;
   background: #F4F7FE;
+  color: #4B5563;
   font-size: 12px;
   font-weight: 600;
   display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 /* date block */
@@ -66,4 +69,125 @@
 .sales-history-page .date-sub {
   font-size: 12px;
   color: #9EA3AE;
+}
+
+/* =========================================
+   Mobile View (<= 820px)
+   ========================================= */
+@media (max-width: 820px) {
+  /* Make filters scroll horizontally */
+  .sales-history-page .page-pad > div:nth-child(2) {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sales-history-page .page-pad > div:nth-child(2)::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide table header */
+  .sales-history-page .sales-table thead {
+    display: none;
+  }
+
+  /* Force table into block layout */
+  .sales-history-page .sales-table,
+  .sales-history-page .sales-table tbody,
+  .sales-history-page .sales-table tr,
+  .sales-history-page .sales-table td {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+    box-sizing: border-box;
+    text-align: left !important;
+  }
+
+  /* Card styling for each row */
+  .sales-history-page .sales-table tbody tr {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    margin-bottom: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.2s;
+  }
+
+  .sales-history-page .sales-table tbody tr:active {
+    background: #f9fafb;
+  }
+
+  .sales-history-page .hide-on-mobile {
+    display: none !important;
+  }
+
+  /* Individual cells */
+  .sales-history-page .sales-table td {
+    padding: 0;
+    border: none;
+    position: relative;
+  }
+
+  .sales-history-page .sales-table td:before {
+    display: none; /* Hide the generic data-labels for this specific compact design */
+  }
+
+  /* Layout specific cells */
+  .sales-history-page .sales-table td.col-receipt {
+    width: 60%;
+    font-size: 16px;
+    font-weight: 900;
+    color: #19191C;
+    order: 1;
+    margin-bottom: 6px;
+  }
+
+  .sales-history-page .sales-table td[data-label="Net Total"],
+  .sales-history-page .sales-table td[data-label="ยอดสุทธิ"] {
+    width: 40%;
+    font-size: 18px;
+    text-align: right !important; 
+    order: 2;
+    margin-bottom: 6px;
+  }
+
+  .sales-history-page .sales-table td.col-date {
+    width: 100%;
+    order: 3;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #9EA3AE;
+  }
+
+  .sales-history-page .date-main, .sales-history-page .date-sub {
+    display: inline-block;
+    font-size: 13px;
+    color: #8B90A0;
+    font-weight: 500;
+  }
+
+  .sales-history-page .date-sub {
+    margin-left: 6px;
+  }
+  
+  .sales-history-page .date-sub::before {
+    content: "•";
+    margin-right: 6px;
+    color: #ddd;
+  }
+  
+  /* Add 'Tap to View' hint */
+  .sales-history-page .col-date::after {
+    content: "ดูรายละเอียด ❯";
+    color: var(--primary-orange);
+    font-size: 12px;
+    font-weight: 700;
+  }
 }

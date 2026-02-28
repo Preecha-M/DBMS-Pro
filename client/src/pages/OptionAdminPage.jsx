@@ -14,6 +14,10 @@ export default function OptionAdminPage() {
   const [groupName, setGroupName] = useState("");
   const [selectedMenus, setSelectedMenus] = useState([]);
 
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [itemForm, setItemForm] = useState({ group_id: "", item_name: "", additional_price: 0 });
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -46,6 +50,7 @@ export default function OptionAdminPage() {
       setSuccess(t('optionAdmin.sucAddGroup'));
       setGroupName("");
       setSelectedMenus([]);
+      setIsGroupModalOpen(false);
       loadData();
     } catch (e) {
       setError(e?.response?.data?.message || t('optionAdmin.errDefault'));
@@ -64,8 +69,6 @@ export default function OptionAdminPage() {
     }
   };
 
-  const [itemForm, setItemForm] = useState({ group_id: "", item_name: "", additional_price: 0 });
-
   const handleAddItem = async (e) => {
     e.preventDefault();
     setError(""); setSuccess("");
@@ -78,6 +81,7 @@ export default function OptionAdminPage() {
       });
       setSuccess(t('optionAdmin.sucAddItem'));
       setItemForm({ ...itemForm, item_name: "", additional_price: 0 });
+      setIsItemModalOpen(false);
       loadData();
     } catch (e) {
       setError(e?.response?.data?.message || t('optionAdmin.errDefault'));
@@ -95,8 +99,6 @@ export default function OptionAdminPage() {
     }
   };
 
-  if (loading) return <div className="page-pad">{t('optionAdmin.loading')}</div>;
-
   const handleMenuSelection = (menuId) => {
     setSelectedMenus(prev => 
       prev.includes(menuId) 
@@ -105,118 +107,212 @@ export default function OptionAdminPage() {
     );
   };
 
+  if (loading) return <div className="page-pad">{t('optionAdmin.loading')}</div>;
+
   return (
     <div className="page-pad">
-      <h2 style={{ marginBottom: 20 }}>{t('optionAdmin.pageTitle')}</h2>
-
-      {error && <div className="auth-error" style={{ marginBottom: 16 }}>{error}</div>}
-      {success && <div style={{ background: "#d4edda", color: "#155724", padding: 12, borderRadius: 8, marginBottom: 16 }}>{success}</div>}
-
-      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-        {/* left col: Groups */}
-        <div className="card" style={{ flex: 1, padding: 20 }}>
-          <h3>{t('optionAdmin.titleGroups')}</h3>
-          <form onSubmit={handleAddGroup} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <input 
-                placeholder={t('optionAdmin.placeholderGroupName')}
-                value={groupName}
-                onChange={e => setGroupName(e.target.value)}
-                required
-                style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #ddd' }}
-              />
-              <button type="submit" className="pos-neworder-btn">{t('optionAdmin.btnAddGroup')}</button>
-            </div>
-            
-            <div style={{ marginTop: 8 }}>
-              <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>{t('optionAdmin.labelSelectMenus')}</label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, maxHeight: 150, overflowY: 'auto', padding: 8, border: '1px solid #ddd', borderRadius: 8 }}>
-                {menus.map(m => (
-                  <label key={m.menu_id} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', background: selectedMenus.includes(m.menu_id) ? '#e6f4ea' : '#f5f5f5', padding: '4px 8px', borderRadius: 16, fontSize: 13 }}>
-                    <input 
-                      type="checkbox" 
-                      checked={selectedMenus.includes(m.menu_id)}
-                      onChange={() => handleMenuSelection(m.menu_id)}
-                      style={{ margin: 0 }}
-                    />
-                    {m.menu_name}
-                  </label>
-                ))}
-                {menus.length === 0 && <span style={{ color: '#999', fontSize: 13 }}>{t('optionAdmin.noMenusSelected')}</span>}
-              </div>
-            </div>
-          </form>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {groups.map(g => (
-              <div key={g.group_id} className="option-group-item">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <div>
-                    <strong>{g.group_name}</strong>
-                    <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
-                      {t('optionAdmin.textUsedFor')} {g.menu_ids?.length > 0 
-                        ? g.menu_ids.map(id => menus.find(m => m.menu_id === id)?.menu_name || `#${id}`).join(', ')
-                        : t('optionAdmin.textAllMenus')}
-                    </div>
-                  </div>
-                  <button onClick={() => handleDeleteGroup(g.group_id)} style={{ background: 'transparent', border: 'none', color: '#ff4d4f', cursor: 'pointer', padding: 4 }}>{t('optionAdmin.btnDeleteWord')}</button>
-                </div>
-                
-                {/* Items in this group */}
-                {g.menu_option_item && g.menu_option_item.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="inv-table" style={{ fontSize: 13, minWidth: 400 }}>
-                    <thead>
-                      <tr>
-                        <th>{t('optionAdmin.colOptionName')}</th>
-                        <th>{t('optionAdmin.colAddPrice')}</th>
-                        <th style={{ width: 50 }}></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {g.menu_option_item.map(it => (
-                        <tr key={it.item_id}>
-                          <td>{it.item_name}</td>
-                          <td>+{it.additional_price} ฿</td>
-                          <td style={{ textAlign: 'right' }}>
-                            <button onClick={() => handleDeleteItem(it.item_id)} style={{ background: 'transparent', border: 'none', color: '#ff4d4f', cursor: 'pointer', fontSize: 16 }}>×</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div style={{ fontSize: 13, color: '#999' }}>{t('optionAdmin.noOptionItems')}</div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* right col: Items Form */}
-        <div className="card" style={{ width: 350, padding: 20 }}>
-          <h3>{t('optionAdmin.titleAddItem')}</h3>
-          <form onSubmit={handleAddItem} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div className="input-group">
-              <label>{t('optionAdmin.labelSelectGroup')}</label>
-              <select value={itemForm.group_id} onChange={e => setItemForm({...itemForm, group_id: e.target.value})} required>
-                <option value="">{t('optionAdmin.optSelect')}</option>
-                {groups.map(g => <option key={g.group_id} value={g.group_id}>{g.group_name}</option>)}
-              </select>
-            </div>
-            <div className="input-group">
-              <label>{t('optionAdmin.labelItemName')}</label>
-              <input value={itemForm.item_name} onChange={e => setItemForm({...itemForm, item_name: e.target.value})} required placeholder={t('optionAdmin.placeholderItemName')} />
-            </div>
-            <div className="input-group">
-              <label>{t('optionAdmin.labelAddPrice')}</label>
-              <input type="number" step="0.5" value={itemForm.additional_price} onChange={e => setItemForm({...itemForm, additional_price: e.target.value})} />
-            </div>
-            <button type="submit" className="pos-neworder-btn">{t('optionAdmin.btnSaveItem')}</button>
-          </form>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+        <h2 style={{ margin: 0 }}>{t('optionAdmin.pageTitle')}</h2>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'nowrap' }}>
+          <button 
+            className="btn-soft" 
+            style={{ whiteSpace: 'nowrap' }}
+            onClick={() => {
+              setError(""); setSuccess("");
+              setItemForm({ group_id: "", item_name: "", additional_price: 0 });
+              setIsItemModalOpen(true);
+            }}
+          >
+            + {t('optionAdmin.titleAddItem')}
+          </button>
+          <button 
+            className="btn-primary" 
+            style={{ whiteSpace: 'nowrap' }}
+            onClick={() => {
+              setError(""); setSuccess("");
+              setGroupName(""); setSelectedMenus([]);
+              setIsGroupModalOpen(true);
+            }}
+          >
+            + {t('optionAdmin.btnAddGroup')}
+          </button>
         </div>
       </div>
+
+      {error && !isGroupModalOpen && !isItemModalOpen && <div className="auth-error" style={{ marginBottom: 16 }}>{error}</div>}
+      {success && !isGroupModalOpen && !isItemModalOpen && <div style={{ background: "#d4edda", color: "#155724", padding: 12, borderRadius: 8, marginBottom: 16 }}>{success}</div>}
+
+      <div className="menu-grid">
+        {groups.map(g => (
+          <div key={g.group_id} className="menu-card" style={{ padding: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div className="menu-card-title" style={{ fontSize: 18 }}>{g.group_name}</div>
+                <div className="menu-card-meta">
+                  {t('optionAdmin.textUsedFor')} {g.menu_ids?.length > 0 
+                    ? g.menu_ids.map(id => menus.find(m => m.menu_id === id)?.menu_name || `#${id}`).join(', ')
+                    : t('optionAdmin.textAllMenus')}
+                </div>
+              </div>
+              <button 
+                onClick={() => handleDeleteGroup(g.group_id)} 
+                title={t('optionAdmin.btnDeleteWord')}
+                style={{ 
+                  background: 'transparent', border: 'none', color: '#DC2626', 
+                  cursor: 'pointer', fontSize: 18, marginTop: -4 
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div style={{ marginTop: 12, background: '#F9FAFB', borderRadius: 12, padding: 12, flex: 1 }}>
+              {g.menu_option_item && g.menu_option_item.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {g.menu_option_item.map(it => (
+                    <div key={it.item_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 14 }}>
+                      <div style={{ fontWeight: 600, color: '#4B5563' }}>{it.item_name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ fontWeight: 800, color: 'var(--primary-orange)' }}>+{it.additional_price} ฿</div>
+                        <button 
+                          onClick={() => handleDeleteItem(it.item_id)} 
+                          style={{ background: 'transparent', border: 'none', color: '#9CA3AF', cursor: 'pointer', padding: 0 }}
+                          title="Delete Item"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: 13, color: '#9CA3AF', textAlign: 'center', padding: '10px 0' }}>{t('optionAdmin.noOptionItems')}</div>
+              )}
+            </div>
+
+            <button
+              className="menu-card-btn"
+              style={{ marginTop: 12 }}
+              onClick={() => {
+                setError(""); setSuccess("");
+                setItemForm({ group_id: String(g.group_id), item_name: "", additional_price: 0 });
+                setIsItemModalOpen(true);
+              }}
+            >
+              + {t('optionAdmin.titleAddItem')}
+            </button>
+          </div>
+        ))}
+        {groups.length === 0 && (
+          <div style={{ color: "#9EA3AE", gridColumn: "1 / -1", textAlign: "center", padding: 40 }}>
+            {t('optionAdmin.loading')}
+          </div>
+        )}
+      </div>
+
+      {/* Add Group Modal */}
+      {isGroupModalOpen && (
+        <div className="modal-backdrop">
+          <div className="modal-card">
+            <button className="modal-x" onClick={() => setIsGroupModalOpen(false)}>×</button>
+            <div className="modal-title" style={{ marginBottom: 16 }}>{t('optionAdmin.btnAddGroup')}</div>
+            
+            {error && <div className="auth-error">{error}</div>}
+
+            <form onSubmit={handleAddGroup}>
+              <div className="input-group">
+                <label>{t('optionAdmin.placeholderGroupName')}</label>
+                <input 
+                  value={groupName}
+                  onChange={e => setGroupName(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div className="input-group">
+                <label>{t('optionAdmin.labelSelectMenus')}</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, maxHeight: 180, overflowY: 'auto', padding: 12, border: '1px solid var(--border-color)', borderRadius: 12 }}>
+                  {menus.map(m => (
+                    <label key={m.menu_id} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', background: selectedMenus.includes(m.menu_id) ? '#FFF1EB' : '#F4F7FE', color: selectedMenus.includes(m.menu_id) ? 'var(--primary-orange)' : 'inherit', padding: '6px 12px', borderRadius: 20, fontSize: 13, fontWeight: selectedMenus.includes(m.menu_id) ? 700 : 500 }}>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedMenus.includes(m.menu_id)}
+                        onChange={() => handleMenuSelection(m.menu_id)}
+                        style={{ margin: 0 }}
+                      />
+                      {m.menu_name}
+                    </label>
+                  ))}
+                  {menus.length === 0 && <span style={{ color: '#999', fontSize: 13 }}>{t('optionAdmin.noMenusSelected')}</span>}
+                </div>
+              </div>
+
+              <div className="modal-actions" style={{ marginTop: 24 }}>
+                <button type="button" className="btn-soft" onClick={() => setIsGroupModalOpen(false)}>
+                  {t('common.cancel', 'Cancel')}
+                </button>
+                <button type="submit" className="btn-primary">
+                  {t('optionAdmin.btnAddGroup')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Item Modal */}
+      {isItemModalOpen && (
+        <div className="modal-backdrop">
+          <div className="modal-card">
+            <button className="modal-x" onClick={() => setIsItemModalOpen(false)}>×</button>
+            <div className="modal-title" style={{ marginBottom: 16 }}>{t('optionAdmin.titleAddItem')}</div>
+            
+            {error && <div className="auth-error">{error}</div>}
+
+            <form onSubmit={handleAddItem}>
+              <div className="input-group">
+                <label>{t('optionAdmin.labelSelectGroup')}</label>
+                <select 
+                  value={itemForm.group_id} 
+                  onChange={e => setItemForm({...itemForm, group_id: e.target.value})} 
+                  required
+                  style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1px solid var(--border-color)" }}
+                >
+                  <option value="">{t('optionAdmin.optSelect')}</option>
+                  {groups.map(g => <option key={g.group_id} value={g.group_id}>{g.group_name}</option>)}
+                </select>
+              </div>
+              <div className="input-group">
+                <label>{t('optionAdmin.labelItemName')}</label>
+                <input 
+                  value={itemForm.item_name} 
+                  onChange={e => setItemForm({...itemForm, item_name: e.target.value})} 
+                  required 
+                  placeholder={t('optionAdmin.placeholderItemName')} 
+                />
+              </div>
+              <div className="input-group">
+                <label>{t('optionAdmin.labelAddPrice')}</label>
+                <input 
+                  type="number" 
+                  step="0.5" 
+                  value={itemForm.additional_price} 
+                  onChange={e => setItemForm({...itemForm, additional_price: e.target.value})} 
+                />
+              </div>
+
+              <div className="modal-actions" style={{ marginTop: 24 }}>
+                <button type="button" className="btn-soft" onClick={() => setIsItemModalOpen(false)}>
+                  {t('common.cancel', 'Cancel')}
+                </button>
+                <button type="submit" className="btn-primary">
+                  {t('optionAdmin.btnSaveItem')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

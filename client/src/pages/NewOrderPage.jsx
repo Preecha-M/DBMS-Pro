@@ -2,6 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import api from "../db/api";
+import { Coffee, CupSoda, Croissant, CakeSlice, Utensils, Hash, LayoutGrid } from "lucide-react";
+
+// Helper to render lucide icon based on text input
+const renderCategoryIcon = (iconName, size = 24) => {
+  const name = String(iconName || "").toLowerCase();
+  if (name.includes("coffee") || name.includes("กาแฟ") || name.includes("☕")) return <Coffee size={size} />;
+  if (name.includes("no") || name.includes("tea") || name.includes("ชา") || name.includes("🍵") || name.includes("soda") || name.includes("โซดา") || name.includes("drink") || name.includes("เครื่องดื่ม")) return <CupSoda size={size} />;
+  if (name.includes("bakery") || name.includes("เบเกอรี่") || name.includes("🥐")) return <Croissant size={size} />;
+  if (name.includes("cake") || name.includes("เค้ก") || name.includes("🍰") || name.includes("dessert") || name.includes("ของหวาน")) return <CakeSlice size={size} />;
+  if (name.includes("food") || name.includes("อาหาร") || name.includes("🍝")) return <Utensils size={size} />;
+  return <Hash size={size} />;
+};
 
 export default function NewOrderPage() {
   const { t } = useTranslation();
@@ -364,25 +376,36 @@ export default function NewOrderPage() {
 
   return (
     <div className="pos-page">
-      <div className="sub-nav">
-        {pillCats.map((c) => (
-          <button
-            key={String(c.category_id)}
-            type="button"
-            className={`filter-pill ${
-              (!c.category_id && !activeCatId) ||
-              Number(c.category_id) === activeCatId
-                ? "active"
-                : ""
-            }`}
-            onClick={() => {
-              if (!c.category_id) setParams({});
-              else setParams({ cat: String(c.category_id) });
-            }}
-          >
-            {c.category_name}
-          </button>
-        ))}
+      <div 
+        className="sub-nav hide-scrollbar" 
+        style={{ 
+          display: 'flex', 
+          overflowX: 'auto', 
+          padding: '8px 24px', 
+          gap: 10,
+          borderBottom: '1px solid var(--border-color)',
+          background: '#fff'
+        }}
+      >
+        {pillCats.map((c) => {
+          const isActive = (!c.category_id && !activeCatId) || Number(c.category_id) === activeCatId;
+          return (
+            <button
+              key={String(c.category_id)}
+              type="button"
+              className={`cat-filter-pill ${isActive ? "active" : ""}`}
+              onClick={() => {
+                if (!c.category_id) setParams({});
+                else setParams({ cat: String(c.category_id) });
+              }}
+            >
+              <div className="cat-filter-icon">
+                {!c.category_id ? <LayoutGrid size={18} /> : renderCategoryIcon(c.icon || c.category_name, 18)}
+              </div>
+              <div>{c.category_name}</div>
+            </button>
+          );
+        })}
       </div>
 
       <div className="pos-order-grid">

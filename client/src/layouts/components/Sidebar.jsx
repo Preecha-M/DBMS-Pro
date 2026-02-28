@@ -2,6 +2,18 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import api from '../../db/api';
 import { useAuth } from '../../auth/useAuth';
+import { Coffee, CupSoda, Croissant, CakeSlice, Utensils, Hash } from "lucide-react";
+
+// Helper to render lucide icon based on text input
+const renderCategoryIcon = (iconName, size = 18) => {
+  const name = String(iconName || "").toLowerCase();
+  if (name.includes("coffee") || name.includes("กาแฟ") || name.includes("☕")) return <Coffee size={size} />;
+  if (name.includes("no") || name.includes("tea") || name.includes("ชา") || name.includes("🍵") || name.includes("soda") || name.includes("โซดา") || name.includes("drink") || name.includes("เครื่องดื่ม")) return <CupSoda size={size} />;
+  if (name.includes("bakery") || name.includes("เบเกอรี่") || name.includes("🥐")) return <Croissant size={size} />;
+  if (name.includes("cake") || name.includes("เค้ก") || name.includes("🍰") || name.includes("dessert") || name.includes("ของหวาน")) return <CakeSlice size={size} />;
+  if (name.includes("food") || name.includes("อาหาร") || name.includes("🍝")) return <Utensils size={size} />;
+  return <Hash size={size} />;
+};
 
 export default function Sidebar() {
   const { user } = useAuth()
@@ -51,7 +63,9 @@ export default function Sidebar() {
           type="button"
           onClick={() => navigate(`/new-order?cat=${c.category_id}`)}
         >
-          <div className="sidebar-icon-box">{c.icon || '•'}</div>
+          <div className="sidebar-icon-box" style={{ background: 'transparent' }}>
+            {renderCategoryIcon(c.icon || c.category_name, 18)}
+          </div>
           <div className="sidebar-label">{c.category_name}</div>
         </button>
       ))}

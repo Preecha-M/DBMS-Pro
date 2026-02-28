@@ -20,6 +20,7 @@ export default function PromotionsPage() {
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
 
   const loadData = async () => {
     setError("");
@@ -55,6 +56,7 @@ export default function PromotionsPage() {
     });
     setEditingId(null);
     setError("");
+    setShowModal(false);
   };
 
   const onSubmit = async (e) => {
@@ -91,6 +93,7 @@ export default function PromotionsPage() {
       min_quantity: p.min_quantity || "1",
       menu_ids: Array.isArray(p.menu_ids) ? p.menu_ids.map(Number) : [],
     });
+    setShowModal(true);
   };
 
   const onDelete = async (id) => {
@@ -128,16 +131,22 @@ export default function PromotionsPage() {
     <div className="page-pad">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
         <h2 style={{ margin: 0 }}>{t('promotions.pageTitle')}</h2>
-        <button className="pos-logout-btn" onClick={resetForm}>{t('promotions.btnClear')}</button>
+        <button className="btn-primary" onClick={() => { resetForm(); setShowModal(true); }}>
+          + {t('promotions.titleAdd')}
+        </button>
       </div>
 
       {error && <div className="auth-error" style={{ marginTop: 12 }}>{error}</div>}
 
-      <div className="promo-page-grid">
-        <form onSubmit={onSubmit} className="card promo-form-panel" style={{ padding: 16 }}>
-          <div style={{ fontWeight: 900, marginBottom: 12 }}>
-            {editingId ? t('promotions.titleEdit') : t('promotions.titleAdd')}
-          </div>
+      <div style={{ marginTop: 16 }}>
+        {showModal && (
+          <div className="modal-backdrop">
+            <div className="modal-card wide">
+              <button className="modal-x" type="button" onClick={resetForm}>×</button>
+              <h3 className="modal-title" style={{ marginTop: 0, marginBottom: 16 }}>
+                {editingId ? t('promotions.titleEdit') : t('promotions.titleAdd')}
+              </h3>
+              <form onSubmit={onSubmit} className="promo-form-panel">
 
           <div className="input-group">
             <label>{t('promotions.labelPromoName')}</label>
@@ -235,10 +244,16 @@ export default function PromotionsPage() {
             </div>
           </div>
 
-          <button type="submit" className="pos-neworder-btn" style={{ marginTop: 14, width: "100%" }}>
-            {editingId ? t('promotions.btnUpdate') : t('promotions.btnCreate')}
-          </button>
+          <div className="modal-actions">
+            <button type="button" className="btn-soft" onClick={resetForm}>{t('promotions.btnClear') || 'Cancel'}</button>
+            <button type="submit" className="btn-primary">
+              {editingId ? t('promotions.btnUpdate') : t('promotions.btnCreate')}
+            </button>
+          </div>
         </form>
+            </div>
+          </div>
+        )}
 
         <div className="card" style={{ padding: 16 }}>
           <div style={{ fontWeight: 900, marginBottom: 12 }}>{t('promotions.titleAllPromos')}</div>

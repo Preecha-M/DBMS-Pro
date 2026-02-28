@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Wallet, ReceiptText, ShoppingCart, History, Package, Users, Flame } from "lucide-react";
+import { Wallet, ReceiptText, ShoppingCart, History, Package, Users, Flame, Coffee, Store } from "lucide-react";
 import api from '../db/api';
 import './HomePage.css';
 
@@ -84,8 +84,16 @@ export default function HomePage() {
         </div>
       </section>
 
+      <div className="mobile-primary-action">
+        <button className="btn-massive-primary" onClick={() => navigate("/new-order")}>
+          <ShoppingCart size={28} />
+          {t('home.newOrder')}
+        </button>
+      </div>
+
       <section className="actions-section">
-        <button className="action-card primary" onClick={() => navigate("/new-order")}>
+        {/* Desktop only new order card */}
+        <button className="action-card primary desktop-only-action" onClick={() => navigate("/new-order")}>
           <div className="action-icon"><ShoppingCart size={28} /></div>
           <div className="action-text">
             <h3>{t('home.newOrder')}</h3>
@@ -93,27 +101,34 @@ export default function HomePage() {
           </div>
         </button>
 
-        <button className="action-card secondary" onClick={() => navigate("/sales-history")}>
-          <div className="action-icon"><History size={28} /></div>
-          <div className="action-text">
-            <h3>{t('home.salesHistory')}</h3>
-            <p>{t('home.salesHistoryDesc')}</p>
-          </div>
-        </button>
-
         <button className="action-card secondary" onClick={() => navigate("/inventory")}>
           <div className="action-icon"><Package size={28} /></div>
-          <div className="action-text">
+          <div className="action-text mobile-center-text">
             <h3>{t('home.inventory')}</h3>
-            <p>{t('home.inventoryDesc')}</p>
+            <p className="desktop-only-action">{t('home.inventoryDesc')}</p>
           </div>
         </button>
 
         <button className="action-card secondary" onClick={() => navigate("/members")}>
           <div className="action-icon"><Users size={28} /></div>
-          <div className="action-text">
+          <div className="action-text mobile-center-text">
             <h3>{t('home.members')}</h3>
-            <p>{t('home.membersDesc')}</p>
+            <p className="desktop-only-action">{t('home.membersDesc')}</p>
+          </div>
+        </button>
+
+        <button className="action-card secondary" onClick={() => navigate("/sales-history")}>
+          <div className="action-icon"><History size={28} /></div>
+          <div className="action-text mobile-center-text">
+            <h3>{t('home.salesHistory')}</h3>
+            <p className="desktop-only-action">{t('home.salesHistoryDesc')}</p>
+          </div>
+        </button>
+
+        <button className="action-card secondary mobile-only-action" onClick={() => navigate("/cashier")}>
+          <div className="action-icon"><Store size={28} /></div>
+          <div className="action-text mobile-center-text">
+            <h3>{t('nav.cashier') || 'หน้าสั่งออเดอร์/เปิดกะ'}</h3>
           </div>
         </button>
       </section>

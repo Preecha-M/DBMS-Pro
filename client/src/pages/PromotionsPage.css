@@ -1,9 +1,5 @@
 .promo-page-grid {
-  display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: 18px;
   margin-top: 16px;
-  align-items: start;
 }
 
 .promo-form-panel {

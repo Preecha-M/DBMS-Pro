@@ -3,6 +3,7 @@ import api from "../db/api";
 import { io } from "socket.io-client";
 import { useTranslation } from "react-i18next";
 import CashierDashboard from "./CashierDashboard";
+import { Circle } from "lucide-react";
 import "./CashierPage.css";
 
 export default function CashierPage() {
@@ -295,7 +296,9 @@ export default function CashierPage() {
         <>
           <div className="cashier-status-card">
         <span className={`status-badge ${isRoundOpen ? "open" : "closed"}`}>
-          {isRoundOpen ? "🟢 " + t('cashier.currentRound') : "🔴 " + t('cashier.roundClosed')}
+          {isRoundOpen
+            ? <><Circle size={10} fill="#22c55e" color="#22c55e" /> {t('cashier.currentRound')}</>
+            : <><Circle size={10} fill="#ef4444" color="#ef4444" /> {t('cashier.roundClosed')}</>}
         </span>
 
         {isRoundOpen && currentRound ? (
@@ -363,11 +366,11 @@ export default function CashierPage() {
                 <thead>
                   <tr>
                     <th>{t('cashier.openedAtLabel')}</th>
-                    <th>{t('cashier.closedAtLabel')}</th>
+                    <th className="hide-on-mobile">{t('cashier.closedAtLabel')}</th>
                     <th>{t('cashier.openedByClosedBy')}</th>
-                    <th>{t('cashier.startingCash')}</th>
-                    <th>{t('cashier.totalSalesLabel')}</th>
-                    <th style={{ textAlign: "right" }}>สถานะ</th>
+                    <th className="hide-on-mobile">{t('cashier.startingCash')}</th>
+                    <th className="text-right">{t('cashier.totalSalesLabel')}</th>
+                    <th className="text-right">สถานะ</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -378,9 +381,11 @@ export default function CashierPage() {
                       style={{ cursor: 'pointer' }}
                       className="history-row"
                     >
-                      <td>{formatDateTime(hr.opened_at)}</td>
-                      <td>{hr.closed_at ? formatDateTime(hr.closed_at) : "-"}</td>
-                      <td>
+                      <td className="col-date" data-label={t('cashier.openedAtLabel')}>
+                        <span className="date-main">{formatDateTime(hr.opened_at)}</span>
+                      </td>
+                      <td className="hide-on-mobile" data-label={t('cashier.closedAtLabel')}>{hr.closed_at ? formatDateTime(hr.closed_at) : "-"}</td>
+                      <td className="col-users" data-label={t('cashier.openedByClosedBy')}>
                         <div style={{ fontSize: 13 }}>
                           <strong>{t('cashier.openedBy')}</strong> {hr.opened_by_username || "-"}
                         </div>
@@ -388,12 +393,12 @@ export default function CashierPage() {
                           <strong>{t('cashier.closedBy')}</strong> {hr.closed_by_username || "-"}
                         </div>
                       </td>
-                      <td>{formatCurrency(hr.opening_cash)}</td>
-                      <td style={{ fontWeight: 600, color: "var(--primary-green)" }}>
+                      <td className="hide-on-mobile" data-label={t('cashier.startingCash')}>{formatCurrency(hr.opening_cash)}</td>
+                      <td className="col-sales text-right" data-label={t('cashier.totalSalesLabel')} style={{ fontWeight: 600, color: "var(--primary-green)" }}>
                         {formatCurrency(hr.total_sales || 0)}
                       </td>
-                      <td style={{ textAlign: "right" }}>
-                        <span className={`status-badge ${hr.status === "open" ? "open" : "closed"}`} style={{ padding: "4px 8px", fontSize: 12 }}>
+                      <td className="col-status text-right" data-label="สถานะ">
+                        <span className={`status-badge ${hr.status === "open" ? "open" : "closed"}`} style={{ padding: "4px 8px", fontSize: 12, marginBottom: 0 }}>
                           {hr.status === "open" ? t('cashier.statusOpen') : t('cashier.statusClosed')}
                         </span>
                       </td>

@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
+import BottomNav from "./components/BottomNav";
 
 export default function MainLayout() {
   return (
@@ -13,6 +14,7 @@ export default function MainLayout() {
           <Outlet />
         </main>
       </div>
+      <BottomNav />
     </div>
   );
 }

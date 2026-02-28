@@ -1,3 +1,8 @@
+.inventory-desktop-wrapper {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
 .inventory-tabs {
   display: flex;
   gap: 12px;
@@ -21,7 +26,7 @@
   color: #fff;
 }
 .inv-form-container {
-  max-width: 600px;
+  max-width: 600px; /* Make it look okay on desktop */
 }
 .inv-table {
   width: 100%;
@@ -45,3 +50,20 @@
 }
 .inv-badge.pending { background: #fff3cd; color: #856404; }
 .inv-badge.received { background: #d4edda; color: #155724; }
+
+@media (max-width: 820px) {
+  .inventory-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+  }
+  
+  .inventory-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .inv-tab {
+    flex: 0 0 auto;
+  }
+}

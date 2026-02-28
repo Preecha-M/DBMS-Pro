@@ -59,12 +59,13 @@ export default function Navbar() {
   return (
     <header className="pos-topbar">
       <div className="pos-topbar-left">
-        <button 
+        {/* Hide hamburger menu because we have bottom nav now */}
+        {/* <button 
           className="mobile-menu-btn" 
           onClick={() => setOpenMenu(!openMenu)}
         >
           {openMenu ? <X size={24} color="#19191C" /> : <Menu size={24} color="#19191C" />}
-        </button>
+        </button> */}
 
         <div className="pos-brand" onClick={() => navigate("/home")}>
           CP <span>POS</span>
@@ -128,7 +129,7 @@ export default function Navbar() {
           {i18n.language.startsWith('th') ? 'TH' : 'EN'}
         </button>
 
-        <button className="pos-neworder-btn" onClick={goNewOrder}>
+        <button className="pos-neworder-btn hide-on-mobile" onClick={goNewOrder}>
           {t('nav.newOrder')}
         </button>
 
