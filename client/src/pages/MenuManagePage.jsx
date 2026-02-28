@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { UploadCloud } from "lucide-react";
 import api from "../db/api";
+import CustomSelect from "../components/CustomSelect";
 
 const FALLBACK_IMG = "https://cdn-icons-png.flaticon.com/512/924/924514.png";
 
@@ -315,80 +316,27 @@ export default function MenuManagePage() {
 
               <div className="input-group">
                 <label>{t('menuManage.labelStatus')}</label>
-                <select
+                <CustomSelect
                   value={form.status}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, status: e.target.value }))
-                  }
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    borderRadius: 12,
-                    border: "1.5px solid var(--border-color)",
-                    fontSize: 14,
-                    fontFamily: 'inherit',
-                    appearance: 'none',
-                    WebkitAppearance: 'none',
-                    background: `#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center`,
-                    paddingRight: 40,
-                    cursor: 'pointer',
-                    color: '#19191C',
-                    outline: 'none',
-                    transition: 'border-color 0.2s, box-shadow 0.2s',
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = 'var(--primary-orange)';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(237,100,45,0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = 'var(--border-color)';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                >
-                  <option value="Available">Available</option>
-                  <option value="Unavailable">Unavailable</option>
-                </select>
+                  onChange={(val) => setForm((p) => ({ ...p, status: val }))}
+                  options={[
+                    { value: 'Available', label: 'Available' },
+                    { value: 'Unavailable', label: 'Unavailable' },
+                  ]}
+                />
               </div>
 
               <div className="input-group">
                 <label>{t('menuManage.labelCategory')}</label>
-                <select
-                  value={form.category_id}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, category_id: e.target.value }))
-                  }
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    borderRadius: 12,
-                    border: "1.5px solid var(--border-color)",
-                    fontSize: 14,
-                    fontFamily: 'inherit',
-                    appearance: 'none',
-                    WebkitAppearance: 'none',
-                    background: `#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center`,
-                    paddingRight: 40,
-                    cursor: 'pointer',
-                    color: '#19191C',
-                    outline: 'none',
-                    transition: 'border-color 0.2s, box-shadow 0.2s',
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = 'var(--primary-orange)';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(237,100,45,0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = 'var(--border-color)';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                >
-                  <option value="">{t('menuManage.optNoCategory')}</option>
-                  {categoryOptions.map((c) => (
-                    <option key={c.category_id} value={c.category_id}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
+                <CustomSelect
+                  value={String(form.category_id)}
+                  onChange={(val) => setForm((p) => ({ ...p, category_id: val }))}
+                  placeholder={t('menuManage.optNoCategory')}
+                  options={[
+                    { value: '', label: t('menuManage.optNoCategory') },
+                    ...categoryOptions.map((c) => ({ value: String(c.category_id), label: c.label }))
+                  ]}
+                />
               </div>
 
               <div className="input-group">

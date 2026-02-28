@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import api from "../db/api";
 import { Coffee, CupSoda, Croissant, CakeSlice, Utensils, Hash, LayoutGrid } from "lucide-react";
+import CustomSelect from "../components/CustomSelect";
 
 // Helper to render lucide icon based on text input
 const renderCategoryIcon = (iconName, size = 24) => {
@@ -415,7 +416,7 @@ export default function NewOrderPage() {
           ) : (
             <div className="product-grid">
               {visibleMenus.map((m) => (
-                <div key={m.menu_id} className="product-card">
+                <div key={m.menu_id} className="product-card" onClick={() => handleProductSelect(m)}>
                   <img
                     src={
                       m.image_url ||
@@ -427,16 +428,6 @@ export default function NewOrderPage() {
                   <div className="product-name">{m.menu_name}</div>
                   <div className="product-price">
                     ฿ {Number(m.price || 0).toFixed(2)}
-                  </div>
-
-                  <div className="product-actions">
-                    <button
-                      type="button"
-                      className="qty-btn"
-                      onClick={() => handleProductSelect(m)}
-                    >
-                      +
-                    </button>
                   </div>
                 </div>
               ))}
@@ -639,20 +630,20 @@ export default function NewOrderPage() {
 
             <div className="input-group">
               <label>{t('newOrder.promoLabel')}</label>
-              <select
+              <CustomSelect
                 value={selectedPromoId}
-                onChange={(e) => setSelectedPromoId(e.target.value)}
-              >
-                <option value="">{t('newOrder.noPromoLabel')}</option>
-                {promotions.map(p => {
-                  const subtext = p.discount_type === 'PERCENTAGE' ? t('newOrder.discountPercent', { amount: p.discount_value }) : t('newOrder.discountAmount', { amount: p.discount_value });
-                  return (
-                    <option key={p.promotion_id} value={p.promotion_id}>
-                      {p.promotion_name} ({subtext})
-                    </option>
-                  );
-                })}
-              </select>
+                onChange={(val) => setSelectedPromoId(val)}
+                placeholder={t('newOrder.noPromoLabel')}
+                options={[
+                  { value: '', label: t('newOrder.noPromoLabel') },
+                  ...promotions.map(p => {
+                    const subtext = p.discount_type === 'PERCENTAGE'
+                      ? t('newOrder.discountPercent', { amount: p.discount_value })
+                      : t('newOrder.discountAmount', { amount: p.discount_value });
+                    return { value: String(p.promotion_id), label: `${p.promotion_name} (${subtext})` };
+                  })
+                ]}
+              />
             </div>
 
             {selectedPromo && (
@@ -668,14 +659,15 @@ export default function NewOrderPage() {
 
             <div className="input-group" style={{ marginTop: 12 }}>
               <label>{t('newOrder.paymentMethod')}</label>
-              <select
+              <CustomSelect
                 value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-              >
-                <option value="Cash">Cash</option>
-                <option value="Credit Card">Credit Card</option>
-                <option value="QR">QR</option>
-              </select>
+                onChange={(val) => setPaymentMethod(val)}
+                options={[
+                  { value: 'Cash', label: 'Cash' },
+                  { value: 'Credit Card', label: 'Credit Card' },
+                  { value: 'QR', label: 'QR' },
+                ]}
+              />
             </div>
             {paymentMethod === "Cash" && (
               <div className="input-group">

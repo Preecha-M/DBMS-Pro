@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { searchMember, createMember, getPointsHistory } from "../services/memberService";
 import "../index.css";
 import "./Members.css"; // Added new styles
+import CustomSelect from "../components/CustomSelect";
 
 import { UserPlus, Mars, Venus, CircleDashed, X, ClipboardList, Search } from 'lucide-react';
 
@@ -296,15 +297,15 @@ export default function Members() {
 
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#6C727F' }}>{t('members.colGender')}</label>
-                <select
-                  style={{ width: '100%' }}
+                <CustomSelect
                   value={gender}
-                  onChange={(e) => setGender(e.target.value)}
-                >
-                  <option value="MALE">{t('members.genderMale')}</option>
-                  <option value="FEMALE">{t('members.genderFemale')}</option>
-                  <option value="OTHER">{t('members.genderOther')}</option>
-                </select>
+                  onChange={(val) => setGender(val)}
+                  options={[
+                    { value: 'MALE', label: t('members.genderMale') },
+                    { value: 'FEMALE', label: t('members.genderFemale') },
+                    { value: 'OTHER', label: t('members.genderOther') },
+                  ]}
+                />
               </div>
 
               <button

@@ -55,7 +55,7 @@ export default function CashierPage() {
     loadSalesSummary(currentRound.opened_at);
 
     const onNewSale = (saleData) => {
-      console.log("WebSocket new-sale received", saleData);
+
       loadSalesSummary(currentRound.opened_at);
       // CashierDashboard handles its own data fetching, but we can update our local summary
     };

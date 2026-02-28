@@ -2,35 +2,13 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import api from "../db/api";
 import "./InventoryPage.css";
+import CustomSelect from "../components/CustomSelect";
 
 export default function InventoryPage() {
   const { t } = useTranslation();
   const [tab, setTab] = useState("withdraw");
 
-  const selectStyle = {
-    width: "100%",
-    padding: "12px 40px 12px 16px",
-    borderRadius: 12,
-    border: "1.5px solid var(--border-color)",
-    fontSize: 14,
-    fontFamily: 'inherit',
-    appearance: 'none',
-    WebkitAppearance: 'none',
-    background: `#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center`,
-    cursor: 'pointer',
-    color: '#19191C',
-    outline: 'none',
-    transition: 'border-color 0.2s, box-shadow 0.2s',
-  };
 
-  const selectFocus = (e) => {
-    e.target.style.borderColor = 'var(--primary-orange)';
-    e.target.style.boxShadow = '0 0 0 3px rgba(237,100,45,0.1)';
-  };
-  const selectBlur = (e) => {
-    e.target.style.borderColor = 'var(--border-color)';
-    e.target.style.boxShadow = 'none';
-  };
   const [ingredients, setIngredients] = useState([]);
   const [orders, setOrders] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -263,14 +241,18 @@ export default function InventoryPage() {
           <form onSubmit={handleWithdraw}>
             <div className="input-group">
               <label>{t('inventory.selectIngredientLabel')}</label>
-              <select value={wdId} onChange={e => setWdId(e.target.value)} required style={selectStyle} onFocus={selectFocus} onBlur={selectBlur}>
-                <option value="">{t('inventory.optSelectIngredient')}</option>
-                {ingredients.map(ig => (
-                  <option key={ig.ingredient_id} value={ig.ingredient_id}>
-                    {ig.ingredient_name} ({t('inventory.strRemaining')} {ig.quantity_on_hand} {ig.unit})
-                  </option>
-                ))}
-              </select>
+              <CustomSelect
+                value={wdId}
+                onChange={(val) => setWdId(val)}
+                placeholder={t('inventory.optSelectIngredient')}
+                options={[
+                  { value: '', label: t('inventory.optSelectIngredient') },
+                  ...ingredients.map(ig => ({
+                    value: String(ig.ingredient_id),
+                    label: `${ig.ingredient_name} (${t('inventory.strRemaining')} ${ig.quantity_on_hand} ${ig.unit})`
+                  }))
+                ]}
+              />
             </div>
             <div className="input-group">
               <label>{t('inventory.withdrawQtyLabel')}</label>
@@ -309,10 +291,15 @@ export default function InventoryPage() {
               </div>
               <div className="input-group">
                 <label>{t('inventory.addCategoryLabel')}</label>
-                <select value={addForm.category_code} onChange={e => setAddForm(p => ({ ...p, category_code: e.target.value }))} style={selectStyle} onFocus={selectFocus} onBlur={selectBlur}>
-                  <option value="">{t('inventory.optNoCategory')}</option>
-                  {categories.map(c => <option key={c.category_id || c.category_code} value={c.category_id || c.category_code}>{c.category_name}</option>)}
-                </select>
+                <CustomSelect
+                  value={addForm.category_code}
+                  onChange={(val) => setAddForm(p => ({ ...p, category_code: val }))}
+                  placeholder={t('inventory.optNoCategory')}
+                  options={[
+                    { value: '', label: t('inventory.optNoCategory') },
+                    ...categories.map(c => ({ value: String(c.category_id || c.category_code), label: c.category_name }))
+                  ]}
+                />
               </div>
               <div className="input-group">
                 <label>{t('inventory.addUnitLabel')}</label>
@@ -446,12 +433,15 @@ export default function InventoryPage() {
             <form onSubmit={handleCreateOrder}>
               <div className="input-group">
                 <label>{t('inventory.orderToSupplierLabel')}</label>
-                <select value={orderSupplier} onChange={e => setOrderSupplier(e.target.value)} required style={selectStyle} onFocus={selectFocus} onBlur={selectBlur}>
-                  <option value="">{t('inventory.optSelectSupplier')}</option>
-                  {suppliers.map(s => (
-                    <option key={s.supplier_id} value={s.supplier_id}>{s.supplier_name}</option>
-                  ))}
-                </select>
+                <CustomSelect
+                  value={orderSupplier}
+                  onChange={(val) => setOrderSupplier(val)}
+                  placeholder={t('inventory.optSelectSupplier')}
+                  options={[
+                    { value: '', label: t('inventory.optSelectSupplier') },
+                    ...suppliers.map(s => ({ value: String(s.supplier_id), label: s.supplier_name }))
+                  ]}
+                />
               </div>
 
               <div style={{ marginTop: 24, marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -475,19 +465,15 @@ export default function InventoryPage() {
                   <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12, background: '#f8f9fa', padding: 12, borderRadius: 8 }}>
                     <div>
                       <label style={{ fontSize: 12, color: '#6c757d' }}>{t('inventory.orderItemIngredient')}</label>
-                      <select 
-                        value={item.ingredient_id} 
-                        onChange={e => handleUpdateOrderItem(index, 'ingredient_id', e.target.value)}
-                        required
-                        style={{ ...selectStyle, padding: '8px 36px 8px 12px' }}
-                        onFocus={selectFocus}
-                        onBlur={selectBlur}
-                      >
-                        <option value="">{t('inventory.optSelect')}</option>
-                        {ingredients.map(ig => (
-                          <option key={ig.ingredient_id} value={ig.ingredient_id}>{ig.ingredient_name}</option>
-                        ))}
-                      </select>
+                      <CustomSelect
+                        value={item.ingredient_id}
+                        onChange={(val) => handleUpdateOrderItem(index, 'ingredient_id', val)}
+                        placeholder={t('inventory.optSelect')}
+                        options={[
+                          { value: '', label: t('inventory.optSelect') },
+                          ...ingredients.map(ig => ({ value: String(ig.ingredient_id), label: ig.ingredient_name }))
+                        ]}
+                      />
                     </div>
                     <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
                       <div style={{ flex: 1 }}>

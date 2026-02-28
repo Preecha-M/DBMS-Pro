@@ -24,51 +24,53 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-image-side">
-        <img
-          src={welcomeImg}
-          alt="Login"
-        />
-      </div>
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#F4F7FE',
+      padding: 16,
+      boxSizing: 'border-box',
+    }}>
+      <div className="auth-container">
+        <div className="auth-image-side">
+          <img src={welcomeImg} alt="Login" />
+        </div>
 
-      <div className="auth-form-side">
-        <h2 className="auth-title">{t('loginPage.titleWelcome')}</h2>
-        <p className="auth-subtitle">{t('loginPage.subtitleLogin')}</p>
+        <div className="auth-form-side">
+          <h2 className="auth-title">{t('loginPage.titleWelcome')}</h2>
+          <p className="auth-subtitle">{t('loginPage.subtitleLogin')}</p>
 
-        {error && <div className="auth-error">{error}</div>}
+          {error && <div className="auth-error">{error}</div>}
 
-        <form onSubmit={onSubmit}>
-          <div className="input-group">
-            <label>{t('loginPage.labelUsername')}</label>
-            <input
-              name="username"
-              value={form.username}
-              onChange={(e) =>
-                setForm({ ...form, username: e.target.value })
-              }
-              required
-            />
-          </div>
+          <form onSubmit={onSubmit}>
+            <div className="input-group">
+              <label>{t('loginPage.labelUsername')}</label>
+              <input
+                name="username"
+                value={form.username}
+                onChange={(e) => setForm({ ...form, username: e.target.value })}
+                required
+              />
+            </div>
 
-          <div className="input-group">
-            <label>{t('loginPage.labelPassword')}</label>
-            <input
-              name="password"
-              type="password"
-              value={form.password}
-              onChange={(e) =>
-                setForm({ ...form, password: e.target.value })
-              }
-              required
-            />
-          </div>
+            <div className="input-group">
+              <label>{t('loginPage.labelPassword')}</label>
+              <input
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                required
+              />
+            </div>
 
-          <button type="submit" className="btn-auth-primary">
-            {t('loginPage.btnSignIn')}
-          </button>
-        </form>
-
+            <button type="submit" className="btn-auth-primary">
+              {t('loginPage.btnSignIn')}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
