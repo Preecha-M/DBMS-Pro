@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { searchMember, createMember, getPointsHistory } from "../services/memberService";
 import "../index.css";
 
 export default function Members() {
+  const { t } = useTranslation();
   const [phone, setPhone] = useState("");
   const [members, setMembers] = useState([]);
 
@@ -31,12 +33,12 @@ export default function Members() {
 
   const handleCreate = async () => {
     if (!name || !newPhone) {
-      alert("กรุณากรอกชื่อและเบอร์โทร");
+      alert(t('members.alertRequireNamePhone'));
       return;
     }
 
     await createMember({ name, phone: newPhone, gender });
-    alert("สมัครสมาชิกเรียบร้อย");
+    alert(t('members.alertRegisterSuccess'));
 
     setName("");
     setNewPhone("");
@@ -53,7 +55,7 @@ export default function Members() {
       setHistoryModal({ open: true, member, history: res.data });
     } catch (err) {
       console.error(err);
-      alert("Failed to load points history");
+      alert(t('members.alertPointsHistoryFailed'));
     }
   };
 
@@ -72,9 +74,9 @@ export default function Members() {
 
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 900 }}>ระบบสมาชิก</h1>
+          <h1 style={{ fontSize: 26, fontWeight: 900 }}>{t('members.title')}</h1>
           <p style={{ color: "#8b90a0", marginTop: 6 }}>
-            ค้นหาและจัดการข้อมูลสมาชิก
+            {t('members.subtitle')}
           </p>
         </div>
 
@@ -90,18 +92,18 @@ export default function Members() {
           {/* Search */}
           <div className="card page-pad">
             <h2 style={{ fontWeight: 900, marginBottom: 12 }}>
-              🔍 ค้นหาสมาชิก
+              {t('members.searchMember')}
             </h2>
 
             <div style={{ display: "flex", gap: 12 }}>
               <input
-                placeholder="เบอร์โทรศัพท์"
+                placeholder={t('members.phonePlaceholder')}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 style={{ flex: 1 }}
               />
               <button className="btn-primary" onClick={handleSearch}>
-                ค้นหา
+                {t('members.searchBtn')}
               </button>
             </div>
           </div>
@@ -109,7 +111,7 @@ export default function Members() {
           {/* Register */}
           <div className="card page-pad">
             <h2 style={{ fontWeight: 900, marginBottom: 12 }}>
-              ➕ สมัครสมาชิกใหม่
+              {t('members.registerMember')}
             </h2>
 
             <div
@@ -120,13 +122,13 @@ export default function Members() {
               }}
             >
               <input
-                placeholder="ชื่อลูกค้า"
+                placeholder={t('members.namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
 
               <input
-                placeholder="เบอร์โทรศัพท์"
+                placeholder={t('members.phonePlaceholder')}
                 value={newPhone}
                 onChange={(e) => setNewPhone(e.target.value)}
               />
@@ -135,9 +137,9 @@ export default function Members() {
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
               >
-                <option value="MALE">ชาย</option>
-                <option value="FEMALE">หญิง</option>
-                <option value="OTHER">อื่น ๆ</option>
+                <option value="MALE">{t('members.genderMale')}</option>
+                <option value="FEMALE">{t('members.genderFemale')}</option>
+                <option value="OTHER">{t('members.genderOther')}</option>
               </select>
 
               <button
@@ -145,7 +147,7 @@ export default function Members() {
                 style={{ gridColumn: "span 2" }}
                 onClick={handleCreate}
               >
-                สมัครสมาชิก
+                {t('members.registerBtn')}
               </button>
             </div>
           </div>
@@ -154,25 +156,25 @@ export default function Members() {
         {/* Result */}
         <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column' }}>
           <h2 style={{ fontWeight: 900, marginBottom: 12 }}>
-            📋 รายชื่อสมาชิก
+            {t('members.memberList')}
           </h2>
 
           <div className="overflow-x-auto" style={{ border: "1px solid var(--border-color)", borderRadius: 8 }}>
             <table className="inv-table">
               <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f8f9fc' }}>
                 <tr>
-                  <th>ชื่อ</th>
-                  <th className="center">เบอร์โทร</th>
-                  <th className="center">เพศ</th>
-                  <th className="right">แต้ม</th>
-                  <th className="center">จัดการ</th>
+                  <th>{t('members.colName')}</th>
+                  <th className="center">{t('members.colPhone')}</th>
+                  <th className="center">{t('members.colGender')}</th>
+                  <th className="right">{t('members.colPoints')}</th>
+                  <th className="center">{t('members.colAction')}</th>
                 </tr>
               </thead>
               <tbody>
                 {members.length === 0 && (
                   <tr>
                     <td colSpan="5" className="center muted" style={{ textAlign: "center", padding: 20 }}>
-                      ไม่พบข้อมูลสมาชิก
+                      {t('members.noMembersFound')}
                     </td>
                   </tr>
                 )}
@@ -187,12 +189,12 @@ export default function Members() {
                         backgroundColor: m.gender === 'MALE' ? '#e3f2fd' : m.gender === 'FEMALE' ? '#fce4ec' : '#f5f5f5',
                         color: m.gender === 'MALE' ? '#1976d2' : m.gender === 'FEMALE' ? '#c2185b' : '#616161'
                       }}>
-                        {m.gender === "MALE" ? "👨 ชาย" : m.gender === "FEMALE" ? "👩 หญิง" : "⚧ อื่น ๆ"}
+                        {m.gender === "MALE" ? t('members.maleIcon') : m.gender === "FEMALE" ? t('members.femaleIcon') : t('members.otherIcon')}
                       </span>
                     </td>
                     <td className="right" style={{ fontWeight: 'bold', color: 'var(--primary-orange)', fontSize: 16 }}>{m.points}</td>
                     <td className="center">
-                      <button className="btn-secondary" style={{ padding: '4px 12px', fontSize: 13, borderRadius: 6 }} onClick={() => handleViewHistory(m)}>ดูประวัติแต้ม</button>
+                      <button className="btn-secondary" style={{ padding: '4px 12px', fontSize: 13, borderRadius: 6 }} onClick={() => handleViewHistory(m)}>{t('members.viewHistoryBtn')}</button>
                     </td>
                   </tr>
                 ))}
@@ -210,20 +212,20 @@ export default function Members() {
         }}>
           <div className="card" style={{ width: 600, maxHeight: '80vh', overflowY: 'auto', padding: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h2 style={{ fontWeight: 900 }}>ประวัติแต้ม - คุณ {historyModal.member?.name}</h2>
+              <h2 style={{ fontWeight: 900 }}>{t('members.historyTitle', { name: historyModal.member?.name })}</h2>
               <button onClick={() => setHistoryModal({ open: false, member: null, history: [] })} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>✖</button>
             </div>
             
             {historyModal.history.length === 0 ? (
-              <p className="muted center">ไม่มีประวัติการได้/ใช้แต้ม</p>
+              <p className="muted center">{t('members.noHistory')}</p>
             ) : (
               <table className="confirm-table">
                 <thead className="confirm-head">
                   <tr>
-                    <th>วันที่</th>
-                    <th>ประเภท</th>
-                    <th>รายการอ้างอิง</th>
-                    <th className="right">จำนวนแต้ม</th>
+                    <th>{t('members.historyColDate')}</th>
+                    <th>{t('members.historyColType')}</th>
+                    <th>{t('members.historyColRef')}</th>
+                    <th className="right">{t('members.historyColPoints')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -236,7 +238,7 @@ export default function Members() {
                           backgroundColor: h.points_change > 0 ? '#e6f4ea' : '#fce8e6',
                           color: h.points_change > 0 ? '#1e8e3e' : '#d93025'
                         }}>
-                          {h.transaction_type === 'EARN' ? 'สะสม' : 'ใช้งาน'}
+                          {h.transaction_type === 'EARN' ? t('members.typeEarn') : t('members.typeSpend')}
                         </span>
                       </td>
                       <td className="muted">{h.sale?.receipt_number || h.notes || "-"}</td>

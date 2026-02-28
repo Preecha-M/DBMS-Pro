@@ -1,8 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import api from "../db/api";
 import "./PromotionsPage.css";
 
 export default function PromotionsPage() {
+  const { t } = useTranslation();
   const [promotions, setPromotions] = useState([]);
   const [menus, setMenus] = useState([]);
   const [form, setForm] = useState({
@@ -30,7 +32,7 @@ export default function PromotionsPage() {
       setPromotions(Array.isArray(promoRes.data) ? promoRes.data : []);
       setMenus(Array.isArray(menuRes.data?.data || menuRes.data) ? (menuRes.data?.data || menuRes.data) : []);
     } catch (e) {
-      setError(e?.response?.data?.message || "โหลดข้อมูลไม่สำเร็จ");
+      setError(e?.response?.data?.message || t('promotions.errLoadFailed'));
     } finally {
       setLoading(false);
     }
@@ -72,7 +74,7 @@ export default function PromotionsPage() {
       await loadData();
       resetForm();
     } catch (e2) {
-      setError(e2?.response?.data?.message || "บันทึกไม่สำเร็จ");
+      setError(e2?.response?.data?.message || t('promotions.errSaveFailed'));
     }
   };
 
@@ -92,14 +94,14 @@ export default function PromotionsPage() {
   };
 
   const onDelete = async (id) => {
-    if (!window.confirm("ยืนยันการลบโปรโมชั่นนี้?")) return;
+    if (!window.confirm(t('promotions.confirmDelete'))) return;
     setError("");
     try {
       await api.delete(`/promotions/${id}`);
       await loadData();
       if (editingId === id) resetForm();
     } catch (e) {
-      setError(e?.response?.data?.message || "ลบไม่สำเร็จ");
+      setError(e?.response?.data?.message || t('promotions.errDeleteFailed'));
     }
   };
 
@@ -125,8 +127,8 @@ export default function PromotionsPage() {
   return (
     <div className="page-pad">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-        <h2 style={{ margin: 0 }}>จัดการโปรโมชั่น</h2>
-        <button className="pos-logout-btn" onClick={resetForm}>Clear Form</button>
+        <h2 style={{ margin: 0 }}>{t('promotions.pageTitle')}</h2>
+        <button className="pos-logout-btn" onClick={resetForm}>{t('promotions.btnClear')}</button>
       </div>
 
       {error && <div className="auth-error" style={{ marginTop: 12 }}>{error}</div>}
@@ -134,21 +136,21 @@ export default function PromotionsPage() {
       <div className="promo-page-grid">
         <form onSubmit={onSubmit} className="card promo-form-panel" style={{ padding: 16 }}>
           <div style={{ fontWeight: 900, marginBottom: 12 }}>
-            {editingId ? "แก้ไขโปรโมชั่น" : "เพิ่มโปรโมชั่นใหม่"}
+            {editingId ? t('promotions.titleEdit') : t('promotions.titleAdd')}
           </div>
 
           <div className="input-group">
-            <label>ชื่อโปรโมชั่น</label>
+            <label>{t('promotions.labelPromoName')}</label>
             <input
               value={form.promotion_name}
               onChange={(e) => setForm((p) => ({ ...p, promotion_name: e.target.value }))}
-              placeholder="เช่น Buy 1 Get 1"
+              placeholder={t('promotions.placeholderPromoName')}
               required
             />
           </div>
 
           <div className="input-group">
-            <label>รายละเอียด</label>
+            <label>{t('promotions.labelDetail')}</label>
             <textarea
               value={form.promotion_detail}
               onChange={(e) => setForm((p) => ({ ...p, promotion_detail: e.target.value }))}
@@ -157,13 +159,13 @@ export default function PromotionsPage() {
                 width: "100%", padding: "12px", border: "1px solid var(--border-color)",
                 borderRadius: "8px", fontSize: "14px", fontFamily: "inherit"
               }}
-              placeholder="เงื่อนไขย่อๆ"
+              placeholder={t('promotions.placeholderDetail')}
             />
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
             <div className="input-group">
-              <label>วันที่เริ่ม</label>
+              <label>{t('promotions.labelStartDate')}</label>
               <input
                 type="date"
                 value={form.start_date}
@@ -171,7 +173,7 @@ export default function PromotionsPage() {
               />
             </div>
             <div className="input-group">
-              <label>วันที่สิ้นสุด</label>
+              <label>{t('promotions.labelEndDate')}</label>
               <input
                 type="date"
                 value={form.end_date}
@@ -182,35 +184,35 @@ export default function PromotionsPage() {
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 12 }}>
             <div className="input-group">
-              <label>รูปแบบส่วนลด</label>
+              <label>{t('promotions.labelDiscountType')}</label>
               <select
                 value={form.discount_type}
                 onChange={(e) => setForm((p) => ({ ...p, discount_type: e.target.value }))}
               >
-                <option value="AMOUNT">หักเป็นเงิน (฿)</option>
-                <option value="PERCENTAGE">หักเปอร์เซ็นต์ (%)</option>
+                <option value="AMOUNT">{t('promotions.optAmount')}</option>
+                <option value="PERCENTAGE">{t('promotions.optPercent')}</option>
               </select>
             </div>
             <div className="input-group">
-              <label>มูลค่าส่วนลด</label>
+              <label>{t('promotions.labelDiscountVal')}</label>
               <input
                 type="number"
                 min="0"
                 step="0.01"
                 value={form.discount_value}
                 onChange={(e) => setForm((p) => ({ ...p, discount_value: e.target.value }))}
-                placeholder={form.discount_type === "PERCENTAGE" ? "เช่น 10 ซึงคือ 10%" : "เช่น 15 บาท"}
+                placeholder={form.discount_type === "PERCENTAGE" ? t('promotions.placeholderDiscountPercent') : t('promotions.placeholderDiscountAmount')}
                 required
               />
             </div>
             <div className="input-group">
-              <label>จำนวนขั้นต่ำที่ต้องซื้อ</label>
+              <label>{t('promotions.labelMinQty')}</label>
               <input
                 type="number"
                 min="1"
                 value={form.min_quantity}
                 onChange={(e) => setForm((p) => ({ ...p, min_quantity: e.target.value }))}
-                placeholder="เช่น 1, 2"
+                placeholder={t('promotions.placeholderMinQty')}
                 required
               />
             </div>
@@ -229,20 +231,20 @@ export default function PromotionsPage() {
                   {m.menu_name} (฿{m.price})
                 </label>
               ))}
-              {menus.length === 0 && <div style={{ fontSize: 13, color: '#999' }}>ไม่มีข้อมูลเมนู</div>}
+              {menus.length === 0 && <div style={{ fontSize: 13, color: '#999' }}>{t('promotions.noMenuData')}</div>}
             </div>
           </div>
 
           <button type="submit" className="pos-neworder-btn" style={{ marginTop: 14, width: "100%" }}>
-            {editingId ? "Update" : "Create"}
+            {editingId ? t('promotions.btnUpdate') : t('promotions.btnCreate')}
           </button>
         </form>
 
         <div className="card" style={{ padding: 16 }}>
-          <div style={{ fontWeight: 900, marginBottom: 12 }}>รายการโปรโมชั่นทั้งหมด</div>
+          <div style={{ fontWeight: 900, marginBottom: 12 }}>{t('promotions.titleAllPromos')}</div>
 
           {loading ? (
-            <div>Loading...</div>
+            <div>{t('promotions.textLoading')}</div>
           ) : (
             <div style={{ display: "grid", gap: 10 }}>
               {promotions.map((p) => {
@@ -256,31 +258,30 @@ export default function PromotionsPage() {
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <div className={`promo-status ${status.class}`}>{status.label}</div>
                         <div className="promo-dates">
-                          {p.start_date ? new Date(p.start_date).toLocaleDateString('th-TH') : "-"}
-                          {" ถึง "}
-                          {p.end_date ? new Date(p.end_date).toLocaleDateString('th-TH') : "-"}
+                          {p.start_date ? new Date(p.start_date).toLocaleDateString() : "-"}
+                          {t('promotions.textTo')}
+                          {p.end_date ? new Date(p.end_date).toLocaleDateString() : "-"}
                         </div>
                       </div>
                       
                       {Array.isArray(p.menu_ids) && p.menu_ids.length > 0 && (
                         <div className="promo-sub" style={{ marginTop: 4 }}>
-                          เมนูที่ร่วม: {p.menu_ids.length} เมนู
+                          {t('promotions.textMenusJoined', { count: p.menu_ids.length })}
                         </div>
                       )}
                       
                       <div className="promo-sub" style={{ marginTop: 4, color: 'var(--primary-orange)', fontWeight: 600 }}>
-                        ลด: {Number(p.discount_value)} {p.discount_type === 'PERCENTAGE' ? '%' : '฿'} 
-                        {' | '} ซื้อขั้นต่ำ: {p.min_quantity} แก้ว
+                        {t('promotions.textDiscount', { val: Number(p.discount_value), unit: p.discount_type === 'PERCENTAGE' ? '%' : '฿', min: p.min_quantity })}
                       </div>
                     </div>
                     <div className="promo-actions">
-                      <button className="qty-btn" type="button" onClick={() => onEdit(p)}>Edit</button>
-                      <button className="qty-btn" type="button" onClick={() => onDelete(p.promotion_id)}>Delete</button>
+                      <button className="qty-btn" type="button" onClick={() => onEdit(p)}>{t('promotions.btnEdit')}</button>
+                      <button className="qty-btn" type="button" onClick={() => onDelete(p.promotion_id)}>{t('promotions.btnDelete')}</button>
                     </div>
                   </div>
                 );
               })}
-              {promotions.length === 0 && <div style={{ color: "#9EA3AE" }}>ยังไม่มีโปรโมชั่น</div>}
+              {promotions.length === 0 && <div style={{ color: "#9EA3AE" }}>{t('promotions.noPromos')}</div>}
             </div>
           )}
         </div>

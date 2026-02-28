@@ -1,5 +1,24 @@
+/* ประกาศสร้างครอบครัวฟอนต์ชื่อ MyCustomFont */
+@font-face {
+  font-family: 'MyCustomFont';
+  /* ชี้เป้าไปที่ไฟล์ฟอนต์ (ลำดับความสำคัญให้ woff2 มาก่อน) */
+  src: url('./fonts/anakotmai-light.woff2') format('woff2'),
+       url('./fonts/anakotmai-light.woff') format('woff');
+  font-weight: 400; /* น้ำหนักฟอนต์ (ตัวปกติ) */
+  font-style: normal;
+}
+
+/* ถ้ามีตัวหนา (Bold) ด้วย ก็ประกาศเพิ่มอีกชุด แต่เปลี่ยนไฟล์และ font-weight */
+@font-face {
+  font-family: 'MyCustomFont';
+  src: url('./fonts/anakotmai-bold.woff2') format('woff2'),
+       url('./fonts/anakotmai-bold.woff') format('woff');
+  font-weight: 700; /* 700 คือตัวหนา */
+  font-style: normal;
+}
+
 :root {
-  font-family: 'Kanit', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'MyCustomFont', 'Kanit', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color-scheme: light;
@@ -324,9 +343,76 @@ body {
 }
 .pos-brand{font-size:22px;font-weight:800;cursor:pointer}
 .pos-brand span{color:var(--primary-orange)}
-.pos-topnav{display:flex;gap:22px;align-items:center;flex:1;justify-content:center}
-.pos-toplink{color:#8b90a0;text-decoration:none;font-weight:600}
-.pos-toplink.active{color:#19191C}
+.pos-topnav{
+  display:flex;
+  gap:16px;
+  align-items:center;
+  flex:1;
+  justify-content:flex-start; /* Align menu items to the left, or use center depending on preference. Let's try start as it often looks cleaner on an app */
+  padding-left: 20px;
+}
+.pos-toplink{
+  color:#8B90A0; /* Subtle grey */
+  text-decoration:none;
+  font-weight:600;
+  font-size:14px;
+  padding: 8px 12px;
+  transition: all 0.2s ease-in-out;
+  position: relative; /* For an underline effect if we want */
+}
+.pos-toplink:hover{
+  color: #19191C;
+}
+.pos-toplink.active{
+  color: var(--primary-orange);
+  font-weight: 800;
+}
+.pos-toplink.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0px;
+  left: 12px;
+  right: 12px;
+  height: 3px;
+  background-color: var(--primary-orange);
+  border-radius: 3px 3px 0 0;
+}
+
+.pos-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 12px;
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  overflow: hidden;
+  z-index: 1000;
+  padding: 8px;
+}
+.pos-dropdown-link {
+  color: #6C727F;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: block;
+}
+.pos-dropdown-link:hover {
+  background: #F4F7FE;
+  color: #19191C;
+}
+.pos-dropdown-link.active {
+  color: var(--primary-orange);
+  background: #FFF1EB;
+  font-weight: 700;
+}
 .pos-topactions{display:flex;gap:12px;align-items:center}
 .pos-neworder-btn{
   background:var(--primary-orange);
@@ -553,8 +639,29 @@ body {
   }
   .pos-toplink {
     font-size: 16px;
-    padding: 8px 0;
+    padding: 12px 0;
     width: 100%;
+    text-align: left;
+    margin-bottom: 0px;
+    border-bottom: 1px solid #f1f3f5;
+  }
+  .pos-toplink:last-child {
+    border-bottom: none;
+  }
+  .pos-toplink.active::after {
+    left: 0;
+    right: auto;
+    width: 100%; /* In mobile, let the underline take full width or hide it */
+    height: 2px;
+  }
+  .pos-dropdown-menu {
+    position: static;
+    margin-top: 0;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+    padding: 0 0 0 16px;
+    background: transparent;
   }
   .pos-brand {
     margin-right: 16px;

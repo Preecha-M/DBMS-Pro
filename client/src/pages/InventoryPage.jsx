@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import api from "../db/api";
 import "./InventoryPage.css";
 
 export default function InventoryPage() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState("withdraw"); // withdraw | add | orders | transactions
   const [ingredients, setIngredients] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -81,14 +83,14 @@ export default function InventoryPage() {
   const handleWithdraw = async (e) => {
     e.preventDefault();
     setError(""); setSuccess("");
-    if (!wdId || !wdQty) return setError("กรุณาเลือกวัตถุดิบและใส่จำนวน");
+    if (!wdId || !wdQty) return setError(t('inventory.errWithdrawEmpty'));
     try {
       await api.post(`/ingredients/${wdId}/withdraw`, { quantity: Number(wdQty) });
-      setSuccess("เบิกวัตถุดิบสำเร็จ");
+      setSuccess(t('inventory.sucWithdraw'));
       setWdId(""); setWdQty("");
       loadIngredients();
     } catch (e) {
-      setError(e?.response?.data?.message || "เกิดข้อผิดพลาด");
+      setError(e?.response?.data?.message || t('inventory.errDefault'));
     }
   };
 
@@ -106,25 +108,25 @@ export default function InventoryPage() {
         cost_per_unit: Number(addForm.cost_per_unit),
         quantity_on_hand: Number(addForm.quantity_on_hand)
       });
-      setSuccess("เพิ่มวัตถุดิบสำเร็จ");
+      setSuccess(t('inventory.sucAddIngredient'));
       setAddForm({ ingredient_id: "", ingredient_name: "", unit: "", cost_per_unit: "", quantity_on_hand: 0, expire_date: "", category_code: "" });
       loadIngredients();
     } catch (e) {
-      setError(e?.response?.data?.message || "เกิดข้อผิดพลาด");
+      setError(e?.response?.data?.message || t('inventory.errDefault'));
     }
   };
 
   // Update Order State
   const handleUpdateOrderStatus = async (orderId, currentStatus) => {
     if (currentStatus.toLowerCase() === 'received') return;
-    if (!window.confirm("ยืนยันการรับสินค้า (สถานะจะเปลี่ยนเป็น Received และสต๊อกจะเพิ่มขึ้น)?")) return;
+    if (!window.confirm(t('inventory.confirmReceiveObject'))) return;
     try {
       await api.put(`/orders/${orderId}/status`, { order_status: "Received" });
-      setSuccess("อัพเดทสถานะสำเร็จ");
+      setSuccess(t('inventory.sucUpdateStatus'));
       loadOrders();
       loadIngredients();
     } catch (e) {
-      setError(e?.response?.data?.message || "เกิดข้อผิดพลาด");
+      setError(e?.response?.data?.message || t('inventory.errDefault'));
     }
   };
 
@@ -156,10 +158,10 @@ export default function InventoryPage() {
     setSuccess("");
     
     // Validate
-    if (!orderSupplier) return setError("กรุณาเลือกซัพพลายเออร์");
-    if (orderItems.length === 0) return setError("กรุณาเพิ่มรายการวัตถุดิบอย่างน้อย 1 รายการ");
+    if (!orderSupplier) return setError(t('inventory.errOrderSupplierEmpty'));
+    if (orderItems.length === 0) return setError(t('inventory.errOrderItemsEmpty'));
     if (orderItems.some(it => !it.ingredient_id || it.quantity <= 0)) {
-      return setError("กรุณากรอกข้อมูลวัตถุดิบและจำนวนให้ถูกต้อง");
+      return setError(t('inventory.errOrderValidation'));
     }
 
     try {
@@ -171,11 +173,11 @@ export default function InventoryPage() {
           unit_cost: Number(it.unit_cost)
         }))
       });
-      setSuccess("สร้างใบสั่งซื้อสำเร็จ");
+      setSuccess(t('inventory.sucCreateOrder'));
       setShowOrderModal(false);
       loadOrders();
     } catch (e) {
-      setError(e?.response?.data?.message || "เกิดข้อผิดพลาดในการสร้างใบสั่งซื้อ");
+      setError(e?.response?.data?.message || t('inventory.errCreateOrderList'));
     }
   };
 
@@ -184,7 +186,7 @@ export default function InventoryPage() {
     setError(""); setSuccess("");
     try {
       const res = await api.post("/suppliers", supplierForm);
-      setSuccess("เพิ่มซัพพลายเออร์สำเร็จ");
+      setSuccess(t('inventory.sucAddSupplier'));
       setShowSupplierModal(false);
       setSupplierForm({ supplier_name: "", contact: "" });
       loadSuppliers();
@@ -192,7 +194,7 @@ export default function InventoryPage() {
         setOrderSupplier(res.data.supplier_id);
       }
     } catch (e) {
-      setError(e?.response?.data?.message || "เกิดข้อผิดพลาด");
+      setError(e?.response?.data?.message || t('inventory.errDefault'));
     }
   };
 
@@ -207,23 +209,23 @@ export default function InventoryPage() {
 
   return (
     <div className="page-pad">
-      <h2 style={{ marginBottom: 20 }}>จัดการคลังวัตถุดิบ (Inventory)</h2>
+      <h2 style={{ marginBottom: 20 }}>{t('inventory.pageTitle')}</h2>
 
       <div className="inventory-tabs">
         <div className={`inv-tab ${tab === "withdraw" ? "active" : ""}`} onClick={() => { setTab("withdraw"); setError(""); setSuccess(""); }}>
-          เบิกวัตถุดิบ
+          {t('inventory.tabWithdraw')}
         </div>
         <div className={`inv-tab ${tab === "add" ? "active" : ""}`} onClick={() => { setTab("add"); setError(""); setSuccess(""); }}>
-          เพิ่มวัตถุดิบใหม่
+          {t('inventory.tabAdd')}
         </div>
         <div className={`inv-tab ${tab === "add_supplier" ? "active" : ""}`} onClick={() => { setTab("add_supplier"); setError(""); setSuccess(""); }}>
-          เพิ่มซัพพลายเออร์ใหม่
+          {t('inventory.tabAddSupplier')}
         </div>
         <div className={`inv-tab ${tab === "orders" ? "active" : ""}`} onClick={() => { setTab("orders"); setError(""); setSuccess(""); }}>
-          สั่งซื้อ/สถานะ
+          {t('inventory.tabOrders')}
         </div>
         <div className={`inv-tab ${tab === "transactions" ? "active" : ""}`} onClick={() => { setTab("transactions"); setError(""); setSuccess(""); }}>
-          ประวัติการเคลื่อนไหวสต๊อก
+          {t('inventory.tabTransactions')}
         </div>
       </div>
 
@@ -234,18 +236,18 @@ export default function InventoryPage() {
         <div className="card inv-form-container" style={{ padding: 24 }}>
           <form onSubmit={handleWithdraw}>
             <div className="input-group">
-              <label>เลือกวัตถุดิบ</label>
+              <label>{t('inventory.selectIngredientLabel')}</label>
               <select value={wdId} onChange={e => setWdId(e.target.value)} required>
-                <option value="">-- เลือกวัตถุดิบ --</option>
+                <option value="">{t('inventory.optSelectIngredient')}</option>
                 {ingredients.map(ig => (
                   <option key={ig.ingredient_id} value={ig.ingredient_id}>
-                    {ig.ingredient_name} (คงเหลือ: {ig.quantity_on_hand} {ig.unit})
+                    {ig.ingredient_name} ({t('inventory.strRemaining')} {ig.quantity_on_hand} {ig.unit})
                   </option>
                 ))}
               </select>
             </div>
             <div className="input-group">
-              <label>จำนวนที่เบิก</label>
+              <label>{t('inventory.withdrawQtyLabel')}</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input 
                   type="number" 
@@ -262,7 +264,7 @@ export default function InventoryPage() {
                 )}
               </div>
             </div>
-            <button type="submit" className="pos-neworder-btn" style={{ width: "100%", marginTop: 12 }}>ยืนยันการเบิก</button>
+            <button type="submit" className="pos-neworder-btn" style={{ width: "100%", marginTop: 12 }}>{t('inventory.btnConfirmWithdraw')}</button>
           </form>
         </div>
       )}
@@ -272,34 +274,34 @@ export default function InventoryPage() {
           <form onSubmit={handleAdd}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div className="input-group">
-                <label>รหัสวัตถุดิบ (ID)</label>
+                <label>{t('inventory.addIdLabel')}</label>
                 <input value={addForm.ingredient_id} onChange={e => setAddForm(p => ({ ...p, ingredient_id: e.target.value }))} required />
               </div>
               <div className="input-group">
-                <label>ชื่อวัตถุดิบ</label>
+                <label>{t('inventory.addNameLabel')}</label>
                 <input value={addForm.ingredient_name} onChange={e => setAddForm(p => ({ ...p, ingredient_name: e.target.value }))} required />
               </div>
               <div className="input-group">
-                <label>หมวดหมู่</label>
+                <label>{t('inventory.addCategoryLabel')}</label>
                 <select value={addForm.category_code} onChange={e => setAddForm(p => ({ ...p, category_code: e.target.value }))}>
-                  <option value="">-- ไม่ระบุ --</option>
+                  <option value="">{t('inventory.optNoCategory')}</option>
                   {categories.map(c => <option key={c.category_id || c.category_code} value={c.category_id || c.category_code}>{c.category_name}</option>)}
                 </select>
               </div>
               <div className="input-group">
-                <label>หน่วย (เช่น kg, liter)</label>
+                <label>{t('inventory.addUnitLabel')}</label>
                 <input value={addForm.unit} onChange={e => setAddForm(p => ({ ...p, unit: e.target.value }))} required />
               </div>
               <div className="input-group">
-                <label>ราคาต่อหน่วย</label>
+                <label>{t('inventory.addCostLabel')}</label>
                 <input type="number" step="0.01" value={addForm.cost_per_unit} onChange={e => setAddForm(p => ({ ...p, cost_per_unit: e.target.value }))} />
               </div>
               <div className="input-group">
-                <label>จำนวนเริ่มต้น (Stock)</label>
+                <label>{t('inventory.addInitialStockLabel')}</label>
                 <input type="number" value={addForm.quantity_on_hand} onChange={e => setAddForm(p => ({ ...p, quantity_on_hand: e.target.value }))} />
               </div>
             </div>
-            <button type="submit" className="pos-neworder-btn" style={{ width: "100%", marginTop: 20 }}>บันทึกข้อมูล</button>
+            <button type="submit" className="pos-neworder-btn" style={{ width: "100%", marginTop: 20 }}>{t('inventory.btnSaveData')}</button>
           </form>
         </div>
       )}
@@ -308,14 +310,14 @@ export default function InventoryPage() {
         <div className="card inv-form-container" style={{ padding: 24 }}>
           <form onSubmit={handleAddSupplier}>
             <div className="input-group">
-              <label>ชื่อซัพพลายเออร์</label>
+              <label>{t('inventory.supNameLabel')}</label>
               <input value={supplierForm.supplier_name} onChange={e => setSupplierForm(p => ({ ...p, supplier_name: e.target.value }))} required />
             </div>
             <div className="input-group">
-              <label>ข้อมูลติดต่อ (เบอร์โทร / อีเมล)</label>
+              <label>{t('inventory.supContactLabel')}</label>
               <input value={supplierForm.contact} onChange={e => setSupplierForm(p => ({ ...p, contact: e.target.value }))} />
             </div>
-            <button type="submit" className="pos-neworder-btn" style={{ width: "100%", marginTop: 12 }}>บันทึกชื่อซัพพลายเออร์</button>
+            <button type="submit" className="pos-neworder-btn" style={{ width: "100%", marginTop: 12 }}>{t('inventory.btnSaveSupplier')}</button>
           </form>
         </div>
       )}
@@ -323,17 +325,17 @@ export default function InventoryPage() {
       {tab === "orders" && (
         <div className="card" style={{ padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-            <button className="pos-neworder-btn" onClick={handleOpenOrderModal}>+ สร้างใบสั่งซื้อใหม่</button>
+            <button className="pos-neworder-btn" onClick={handleOpenOrderModal}>{t('inventory.btnCreateOrder')}</button>
           </div>
           <div className="overflow-x-auto">
             <table className="inv-table">
             <thead>
               <tr>
-                <th>รหัสใบสั่งซื้อ</th>
-                <th>วันที่สั่ง</th>
-                <th>ซัพพลายเออร์</th>
-                <th>สถานะ</th>
-                <th>จัดการ</th>
+                <th>{t('inventory.colOrderId')}</th>
+                <th>{t('inventory.colOrderDate')}</th>
+                <th>{t('inventory.colOrderSupplier')}</th>
+                <th>{t('inventory.colOrderStatus')}</th>
+                <th>{t('inventory.colOrderAction')}</th>
               </tr>
             </thead>
             <tbody>
@@ -350,13 +352,13 @@ export default function InventoryPage() {
                   <td>
                     {String(o.order_status).toLowerCase() !== 'received' && (
                       <button className="qty-btn" onClick={() => handleUpdateOrderStatus(o.order_id, o.order_status)}>
-                        รับสินค้า
+                        {t('inventory.btnReceiveItem')}
                       </button>
                     )}
                   </td>
                 </tr>
               ))}
-              {orders.length === 0 && <tr><td colSpan="5" style={{ textAlign: "center" }}>ไม่มีข้อมูลการสั่งซื้อ</td></tr>}
+              {orders.length === 0 && <tr><td colSpan="5" style={{ textAlign: "center" }}>{t('inventory.noOrders')}</td></tr>}
             </tbody>
           </table>
           </div>
@@ -369,12 +371,12 @@ export default function InventoryPage() {
             <table className="inv-table">
             <thead>
               <tr>
-                <th>วันที่</th>
-                <th>วัตถุดิบ (ID)</th>
-                <th>ชื่อวัตถุดิบ</th>
-                <th>ประเภท</th>
-                <th>จำนวนที่ขยับ</th>
-                <th>หมายเหตุ / อ้างอิง</th>
+                <th>{t('inventory.colTxDate')}</th>
+                <th>{t('inventory.colTxIgId')}</th>
+                <th>{t('inventory.colTxIgName')}</th>
+                <th>{t('inventory.colTxType')}</th>
+                <th>{t('inventory.colTxQtyChange')}</th>
+                <th>{t('inventory.colTxNote')}</th>
               </tr>
             </thead>
             <tbody>
@@ -403,7 +405,7 @@ export default function InventoryPage() {
                   </td>
                 </tr>
               ))}
-              {transactions.length === 0 && <tr><td colSpan="6" style={{ textAlign: "center" }}>ไม่มีประวัติการเคลื่อนไหวสต๊อก</td></tr>}
+              {transactions.length === 0 && <tr><td colSpan="6" style={{ textAlign: "center" }}>{t('inventory.noTransactions')}</td></tr>}
             </tbody>
           </table>
           </div>
@@ -414,12 +416,12 @@ export default function InventoryPage() {
         <div className="modal-backdrop">
           <div className="modal-card wide">
             <button className="modal-x" onClick={() => setShowOrderModal(false)}>×</button>
-            <div className="modal-title">สร้างใบสั่งซื้อใหม่</div>
+            <div className="modal-title">{t('inventory.orderModalTitle')}</div>
             <form onSubmit={handleCreateOrder}>
               <div className="input-group">
-                <label>ออเดอร์ไปยังซัพพลายเออร์</label>
+                <label>{t('inventory.orderToSupplierLabel')}</label>
                 <select value={orderSupplier} onChange={e => setOrderSupplier(e.target.value)} required>
-                  <option value="">-- เลือกซัพพลายเออร์ --</option>
+                  <option value="">{t('inventory.optSelectSupplier')}</option>
                   {suppliers.map(s => (
                     <option key={s.supplier_id} value={s.supplier_id}>{s.supplier_name}</option>
                   ))}
@@ -427,15 +429,15 @@ export default function InventoryPage() {
               </div>
 
               <div style={{ marginTop: 24, marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontWeight: 'bold' }}>รายการวัตถุดิบ</div>
+                <div style={{ fontWeight: 'bold' }}>{t('inventory.orderItemsTitle')}</div>
                 <button type="button" className="btn-soft" style={{ padding: '4px 12px' }} onClick={handleAddOrderItem}>
-                  + เพิ่มรายการ
+                  {t('inventory.btnAddOrderItem')}
                 </button>
               </div>
 
               {orderItems.length === 0 && (
                 <div style={{ padding: 16, textAlign: 'center', background: '#f8f9fa', borderRadius: 8, color: '#6c757d' }}>
-                  ยังไม่มีรายการวัตถุดิบ
+                  {t('inventory.noOrderItems')}
                 </div>
               )}
 
@@ -446,21 +448,21 @@ export default function InventoryPage() {
                 return (
                   <div key={index} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 12, alignItems: 'end', marginBottom: 12, background: '#f8f9fa', padding: 12, borderRadius: 8 }}>
                     <div>
-                      <label style={{ fontSize: 12, color: '#6c757d' }}>วัตถุดิบ</label>
+                      <label style={{ fontSize: 12, color: '#6c757d' }}>{t('inventory.orderItemIngredient')}</label>
                       <select 
                         value={item.ingredient_id} 
                         onChange={e => handleUpdateOrderItem(index, 'ingredient_id', e.target.value)}
                         required
                         style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
                       >
-                        <option value="">-- เลือก --</option>
+                        <option value="">{t('inventory.optSelect')}</option>
                         {ingredients.map(ig => (
                           <option key={ig.ingredient_id} value={ig.ingredient_id}>{ig.ingredient_name}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label style={{ fontSize: 12, color: '#6c757d' }}>จำนวน {unit ? `(${unit})` : ''}</label>
+                      <label style={{ fontSize: 12, color: '#6c757d' }}>{t('inventory.orderItemQty', { unit: unit ? `(${unit})` : '' })}</label>
                       <input 
                         type="number" 
                         min="1" 
@@ -471,7 +473,7 @@ export default function InventoryPage() {
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: 12, color: '#6c757d' }}>ราคา/หน่วย</label>
+                      <label style={{ fontSize: 12, color: '#6c757d' }}>{t('inventory.orderItemCost')}</label>
                       <input 
                         type="number" 
                         min="0" 
@@ -487,7 +489,7 @@ export default function InventoryPage() {
                         onClick={() => handleRemoveOrderItem(index)}
                         style={{ background: '#ffebee', color: '#c62828', border: 'none', padding: '8px 12px', borderRadius: 4, cursor: 'pointer' }}
                       >
-                        ลบ
+                        {t('inventory.btnDelete')}
                       </button>
                     </div>
                   </div>
@@ -495,8 +497,8 @@ export default function InventoryPage() {
               })}
 
               <div className="modal-actions" style={{ marginTop: 24 }}>
-                <button type="button" className="btn-soft" onClick={() => setShowOrderModal(false)}>ยกเลิก</button>
-                <button type="submit" className="btn-primary">ยืนยันการสั่งซื้อ</button>
+                <button type="button" className="btn-soft" onClick={() => setShowOrderModal(false)}>{t('inventory.btnCancel')}</button>
+                <button type="submit" className="btn-primary">{t('inventory.btnConfirmOrderSubmit')}</button>
               </div>
             </form>
           </div>

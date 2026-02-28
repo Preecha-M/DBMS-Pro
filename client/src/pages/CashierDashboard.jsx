@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
@@ -6,6 +7,7 @@ import api from '../db/api';
 import './CashierDashboard.css';
 
 export default function CashierDashboard({ roundId, roundInfo }) {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -52,15 +54,15 @@ export default function CashierDashboard({ roundId, roundInfo }) {
       {/* 1. Key Metrics */}
       <div className="metrics-grid">
         <div className="metric-card">
-          <div className="metric-title">ยอดขายรวม</div>
+          <div className="metric-title">{t('dashboard.totalSales')}</div>
           <div className="metric-value highlight">{formatCurrency(metrics.totalSales)}</div>
         </div>
         <div className="metric-card">
-          <div className="metric-title">จำนวนออเดอร์</div>
-          <div className="metric-value">{metrics.totalOrders} บิล</div>
+          <div className="metric-title">{t('dashboard.totalOrders')}</div>
+          <div className="metric-value">{metrics.totalOrders} {t('dashboard.bills')}</div>
         </div>
         <div className="metric-card">
-          <div className="metric-title">ยอดเฉลี่ยต่อบิล</div>
+          <div className="metric-title">{t('dashboard.avgBasketValue')}</div>
           <div className="metric-value">{formatCurrency(metrics.avgBasketValue)}</div>
         </div>
       </div>
@@ -68,14 +70,14 @@ export default function CashierDashboard({ roundId, roundInfo }) {
       <div className="dashboard-row">
         {/* 2. Visual Trends (Hourly Sales Chart) */}
         <div className="chart-card">
-          <h3 className="card-title">แนวโน้มยอดขายรายชั่วโมง</h3>
+          <h3 className="card-title">{t('dashboard.hourlySalesTrend')}</h3>
           <div style={{ width: '100%', height: 300 }}>
             <ResponsiveContainer>
               <LineChart data={hourlySales} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                 <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6C727F' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6C727F' }} tickFormatter={(val) => `฿${val}`} />
-                <Tooltip formatter={(value) => [formatCurrency(value), 'ยอดขาย']} labelStyle={{ color: '#111' }} />
+                <Tooltip formatter={(value) => [formatCurrency(value), t('dashboard.sales')]} labelStyle={{ color: '#111' }} />
                 <Line type="monotone" dataKey="revenue" stroke="var(--primary-orange)" strokeWidth={3} dot={{ r: 4, fill: "var(--primary-orange)" }} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>
@@ -84,9 +86,9 @@ export default function CashierDashboard({ roundId, roundInfo }) {
 
         {/* 3. Top Performing Products */}
         <div className="top-products-card">
-          <h3 className="card-title">5 อันดับสินค้าขายดี</h3>
+          <h3 className="card-title">{t('dashboard.top5Products')}</h3>
           {topProducts.length === 0 ? (
-            <p className="empty-text">ยังไม่มีข้อมูลการขาย</p>
+            <p className="empty-text">{t('dashboard.noSalesData')}</p>
           ) : (
             <div className="top-products-list">
               {topProducts.map((p, idx) => (
@@ -96,7 +98,7 @@ export default function CashierDashboard({ roundId, roundInfo }) {
                     <span className="tp-name">{p.name}</span>
                   </div>
                   <div className="tp-right">
-                    <div className="tp-qty">{p.quantity} ชิ้น</div>
+                    <div className="tp-qty">{p.quantity} {t('dashboard.pieces')}</div>
                     <div className="tp-rev">{formatCurrency(p.revenue)}</div>
                   </div>
                 </div>
@@ -109,13 +111,13 @@ export default function CashierDashboard({ roundId, roundInfo }) {
       <div className="dashboard-row">
         {/* 4. Payment Methods */}
         <div className="payment-card">
-          <h3 className="card-title">สัดส่วนช่องทางการชำระเงิน</h3>
+          <h3 className="card-title">{t('dashboard.paymentMethods')}</h3>
           {paymentSplit.length === 0 ? (
-            <p className="empty-text">ยังไม่มีข้อมูล</p>
+            <p className="empty-text">{t('dashboard.noData')}</p>
           ) : (
             paymentSplit.map((pm, idx) => (
               <div key={idx} className="payment-row">
-                <span className="pm-name">{pm.name === 'Cash' ? 'เงินสด' : pm.name === 'Credit Card' ? 'บัตรเครดิต' : pm.name === 'QR' ? 'โอนเงิน/QR' : pm.name}</span>
+                <span className="pm-name">{pm.name === 'Cash' ? t('dashboard.cash') : pm.name === 'Credit Card' ? t('dashboard.creditCard') : pm.name === 'QR' ? t('dashboard.qr') : pm.name}</span>
                 <span className="pm-val">{formatCurrency(pm.value)}</span>
               </div>
             ))
@@ -124,9 +126,9 @@ export default function CashierDashboard({ roundId, roundInfo }) {
 
         {/* Categories Split */}
         <div className="category-card">
-          <h3 className="card-title">ยอดขายตามหมวดหมู่</h3>
+          <h3 className="card-title">{t('dashboard.categorySales')}</h3>
           {categorySplit.length === 0 ? (
-            <p className="empty-text">ยังไม่มีข้อมูล</p>
+             <p className="empty-text">{t('dashboard.noData')}</p>
           ) : (
             categorySplit.map((c, idx) => (
               <div key={idx} className="category-row">

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import api from "../db/api";
 import "./SalesHistoryPage.css"; // ⭐ CSS เฉพาะหน้านี้
 
 export default function SalesHistoryPage() {
+  const { t } = useTranslation();
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,7 +48,7 @@ export default function SalesHistoryPage() {
     <div className="pos-page sales-history-page">
       <div className="page-pad">
         {/* Page title */}
-        <h2 style={{ marginBottom: 16 }}>Sales History</h2>
+        <h2 style={{ marginBottom: 16 }}>{t('salesHistory.title')}</h2>
 
         {/* Filter bar */}
         <div
@@ -62,7 +64,7 @@ export default function SalesHistoryPage() {
             className={`filter-pill ${mode === "day" ? "active" : ""}`}
             onClick={() => setMode("day")}
           >
-            รายวัน
+            {t('salesHistory.daily')}
           </button>
 
           {mode === "day" && (
@@ -78,21 +80,21 @@ export default function SalesHistoryPage() {
             className={`filter-pill ${mode === "month" ? "active" : ""}`}
             onClick={() => setMode("month")}
           >
-            เดือนนี้
+            {t('salesHistory.thisMonth')}
           </button>
 
           <button
             className={`filter-pill ${mode === "year" ? "active" : ""}`}
             onClick={() => setMode("year")}
           >
-            ทั้งปี
+            {t('salesHistory.thisYear')}
           </button>
 
           <button
             className={`filter-pill ${mode === "custom" ? "active" : ""}`}
             onClick={() => setMode("custom")}
           >
-            เลือกเดือน
+            {t('salesHistory.selectMonth')}
           </button>
 
           {mode === "custom" && (
@@ -108,7 +110,7 @@ export default function SalesHistoryPage() {
         {/* Content */}
         {loading ? (
           <div className="card" style={{ padding: 24 }}>
-            กำลังโหลดข้อมูล...
+            {t('salesHistory.loading')}
           </div>
         ) : (
           <div className="card">
@@ -122,9 +124,9 @@ export default function SalesHistoryPage() {
                 alignItems: "center",
               }}
             >
-              <div style={{ fontWeight: 600 }}>รายการขายย้อนหลัง</div>
+              <div style={{ fontWeight: 600 }}>{t('salesHistory.pastSalesList')}</div>
               <div style={{ fontSize: 13, color: "#888" }}>
-                ทั้งหมด {sales.length} รายการ
+                {t('salesHistory.totalItems', { count: sales.length })}
               </div>
             </div>
 
@@ -137,19 +139,19 @@ export default function SalesHistoryPage() {
                   color: "#999",
                 }}
               >
-                ไม่พบข้อมูลการขาย
+                {t('salesHistory.noSalesData')}
               </div>
             ) : (
               <div className="table-container">
                 <table className="sales-table">
                   <thead>
                     <tr>
-                      <th>Receipt #</th>
-                      <th>Date</th>
-                      <th>Member</th>
-                      <th>Employee</th>
-                      <th>Payment</th>
-                      <th className="col-right">Net Total</th>
+                      <th>{t('salesHistory.receipt')}</th>
+                      <th>{t('salesHistory.date')}</th>
+                      <th>{t('salesHistory.member')}</th>
+                      <th>{t('salesHistory.employee')}</th>
+                      <th>{t('salesHistory.payment')}</th>
+                      <th className="col-right">{t('salesHistory.netTotal')}</th>
                     </tr>
                   </thead>
 

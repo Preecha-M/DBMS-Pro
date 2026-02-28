@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import api from "../db/api";
 
 const FALLBACK_IMG = "https://cdn-icons-png.flaticon.com/512/924/924514.png";
 
 export default function MenuManagePage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [menus, setMenus] = useState([]);
 
@@ -34,7 +36,7 @@ export default function MenuManagePage() {
     } catch (e) {
       setMenus([]);
       setCatsRaw(null);
-      setError(e?.response?.data?.message || "โหลดข้อมูลไม่สำเร็จ");
+      setError(e?.response?.data?.message || t('menuManage.errLoadFailed'));
     } finally {
       setLoading(false);
     }
@@ -115,7 +117,7 @@ export default function MenuManagePage() {
       setForm((p) => ({ ...p, image_url: url }));
     } catch (e) {
       setError(
-        e?.response?.data?.message || e?.message || "อัปโหลดรูปไม่สำเร็จ"
+        e?.response?.data?.message || e?.message || t('menuManage.errUploadFailed')
       );
     }
   };
@@ -128,9 +130,9 @@ export default function MenuManagePage() {
       const name = form.menu_name.trim();
       const priceNum = Number(form.price);
 
-      if (!name) return setError("กรอกชื่อเมนูก่อน");
+      if (!name) return setError(t('menuManage.errNameEmpty'));
       if (!Number.isFinite(priceNum) || priceNum < 0)
-        return setError("ราคาต้องเป็นตัวเลข");
+        return setError(t('menuManage.errPriceInvalid'));
 
       const payload = {
         menu_name: name,
@@ -149,7 +151,7 @@ export default function MenuManagePage() {
       await load();
       resetForm();
     } catch (e2) {
-      setError(e2?.response?.data?.message || "บันทึกไม่สำเร็จ");
+      setError(e2?.response?.data?.message || t('menuManage.errSaveFailed'));
     }
   };
 
@@ -172,7 +174,7 @@ export default function MenuManagePage() {
       await load();
       if (editingId === id) resetForm();
     } catch (e) {
-      setError(e?.response?.data?.message || "ลบไม่สำเร็จ");
+      setError(e?.response?.data?.message || t('menuManage.errDeleteFailed'));
     }
   };
 
@@ -186,9 +188,9 @@ export default function MenuManagePage() {
           gap: 12,
         }}
       >
-        <h2 style={{ margin: 0 }}>จัดการเมนู</h2>
+        <h2 style={{ margin: 0 }}>{t('menuManage.pageTitle')}</h2>
         <button className="pos-logout-btn" onClick={resetForm}>
-          Clear
+          {t('menuManage.btnClear')}
         </button>
       </div>
 
@@ -208,30 +210,30 @@ export default function MenuManagePage() {
       >
         <form onSubmit={onSubmit} className="card" style={{ padding: 16 }}>
           <div style={{ fontWeight: 900, marginBottom: 12 }}>
-            {editingId ? "แก้ไขเมนู" : "เพิ่มเมนูใหม่"}
+            {editingId ? t('menuManage.formTitleEdit') : t('menuManage.formTitleAdd')}
           </div>
 
           <div className="input-group">
-            <label>ชื่อเมนู</label>
+            <label>{t('menuManage.labelName')}</label>
             <input
               value={form.menu_name}
               onChange={(e) =>
                 setForm((p) => ({ ...p, menu_name: e.target.value }))
               }
-              placeholder="เช่น Iced Americano"
+              placeholder={t('menuManage.placeholderName')}
               required
             />
           </div>
 
           <div className="input-group">
-            <label>ราคา</label>
+            <label>{t('menuManage.labelPrice')}</label>
             <input
               type="number"
               value={form.price}
               onChange={(e) =>
                 setForm((p) => ({ ...p, price: e.target.value }))
               }
-              placeholder="เช่น 45"
+              placeholder={t('menuManage.placeholderPrice')}
               min="0"
               step="0.01"
               required
@@ -239,7 +241,7 @@ export default function MenuManagePage() {
           </div>
 
           <div className="input-group">
-            <label>สถานะ</label>
+            <label>{t('menuManage.labelStatus')}</label>
             <select
               value={form.status}
               onChange={(e) =>
@@ -258,7 +260,7 @@ export default function MenuManagePage() {
           </div>
 
           <div className="input-group">
-            <label>หมวดหมู่</label>
+            <label>{t('menuManage.labelCategory')}</label>
             <select
               value={form.category_id}
               onChange={(e) =>
@@ -271,7 +273,7 @@ export default function MenuManagePage() {
                 border: "1px solid var(--border-color)",
               }}
             >
-              <option value="">— ไม่ระบุหมวด —</option>
+              <option value="">{t('menuManage.optNoCategory')}</option>
               {categoryOptions.map((c) => (
                 <option key={c.category_id} value={c.category_id}>
                   {c.label}
@@ -281,7 +283,7 @@ export default function MenuManagePage() {
           </div>
 
           <div className="input-group">
-            <label>รูปเมนู</label>
+            <label>{t('menuManage.labelImage')}</label>
 
             <div style={{ display: "grid", gap: 10 }}>
               <input
@@ -295,7 +297,7 @@ export default function MenuManagePage() {
                 onChange={(e) =>
                   setForm((p) => ({ ...p, image_url: e.target.value }))
                 }
-                placeholder="หรือวางลิงก์รูป (optional)"
+                placeholder={t('menuManage.placeholderImageLink')}
               />
 
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -312,7 +314,7 @@ export default function MenuManagePage() {
                   }}
                 />
                 <div style={{ color: "#9EA3AE", fontSize: 12 }}>
-                  Preview รูปภาพ
+                  {t('menuManage.textImagePreview')}
                 </div>
               </div>
             </div>
@@ -323,15 +325,15 @@ export default function MenuManagePage() {
             className="pos-neworder-btn"
             style={{ marginTop: 14, width: "100%" }}
           >
-            {editingId ? "Update" : "Create"}
+            {editingId ? t('menuManage.btnUpdate') : t('menuManage.btnCreate')}
           </button>
         </form>
 
         <div className="card" style={{ padding: 16, overflow: "hidden" }}>
-          <div style={{ fontWeight: 900, marginBottom: 12 }}>รายการเมนู</div>
+          <div style={{ fontWeight: 900, marginBottom: 12 }}>{t('menuManage.listTitle')}</div>
 
           {loading ? (
-            <div>Loading...</div>
+            <div>{t('menuManage.textLoading')}</div>
           ) : (
             <div style={{ display: "grid", gap: 10 }}>
               {menus.map((m) => (
@@ -355,7 +357,7 @@ export default function MenuManagePage() {
                       <div className="cat-sub">
                         ฿ {Number(m.price || 0).toFixed(2)} · {m.status || "-"}
                         {" · "}
-                        หมวด:{" "}
+                        {t('menuManage.textCategory')}{" "}
                         {m.category_id
                           ? categoryNameById.get(Number(m.category_id)) ||
                             `#${m.category_id}`
@@ -370,21 +372,21 @@ export default function MenuManagePage() {
                       type="button"
                       onClick={() => onEdit(m)}
                     >
-                      Edit
+                      {t('menuManage.btnEdit')}
                     </button>
                     <button
                       className="qty-btn"
                       type="button"
                       onClick={() => onDelete(m.menu_id)}
                     >
-                      Delete
+                      {t('menuManage.btnDelete')}
                     </button>
                   </div>
                 </div>
               ))}
 
               {menus.length === 0 && (
-                <div style={{ color: "#9EA3AE" }}>ยังไม่มีเมนู</div>
+                <div style={{ color: "#9EA3AE" }}>{t('menuManage.noMenus')}</div>
               )}
             </div>
           )}

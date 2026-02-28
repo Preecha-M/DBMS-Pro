@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import api from "../db/api";
 
 export default function NewOrderPage() {
+  const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [menus, setMenus] = useState([]);
@@ -64,7 +66,7 @@ export default function NewOrderPage() {
       setNextSaleId(nextId);
 
     } catch (e) {
-      setError(e?.response?.data?.message || "โหลดข้อมูลไม่สำเร็จ");
+      setError(e?.response?.data?.message || t('newOrder.loadingFailed'));
     } finally {
       setLoading(false);
     }
@@ -75,8 +77,8 @@ export default function NewOrderPage() {
   }, []);
 
   const pillCats = useMemo(
-    () => [{ category_id: null, category_name: "All" }, ...cats],
-    [cats]
+    () => [{ category_id: null, category_name: t('newOrder.allCategories') }, ...cats],
+    [cats, t]
   );
 
   const visibleMenus = useMemo(() => {
@@ -263,14 +265,12 @@ export default function NewOrderPage() {
     if (paymentMethod === "Cash") {
       const net = subtotal - Number(discountAmount || 0);
       if (!cashReceived || cashReceived === "") {
-        setError("กรุณากรอกจำนวนเงินสดที่ลูกค้าให้");
+        setError(t('newOrder.enterCashAmount'));
         return;
       }
       if (Number(cashReceived) < net) {
         setError(
-          `เงินสดไม่พอ! ขาดอีก ${(net - Number(cashReceived)).toFixed(
-            2
-          )} บาท`
+          t('newOrder.notEnoughCash', { amount: (net - Number(cashReceived)).toFixed(2) })
         );
         return;
       }
@@ -302,7 +302,7 @@ export default function NewOrderPage() {
       setStep("CONFIRM");
     } catch (e) {
       setError(
-        e?.response?.data?.message || e?.message || "ตรวจสอบสมาชิกไม่สำเร็จ"
+        e?.response?.data?.message || e?.message || t('newOrder.memberCheckFailed')
       );
     }
   };
@@ -314,15 +314,13 @@ export default function NewOrderPage() {
     if (paymentMethod === "Cash") {
       const net = orderSnapshot.subtotal - orderSnapshot.discountAmount;
       if (!cashReceived || cashReceived === "") {
-        setError("กรุณากรอกจำนวนเงินสดที่ลูกค้าให้");
+        setError(t('newOrder.enterCashAmount'));
         return;
       }
 
       if (Number(cashReceived) < net) {
         setError(
-          `เงินสดไม่พอ! ขาดอีก ${(
-            net - Number(cashReceived)
-          ).toFixed(2)} บาท`
+          t('newOrder.notEnoughCash', { amount: (net - Number(cashReceived)).toFixed(2) })
         );
         return;
       }
@@ -348,7 +346,7 @@ export default function NewOrderPage() {
       setCart([]);
       setStep("RECEIPT");
     } catch (e) {
-      setError(e?.response?.data?.message || "บันทึกการขายไม่สำเร็จ");
+      setError(e?.response?.data?.message || t('newOrder.saveFailed'));
     }
   };
 
@@ -420,7 +418,7 @@ export default function NewOrderPage() {
                 </div>
               ))}
               {visibleMenus.length === 0 && (
-                <div className="page-pad">ไม่มีเมนูในหมวดนี้</div>
+                <div className="page-pad">{t('newOrder.noMenuInCategory')}</div>
               )}
             </div>
           )}
@@ -451,7 +449,7 @@ export default function NewOrderPage() {
 
           <div className="cart-items">
             {cart.length === 0 ? (
-              <div className="cart-empty">ยังไม่มีสินค้าในออเดอร์</div>
+              <div className="cart-empty">{t('newOrder.emptyCart')}</div>
             ) : (
               cart.map((it) => (
                 <div key={it.cartItemId} className="cart-row">
@@ -503,9 +501,9 @@ export default function NewOrderPage() {
           <div className="cart-foot">
             <div className="cart-total">
               <div>
-                <div className="cart-total-title">Total</div>
+                <div className="cart-total-title">{t('newOrder.cartTotalTitle')}</div>
                 <div className="cart-total-sub">
-                  Items: {cart.length}, Quantity: {qty}
+                  {t('newOrder.cartItemsCount')} {cart.length}, {t('newOrder.cartQuantity')} {qty}
                 </div>
               </div>
               <div className="cart-total-money">฿ {subtotal.toFixed(0)}</div>
@@ -519,7 +517,7 @@ export default function NewOrderPage() {
                 setStep("RECEIPT");
               }}
             >
-              Print Invoice
+              {t('newOrder.printInvoiceBtn')}
             </button>
 
             <button
@@ -531,7 +529,7 @@ export default function NewOrderPage() {
                 setStep("PAYMENT");
               }}
             >
-              Payments
+              {t('newOrder.paymentBtn')}
             </button>
           </div>
         </aside>
@@ -543,7 +541,7 @@ export default function NewOrderPage() {
             <button className="modal-x" onClick={() => setSelectingItem(null)}>
               ×
             </button>
-            <div className="modal-title">เลือกตัวเลือกสำหรับ: {selectingItem.menu_name}</div>
+            <div className="modal-title">{t('newOrder.selectOptionsFor')} {selectingItem.menu_name}</div>
             <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: 8 }}>
               {selectingItem.relevantOptionGroups?.map(group => (
                 <div key={group.group_id} style={{ marginBottom: 16 }}>
@@ -579,7 +577,7 @@ export default function NewOrderPage() {
                             {opt.item_name}
                           </div>
                           <div style={{ color: Number(opt.additional_price) > 0 ? 'var(--primary-orange)' : '#888', fontWeight: 600 }}>
-                            {Number(opt.additional_price) > 0 ? `+${opt.additional_price} ฿` : 'ฟรี'}
+                            {Number(opt.additional_price) > 0 ? `+${opt.additional_price} ฿` : t('newOrder.free')}
                           </div>
                         </label>
                       );
@@ -591,7 +589,7 @@ export default function NewOrderPage() {
             
             <div className="modal-actions" style={{ marginTop: 24 }}>
               <button className="btn-primary" style={{ width: '100%' }} onClick={() => addToCart(selectingItem, selectingItem.selectedOptions)}>
-                เพิ่มลงตะกร้า (รอเพิ่ม {selectingItem.selectedOptions.reduce((s, o) => s + o.additional_price, 0)} ฿)
+                {t('newOrder.addToCartWait', { amount: selectingItem.selectedOptions.reduce((s, o) => s + o.additional_price, 0) })}
               </button>
             </div>
           </div>
@@ -605,26 +603,26 @@ export default function NewOrderPage() {
               ×
             </button>
 
-            <div className="modal-title">Payment</div>
+            <div className="modal-title">{t('newOrder.paymentTitle')}</div>
 
             <div className="input-group">
-              <label>เบอร์โทรศัพท์สมาชิก (ไม่ใส่ = Walk-in)</label>
+              <label>{t('newOrder.memberPhoneLabel')}</label>
               <input
                 value={memberId}
                 onChange={(e) => setMemberId(e.target.value)}
-                placeholder="เช่น 0891234567"
+                placeholder={t('newOrder.memberPhonePlaceholder')}
               />
             </div>
 
             <div className="input-group">
-              <label>โปรโมชั่น</label>
+              <label>{t('newOrder.promoLabel')}</label>
               <select
                 value={selectedPromoId}
                 onChange={(e) => setSelectedPromoId(e.target.value)}
               >
-                <option value="">-- ไม่ใช้โปรโมชั่น --</option>
+                <option value="">{t('newOrder.noPromoLabel')}</option>
                 {promotions.map(p => {
-                  const subtext = p.discount_type === 'PERCENTAGE' ? `ลด ${p.discount_value}%` : `ลด ฿${p.discount_value}`;
+                  const subtext = p.discount_type === 'PERCENTAGE' ? t('newOrder.discountPercent', { amount: p.discount_value }) : t('newOrder.discountAmount', { amount: p.discount_value });
                   return (
                     <option key={p.promotion_id} value={p.promotion_id}>
                       {p.promotion_name} ({subtext})
@@ -636,17 +634,17 @@ export default function NewOrderPage() {
 
             {selectedPromo && (
               <div className="modal-note" style={{ marginTop: 8 }}>
-                เงื่อนไข: {selectedPromo.discount_type === 'PERCENTAGE' ? `ลด ${Number(selectedPromo.discount_value)}%` : `ลด ${Number(selectedPromo.discount_value)} ฿`} 
-                {` | ขั้นต่ำ ${selectedPromo.min_quantity} แก้ว`}
-                {selectedPromo.menu_ids?.length > 0 && ` | เฉพาะเมนูที่ร่วมรายการ`}
+                {t('newOrder.promoConditions')} {selectedPromo.discount_type === 'PERCENTAGE' ? t('newOrder.discountPercent', { amount: Number(selectedPromo.discount_value) }) : t('newOrder.discountAmount', { amount: Number(selectedPromo.discount_value) })} 
+                {` | ${t('newOrder.minCups', { amount: selectedPromo.min_quantity })}`}
+                {selectedPromo.menu_ids?.length > 0 && ` | ${t('newOrder.specificMenuOnly')}`}
                 <span style={{ display: 'block', color: 'var(--primary-orange)', marginTop: 4 }}>
-                  หักส่วนลด: <b>{discountAmount > 0 ? `-${discountAmount.toFixed(2)} บาท` : 'ยังไม่เข้าเงื่อนไข'}</b>
+                  {t('newOrder.discountApplied')} <b>{discountAmount > 0 ? `-${discountAmount.toFixed(2)} บาท` : t('newOrder.discountNotMet')}</b>
                 </span>
               </div>
             )}
 
             <div className="input-group" style={{ marginTop: 12 }}>
-              <label>วิธีชำระเงิน</label>
+              <label>{t('newOrder.paymentMethod')}</label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
@@ -658,22 +656,22 @@ export default function NewOrderPage() {
             </div>
             {paymentMethod === "Cash" && (
               <div className="input-group">
-                <label>เงินสดที่ลูกค้าให้</label>
+                <label>{t('newOrder.cashReceivedLabel')}</label>
                 <input
                   type="number"
                   min="0"
                   value={cashReceived}
                   onChange={(e) => setCashReceived(e.target.value)}
-                  placeholder="เช่น 500"
+                  placeholder={t('newOrder.cashReceivedPlaceholder')}
                 />
                 <div className="modal-note">
-                  เงินทอน: <b>{changeAmount.toFixed(2)}</b> บาท
+                  {t('newOrder.changeAmountLabel')} <b>{changeAmount.toFixed(2)}</b>
                 </div>
               </div>
             )}
 
             <div className="modal-note">
-              แต้มที่จะได้รับ: <b>{earnedPoints}</b> คะแนน (1 แก้ว = 1 คะแนน)
+              {t('newOrder.pointsEarnedLabel')} <b>{earnedPoints}</b> {t('newOrder.pointsUnit')}
             </div>
 
             {error && (
@@ -684,13 +682,13 @@ export default function NewOrderPage() {
 
             <div className="modal-actions">
               <button className="btn-soft" onClick={closeAllModals}>
-                Cancel
+                {t('newOrder.cancelBtn')}
               </button>
               <button
                 className="btn-primary"
                 onClick={goConfirm}
               >
-                Next
+                {t('newOrder.nextBtn')}
               </button>
             </div>
           </div>
@@ -704,17 +702,17 @@ export default function NewOrderPage() {
               ×
             </button>
 
-            <div className="modal-title center">Order confirmation</div>
+            <div className="modal-title center">{t('newOrder.confirmOrderTitle')}</div>
             <div className="modal-sub center">
-              Please confirm the order below to completed payment
+              {t('newOrder.confirmOrderSub')}
             </div>
 
             <div className="confirm-table">
               <div className="confirm-head">
-                <div>ITEM NAME</div>
-                <div>QTY</div>
-                <div>PRICE</div>
-                <div>SUBTOTAL</div>
+                <div>{t('newOrder.itemNameCol')}</div>
+                <div>{t('newOrder.qtyCol')}</div>
+                <div>{t('newOrder.priceCol')}</div>
+                <div>{t('newOrder.subtotalCol')}</div>
               </div>
 
               {orderSnapshot.items.map((it, idx) => (
@@ -729,7 +727,7 @@ export default function NewOrderPage() {
               ))}
 
               <div className="confirm-sum">
-                <div className="muted">Total points</div>
+                <div className="muted">{t('newOrder.totalPoints')}</div>
                 <div className="right">
                   <b>{orderSnapshot.earnedPoints}</b>
                 </div>
@@ -737,7 +735,7 @@ export default function NewOrderPage() {
 
               {orderSnapshot.discountAmount > 0 && (
                 <div className="confirm-sum">
-                  <div className="muted">Promotion Discount</div>
+                  <div className="muted">{t('newOrder.promoDiscount')}</div>
                   <div className="right" style={{ color: "var(--primary-orange)" }}>
                     -฿ {orderSnapshot.discountAmount.toFixed(2)}
                   </div>
@@ -745,7 +743,7 @@ export default function NewOrderPage() {
               )}
 
               <div className="confirm-total">
-                <div>Net Total</div>
+                <div>{t('newOrder.netTotal')}</div>
                 <div className="right total-money">
                   ฿ {(orderSnapshot.subtotal - orderSnapshot.discountAmount).toFixed(2)}
                 </div>
@@ -760,10 +758,10 @@ export default function NewOrderPage() {
 
             <div className="modal-actions">
               <button className="btn-soft" onClick={() => setStep("PAYMENT")}>
-                Back
+                {t('newOrder.backBtn')}
               </button>
               <button className="btn-primary" onClick={confirmPay}>
-                Confirm
+                {t('newOrder.confirmBtn')}
               </button>
             </div>
           </div>
@@ -904,10 +902,10 @@ export default function NewOrderPage() {
 
             <div className="modal-actions no-print">
               <button className="btn-soft" onClick={closeAllModals}>
-                Cancel
+                {t('newOrder.cancelBtn')}
               </button>
               <button className="btn-primary" onClick={() => window.print()}>
-                Print
+                {t('newOrder.printBtn')}
               </button>
             </div>
           </div>

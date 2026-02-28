@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../auth/useAuth";
 import welcomeImg from "../assets/welcome.jpg";
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ username: "", password: "" });
@@ -17,7 +19,7 @@ export default function LoginPage() {
       await login(form.username.trim(), form.password);
       navigate("/home", { replace: true });
     } catch (err) {
-      setError(err?.response?.data?.message || "เข้าสู่ระบบไม่สำเร็จ");
+      setError(err?.response?.data?.message || t('loginPage.errLoginFailed'));
     }
   };
 
@@ -31,14 +33,14 @@ export default function LoginPage() {
       </div>
 
       <div className="auth-form-side">
-        <h2 className="auth-title">Welcome Back!</h2>
-        <p className="auth-subtitle">กรุณาเข้าสู่ระบบเพื่อใช้งานระบบ POS</p>
+        <h2 className="auth-title">{t('loginPage.titleWelcome')}</h2>
+        <p className="auth-subtitle">{t('loginPage.subtitleLogin')}</p>
 
         {error && <div className="auth-error">{error}</div>}
 
         <form onSubmit={onSubmit}>
           <div className="input-group">
-            <label>Username</label>
+            <label>{t('loginPage.labelUsername')}</label>
             <input
               name="username"
               value={form.username}
@@ -50,7 +52,7 @@ export default function LoginPage() {
           </div>
 
           <div className="input-group">
-            <label>Password</label>
+            <label>{t('loginPage.labelPassword')}</label>
             <input
               name="password"
               type="password"
@@ -63,7 +65,7 @@ export default function LoginPage() {
           </div>
 
           <button type="submit" className="btn-auth-primary">
-            Sign in
+            {t('loginPage.btnSignIn')}
           </button>
         </form>
 

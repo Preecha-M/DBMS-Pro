@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import api from "../db/api";
 import "./OptionAdminPage.css";
 
 export default function OptionAdminPage() {
+  const { t } = useTranslation();
   const [groups, setGroups] = useState([]);
   const [menus, setMenus] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +24,7 @@ export default function OptionAdminPage() {
       setGroups(groupsRes.data);
       setMenus(menusRes.data);
     } catch (e) {
-      setError(e?.response?.data?.message || "โหลดข้อมูลไม่สำเร็จ");
+      setError(e?.response?.data?.message || t('optionAdmin.errLoadFailed'));
     } finally {
       setLoading(false);
     }
@@ -41,24 +43,24 @@ export default function OptionAdminPage() {
         group_name: groupName,
         menu_ids: selectedMenus
       });
-      setSuccess("เพิ่มหน้าต่างตัวเลือกสำเร็จ");
+      setSuccess(t('optionAdmin.sucAddGroup'));
       setGroupName("");
       setSelectedMenus([]);
       loadData();
     } catch (e) {
-      setError(e?.response?.data?.message || "Error");
+      setError(e?.response?.data?.message || t('optionAdmin.errDefault'));
     }
   };
 
   const handleDeleteGroup = async (id) => {
-    if (!window.confirm("ต้องการลบกลุ่มตัวเลือกนี้และข้อมูลภายในทั้งหมด?")) return;
+    if (!window.confirm(t('optionAdmin.confirmDeleteGroup'))) return;
     setError(""); setSuccess("");
     try {
       await api.delete(`/menu-options/groups/${id}`);
-      setSuccess("ลบกลุ่มตัวเลือกสำเร็จ");
+      setSuccess(t('optionAdmin.sucDeleteGroup'));
       loadData();
     } catch (e) {
-      setError(e?.response?.data?.message || "Error");
+      setError(e?.response?.data?.message || t('optionAdmin.errDefault'));
     }
   };
 
@@ -74,11 +76,11 @@ export default function OptionAdminPage() {
         item_name: itemForm.item_name,
         additional_price: Number(itemForm.additional_price || 0)
       });
-      setSuccess("เพิ่มตัวเลือกสำเร็จ");
+      setSuccess(t('optionAdmin.sucAddItem'));
       setItemForm({ ...itemForm, item_name: "", additional_price: 0 });
       loadData();
     } catch (e) {
-      setError(e?.response?.data?.message || "Error");
+      setError(e?.response?.data?.message || t('optionAdmin.errDefault'));
     }
   };
 
@@ -86,14 +88,14 @@ export default function OptionAdminPage() {
     setError(""); setSuccess("");
     try {
       await api.delete(`/menu-options/items/${id}`);
-      setSuccess("ลบตัวเลือกย่อยสำเร็จ");
+      setSuccess(t('optionAdmin.sucDeleteItem'));
       loadData();
     } catch (e) {
-      setError(e?.response?.data?.message || "Error");
+      setError(e?.response?.data?.message || t('optionAdmin.errDefault'));
     }
   };
 
-  if (loading) return <div className="page-pad">กำลังโหลด...</div>;
+  if (loading) return <div className="page-pad">{t('optionAdmin.loading')}</div>;
 
   const handleMenuSelection = (menuId) => {
     setSelectedMenus(prev => 
@@ -105,7 +107,7 @@ export default function OptionAdminPage() {
 
   return (
     <div className="page-pad">
-      <h2 style={{ marginBottom: 20 }}>จัดการตัวเลือกเสริม (Menu Options)</h2>
+      <h2 style={{ marginBottom: 20 }}>{t('optionAdmin.pageTitle')}</h2>
 
       {error && <div className="auth-error" style={{ marginBottom: 16 }}>{error}</div>}
       {success && <div style={{ background: "#d4edda", color: "#155724", padding: 12, borderRadius: 8, marginBottom: 16 }}>{success}</div>}
@@ -113,21 +115,21 @@ export default function OptionAdminPage() {
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
         {/* left col: Groups */}
         <div className="card" style={{ flex: 1, padding: 20 }}>
-          <h3>หัวข้อตัวเลือก</h3>
+          <h3>{t('optionAdmin.titleGroups')}</h3>
           <form onSubmit={handleAddGroup} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
             <div style={{ display: 'flex', gap: 10 }}>
               <input 
-                placeholder="เช่น ระดับความหวาน, Toppings..."
+                placeholder={t('optionAdmin.placeholderGroupName')}
                 value={groupName}
                 onChange={e => setGroupName(e.target.value)}
                 required
                 style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #ddd' }}
               />
-              <button type="submit" className="pos-neworder-btn">เพิ่มหัวข้อ</button>
+              <button type="submit" className="pos-neworder-btn">{t('optionAdmin.btnAddGroup')}</button>
             </div>
             
             <div style={{ marginTop: 8 }}>
-              <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>เลือกเมนูที่ใช้ต้วเลือกนี้:</label>
+              <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>{t('optionAdmin.labelSelectMenus')}</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, maxHeight: 150, overflowY: 'auto', padding: 8, border: '1px solid #ddd', borderRadius: 8 }}>
                 {menus.map(m => (
                   <label key={m.menu_id} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', background: selectedMenus.includes(m.menu_id) ? '#e6f4ea' : '#f5f5f5', padding: '4px 8px', borderRadius: 16, fontSize: 13 }}>
@@ -140,7 +142,7 @@ export default function OptionAdminPage() {
                     {m.menu_name}
                   </label>
                 ))}
-                {menus.length === 0 && <span style={{ color: '#999', fontSize: 13 }}>ไม่พบเมนู</span>}
+                {menus.length === 0 && <span style={{ color: '#999', fontSize: 13 }}>{t('optionAdmin.noMenusSelected')}</span>}
               </div>
             </div>
           </form>
@@ -152,12 +154,12 @@ export default function OptionAdminPage() {
                   <div>
                     <strong>{g.group_name}</strong>
                     <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
-                      ใช้กับ: {g.menu_ids?.length > 0 
+                      {t('optionAdmin.textUsedFor')} {g.menu_ids?.length > 0 
                         ? g.menu_ids.map(id => menus.find(m => m.menu_id === id)?.menu_name || `#${id}`).join(', ')
-                        : 'ทุกเมนู (ไม่ได้ระบุ)'}
+                        : t('optionAdmin.textAllMenus')}
                     </div>
                   </div>
-                  <button onClick={() => handleDeleteGroup(g.group_id)} style={{ background: 'transparent', border: 'none', color: '#ff4d4f', cursor: 'pointer', padding: 4 }}>ลบ</button>
+                  <button onClick={() => handleDeleteGroup(g.group_id)} style={{ background: 'transparent', border: 'none', color: '#ff4d4f', cursor: 'pointer', padding: 4 }}>{t('optionAdmin.btnDeleteWord')}</button>
                 </div>
                 
                 {/* Items in this group */}
@@ -166,8 +168,8 @@ export default function OptionAdminPage() {
                     <table className="inv-table" style={{ fontSize: 13, minWidth: 400 }}>
                     <thead>
                       <tr>
-                        <th>ชื่อตัวเลือก</th>
-                        <th>ราคาบวกเพิ่ม</th>
+                        <th>{t('optionAdmin.colOptionName')}</th>
+                        <th>{t('optionAdmin.colAddPrice')}</th>
                         <th style={{ width: 50 }}></th>
                       </tr>
                     </thead>
@@ -185,7 +187,7 @@ export default function OptionAdminPage() {
                     </table>
                   </div>
                 ) : (
-                  <div style={{ fontSize: 13, color: '#999' }}>ไม่มีตัวเลือกย่อย</div>
+                  <div style={{ fontSize: 13, color: '#999' }}>{t('optionAdmin.noOptionItems')}</div>
                 )}
               </div>
             ))}
@@ -194,24 +196,24 @@ export default function OptionAdminPage() {
 
         {/* right col: Items Form */}
         <div className="card" style={{ width: 350, padding: 20 }}>
-          <h3>เพิ่มตัวเลือกย่อย</h3>
+          <h3>{t('optionAdmin.titleAddItem')}</h3>
           <form onSubmit={handleAddItem} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div className="input-group">
-              <label>เลือกหัวข้อ</label>
+              <label>{t('optionAdmin.labelSelectGroup')}</label>
               <select value={itemForm.group_id} onChange={e => setItemForm({...itemForm, group_id: e.target.value})} required>
-                <option value="">-- เลือก --</option>
+                <option value="">{t('optionAdmin.optSelect')}</option>
                 {groups.map(g => <option key={g.group_id} value={g.group_id}>{g.group_name}</option>)}
               </select>
             </div>
             <div className="input-group">
-              <label>ชื่อตัวเลือกย่อย</label>
-              <input value={itemForm.item_name} onChange={e => setItemForm({...itemForm, item_name: e.target.value})} required placeholder="เช่น หวาน 50%" />
+              <label>{t('optionAdmin.labelItemName')}</label>
+              <input value={itemForm.item_name} onChange={e => setItemForm({...itemForm, item_name: e.target.value})} required placeholder={t('optionAdmin.placeholderItemName')} />
             </div>
             <div className="input-group">
-              <label>ราคาบวกเพิ่ม (บาท)</label>
+              <label>{t('optionAdmin.labelAddPrice')}</label>
               <input type="number" step="0.5" value={itemForm.additional_price} onChange={e => setItemForm({...itemForm, additional_price: e.target.value})} />
             </div>
-            <button type="submit" className="pos-neworder-btn">บันทึกตัวเลือกเพิ่ม</button>
+            <button type="submit" className="pos-neworder-btn">{t('optionAdmin.btnSaveItem')}</button>
           </form>
         </div>
       </div>

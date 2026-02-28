@@ -4,7 +4,7 @@
   margin-bottom: 24px;
 }
 .inv-tab {
-  padding: 10px 20px;
+  padding: 10px 16px;
   border-radius: 8px;
   background: #fff;
   border: 1px solid var(--border-color);
@@ -12,6 +12,8 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  font-size: 14px; /* สามารถแก้ขนาดตัวหนังสือได้ที่นี่ */
+  white-space: nowrap; /* ป้องกันไม่ให้ข้อความตกบรรทัด */
 }
 .inv-tab.active {
   background: var(--primary-orange);

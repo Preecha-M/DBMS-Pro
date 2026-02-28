@@ -1,19 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, NavLink } from "react-router-dom";
+import { useNavigate, NavLink, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../auth/useAuth";
 import api from "../../db/api";
-import { Bell, Menu, X } from "lucide-react";
+import { Bell, Menu, X, ChevronDown } from "lucide-react";
 
 export default function Navbar() {
-  const { user, logout } = useAuth()
+  const { user, logout } = useAuth();
+  const { t, i18n } = useTranslation();
   
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const location = useLocation();
   const userMenuRef = useRef(null);
   const notifRef = useRef(null);
+  const settingsRef = useRef(null);
   
   const [openUser, setOpenUser] = useState(false);
   const [openNotif, setOpenNotif] = useState(false);
   const [openMenu, setOpenMenu] = useState(false);
+  const [openSettings, setOpenSettings] = useState(false);
   const [lowStockItems, setLowStockItems] = useState([]);
   
   const isAdmin = ["admin", "manager"].includes(String(user?.role || "").toLowerCase());
@@ -22,6 +27,7 @@ export default function Navbar() {
     const onDoc = (e) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setOpenUser(false);
       if (notifRef.current && !notifRef.current.contains(e.target)) setOpenNotif(false);
+      if (settingsRef.current && !settingsRef.current.contains(e.target)) setOpenSettings(false);
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
@@ -42,6 +48,11 @@ export default function Navbar() {
   };
   
   const goNewOrder = () => navigate("/new-order");
+
+  const toggleLanguage = () => {
+    const nextLang = i18n.language.startsWith('th') ? 'en' : 'th';
+    i18n.changeLanguage(nextLang);
+  };
   
   if (!user) return null;
 
@@ -62,64 +73,63 @@ export default function Navbar() {
 
       <nav className={`pos-topnav ${openMenu ? 'mobile-open' : ''}`}>
         <NavLink to="/home" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}>
-          Home
+          {t('nav.home')}
         </NavLink>
         <NavLink to="/sales-history" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}>
-          Sales History
+          {t('nav.salesHistory')}
         </NavLink>
         <NavLink to="/Members" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}>
-          Members
+          {t('nav.members')}
         </NavLink>
         <NavLink to="/cashier" className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}>
-          Cashier
+          {t('nav.cashier')}
         </NavLink>
 
         {isAdmin && (
-          <NavLink
-            to="/settings/menus"
-            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}
-          >
-            Menus
-          </NavLink>
-        )}
-        {isAdmin && (
-          <NavLink
-            to="/settings/categories"
-            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}
-          >
-            Categories
-          </NavLink>
-        )}
-        {isAdmin && (
-          <NavLink
-            to="/settings/options"
-            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}
-          >
-            Options
-          </NavLink>
-        )}
-        {isAdmin && (
-          <NavLink
-            to="/inventory"
-            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}
-          >
-            Inventory
-          </NavLink>
-        )}
-        {isAdmin && (
-          <NavLink
-            to="/settings/promotions"
-            className={({ isActive }) => `pos-toplink ${isActive ? "active" : ""}`} onClick={() => setOpenMenu(false)}
-          >
-            Promotions
-          </NavLink>
+          <div ref={settingsRef} style={{ position: "relative", display: "flex", alignItems: "center" }}>
+            <button
+              className={`pos-toplink ${location.pathname.startsWith('/settings') || location.pathname === '/inventory' ? 'active' : ''}`}
+              onClick={() => setOpenSettings(!openSettings)}
+              style={{ display: "flex", alignItems: "center", gap: "6px", background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit" }}
+            >
+              {t('nav.settings')} <ChevronDown size={16} color={location.pathname.startsWith('/settings') || location.pathname === '/inventory' ? "var(--primary-orange)" : "#8B90A0"} />
+            </button>
+            {openSettings && (
+              <div className="pos-dropdown-menu">
+                <NavLink to="/settings/menus" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.menus')}</NavLink>
+                <NavLink to="/settings/categories" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.categories')}</NavLink>
+                <NavLink to="/settings/options" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.options')}</NavLink>
+                <NavLink to="/inventory" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.inventory')}</NavLink>
+                <NavLink to="/settings/promotions" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.promotions')}</NavLink>
+              </div>
+            )}
+          </div>
         )}
       </nav>
 
 
       <div className="pos-topactions">
+        {/* Language Switcher */}
+        <button 
+          type="button" 
+          onClick={toggleLanguage}
+          style={{
+            background: "transparent",
+            border: "1px solid var(--border-color)",
+            borderRadius: "12px",
+            padding: "8px 12px",
+            fontWeight: "800",
+            cursor: "pointer",
+            color: "#19191C",
+            fontSize: "14px"
+          }}
+          title="Switch Language"
+        >
+          {i18n.language.startsWith('th') ? 'TH' : 'EN'}
+        </button>
+
         <button className="pos-neworder-btn" onClick={goNewOrder}>
-          New Order
+          {t('nav.newOrder')}
         </button>
 
         {isAdmin && (
@@ -127,7 +137,7 @@ export default function Navbar() {
             <button 
               className="pos-icon-btn" 
               type="button" 
-              title="Notifications"
+              title={t('nav.notifications')}
               onClick={() => setOpenNotif(!openNotif)}
               style={{ position: 'relative' }}
             >
@@ -161,19 +171,19 @@ export default function Navbar() {
                 }}
               >
                 <div style={{ padding: '12px 16px', borderBottom: "1px solid var(--border-color)", fontWeight: 900, background: '#f9fafb' }}>
-                  การแจ้งเตือนสต็อก <span style={{ color: 'var(--primary-red, #E63946)' }}>({lowStockItems.length})</span>
+                  {t('nav.notifications')} <span style={{ color: 'var(--primary-red, #E63946)' }}>({lowStockItems.length})</span>
                 </div>
                 <div style={{ maxHeight: 300, overflowY: 'auto' }}>
                   {lowStockItems.length === 0 ? (
                     <div style={{ padding: 20, textAlign: 'center', color: '#9EA3AE', fontSize: 13 }}>
-                      ไม่มีการแจ้งเตือนสินค้าใกล้หมด
+                      {t('nav.noNotifications')}
                     </div>
                   ) : (
                     lowStockItems.map(item => (
                       <div key={item.ingredient_id} style={{ padding: '12px 16px', borderBottom: '1px solid #f1f3f5' }}>
                         <div style={{ fontWeight: 700, fontSize: 14, color: '#19191C' }}>{item.ingredient_name || item.ingredient_id}</div>
                         <div style={{ fontSize: 13, color: 'var(--primary-red, #E63946)', marginTop: 4 }}>
-                          คงเหลือ: {item.quantity_on_hand} {item.unit || 'หน่วย'}
+                          {t('nav.stockRemaining')}: {item.quantity_on_hand} {item.unit || t('nav.unit')}
                         </div>
                       </div>
                     ))
@@ -251,7 +261,7 @@ export default function Navbar() {
                   color: "var(--primary-orange)",
                 }}
               >
-                Logout
+                {t('nav.logout')}
               </button>
             </div>
           )}

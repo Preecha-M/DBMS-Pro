@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "react-i18next";
 import './StartupLoader.css';
 
 export default function StartupLoader() {
+  const { t } = useTranslation();
   const [msgIndex, setMsgIndex] = useState(0);
 
   const messages = [
-    "รอแปปหนึ่งน้าาา... ☕",
-    "เราใช้โฮสต์ Render ปลอมตัวเป็นสายฟรี ขอเวลา Start up ก่อนนะ 🚀",
-    "กำลังสตาร์ทเซิฟเวอร์ให้ใจเย็นๆ... 💨",
-    "ปลุก Database แป๊บบบ... 😴",
-    "มาแล้วๆ อีกนิดเดียว! 💖"
+    t('startupLoader.msg1'),
+    t('startupLoader.msg2'),
+    t('startupLoader.msg3'),
+    t('startupLoader.msg4'),
+    t('startupLoader.msg5')
   ];
 
   useEffect(() => {

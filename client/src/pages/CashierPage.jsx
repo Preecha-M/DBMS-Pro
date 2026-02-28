@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import api from "../db/api";
 import { io } from "socket.io-client";
+import { useTranslation } from "react-i18next";
 import CashierDashboard from "./CashierDashboard";
 import "./CashierPage.css";
 
 export default function CashierPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -238,13 +240,13 @@ export default function CashierPage() {
     : 0;
 
   if (loading) {
-    return <div className="cashier-page">กำลังโหลด...</div>;
+    return <div className="cashier-page">{t('cashier.pageLoading')}</div>;
   }
 
   return (
     <div className="cashier-page">
       <div className="cashier-header">
-        <h1 className="cashier-title">แคชเชียร์ (Cashier)</h1>
+        <h1 className="cashier-title">{t('cashier.title')}</h1>
         <div className="cashier-tabs">
           <button 
             className={`cashier-tab-btn ${activeTab === "current" ? "active" : ""}`}
@@ -253,7 +255,7 @@ export default function CashierPage() {
               setSelectedHistoryRound(null);
             }}
           >
-            รอบปัจจุบัน
+            {t('cashier.currentRound')}
           </button>
           <button 
             className={`cashier-tab-btn ${activeTab === "history" ? "active" : ""}`}
@@ -262,7 +264,7 @@ export default function CashierPage() {
               setSelectedHistoryRound(null);
             }}
           >
-            ประวัติรอบการขาย
+            {t('cashier.historyLogTab')}
           </button>
         </div>
         <div className="cashier-actions">
@@ -272,14 +274,14 @@ export default function CashierPage() {
                 className="cashier-btn primary"
                 onClick={() => setShowOpenModal(true)}
               >
-                เปิดรอบการขาย
+                {t('cashier.openRoundBtn')}
               </button>
             ) : (
               <button
                 className="cashier-btn success"
                 onClick={() => setShowCloseModal(true)}
               >
-                ปิดยอด
+                {t('cashier.closeRound')}
               </button>
             )
           )}
@@ -293,25 +295,25 @@ export default function CashierPage() {
         <>
           <div className="cashier-status-card">
         <span className={`status-badge ${isRoundOpen ? "open" : "closed"}`}>
-          {isRoundOpen ? "🟢 รอบการขายเปิดอยู่" : "🔴 รอบการขายปิด"}
+          {isRoundOpen ? "🟢 " + t('cashier.currentRound') : "🔴 " + t('cashier.roundClosed')}
         </span>
 
         {isRoundOpen && currentRound ? (
           <div className="status-info">
             <div className="info-item">
-              <div className="info-label">เงินสดเริ่มต้น</div>
+              <div className="info-label">{t('cashier.startingCash')}</div>
               <div className="info-value">
                 {formatCurrency(currentRound.opening_cash)}
               </div>
             </div>
             <div className="info-item">
-              <div className="info-label">เวลาเปิดรอบ</div>
+              <div className="info-label">{t('cashier.openedAtLabel')}</div>
               <div className="info-value">
                 {formatDateTime(currentRound.opened_at)}
               </div>
             </div>
             <div className="info-item">
-              <div className="info-label">ยอดขายรวม</div>
+              <div className="info-label">{t('cashier.totalSalesLabel')}</div>
               <div className="info-value highlight">
                 {formatCurrency(salesSummary.totalSales)}
               </div>
@@ -319,7 +321,7 @@ export default function CashierPage() {
           </div>
         ) : (
           <p style={{ color: "#9EA3AE", marginTop: 12 }}>
-            กรุณาเปิดรอบการขายเพื่อเริ่มต้นการทำงาน
+            {t('cashier.pleaseOpenRound')}
           </p>
         )}
       </div>
@@ -334,37 +336,37 @@ export default function CashierPage() {
             onClick={() => setSelectedHistoryRound(null)}
             style={{ marginBottom: 16, padding: '8px 16px', borderRadius: 8, border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontWeight: 700 }}
           >
-            ← กลับไปหน้ารวมประวัติ
+            {t('cashier.backToHistory')}
           </button>
           <div className="cashier-status-card" style={{ marginBottom: 20 }}>
-            <h2 style={{ fontSize: 18, marginBottom: 12 }}>ประวัติรอบเวลา: {formatDateTime(selectedHistoryRound.opened_at)}</h2>
+            <h2 style={{ fontSize: 18, marginBottom: 12 }}>{t('cashier.historyRoundTime')} {formatDateTime(selectedHistoryRound.opened_at)}</h2>
             <div style={{ display: 'flex', gap: 24, fontSize: 14 }}>
-              <div><strong>ผู้เปิด:</strong> {selectedHistoryRound.opened_by_username}</div>
-              <div><strong>เงินสดเริ่มต้น:</strong> {formatCurrency(selectedHistoryRound.opening_cash)}</div>
-              <div><strong>เงินทอน/ปิดลิ้นชักที่ระบุไว้:</strong> {selectedHistoryRound.closing_cash !== null ? formatCurrency(selectedHistoryRound.closing_cash) : '-'}</div>
+              <div><strong>{t('cashier.opener')}</strong> {selectedHistoryRound.opened_by_username}</div>
+              <div><strong>{t('cashier.startingCash')}:</strong> {formatCurrency(selectedHistoryRound.opening_cash)}</div>
+              <div><strong>{t('cashier.closingCashNote')}</strong> {selectedHistoryRound.closing_cash !== null ? formatCurrency(selectedHistoryRound.closing_cash) : '-'}</div>
             </div>
           </div>
           <CashierDashboard roundId={selectedHistoryRound.round_id} roundInfo={selectedHistoryRound} />
         </div>
       ) : (
         <div className="cashier-history-card">
-          <h2 className="summary-title" style={{ marginBottom: 16 }}>ประวัติรอบการขายทั้งหมด</h2>
+          <h2 className="summary-title" style={{ marginBottom: 16 }}>{t('cashier.historyTitle')}</h2>
           {loadingHistory ? (
-            <div>กำลังโหลดข้อมูล...</div>
+            <div>{t('cashier.pageLoading')}</div>
           ) : historyRounds.length === 0 ? (
             <div style={{ color: "#9EA3AE", textAlign: "center", padding: "40px 0" }}>
-              ยังไม่มีประวัติรอบการขาย
+              {t('cashier.historyEmpty')}
             </div>
           ) : (
             <div className="table-container">
               <table className="inv-table">
                 <thead>
                   <tr>
-                    <th>เวลาเปิดรอบ</th>
-                    <th>เวลาปิดรอบ</th>
-                    <th>ผู้เปิด / ผู้ปิด</th>
-                    <th>เงินสดเริ่มต้น</th>
-                    <th>ยอดขายรวม</th>
+                    <th>{t('cashier.openedAtLabel')}</th>
+                    <th>{t('cashier.closedAtLabel')}</th>
+                    <th>{t('cashier.openedByClosedBy')}</th>
+                    <th>{t('cashier.startingCash')}</th>
+                    <th>{t('cashier.totalSalesLabel')}</th>
                     <th style={{ textAlign: "right" }}>สถานะ</th>
                   </tr>
                 </thead>
@@ -380,10 +382,10 @@ export default function CashierPage() {
                       <td>{hr.closed_at ? formatDateTime(hr.closed_at) : "-"}</td>
                       <td>
                         <div style={{ fontSize: 13 }}>
-                          <strong>เปิด:</strong> {hr.opened_by_username || "-"}
+                          <strong>{t('cashier.openedBy')}</strong> {hr.opened_by_username || "-"}
                         </div>
                         <div style={{ fontSize: 13, color: "#666" }}>
-                          <strong>ปิด:</strong> {hr.closed_by_username || "-"}
+                          <strong>{t('cashier.closedBy')}</strong> {hr.closed_by_username || "-"}
                         </div>
                       </td>
                       <td>{formatCurrency(hr.opening_cash)}</td>
@@ -392,7 +394,7 @@ export default function CashierPage() {
                       </td>
                       <td style={{ textAlign: "right" }}>
                         <span className={`status-badge ${hr.status === "open" ? "open" : "closed"}`} style={{ padding: "4px 8px", fontSize: 12 }}>
-                          {hr.status === "open" ? "เปิดอยู่" : "ปิดแล้ว"}
+                          {hr.status === "open" ? t('cashier.statusOpen') : t('cashier.statusClosed')}
                         </span>
                       </td>
                     </tr>
@@ -418,15 +420,15 @@ export default function CashierPage() {
               ×
             </button>
 
-            <h2 className="cashier-modal-title">เปิดรอบการขาย</h2>
+            <h2 className="cashier-modal-title">{t('cashier.openRoundModalTitle')}</h2>
             <p className="cashier-modal-subtitle">
-              กรุณากรอกจำนวนเงินสดที่มีในลิ้นชักเงินสดตอนเริ่มต้นวัน
+              {t('cashier.openRoundModalSubtitle')}
             </p>
 
             {error && <div className="cashier-error">{error}</div>}
 
             <div className="cashier-input-group">
-              <label>จำนวนเงินสดเริ่มต้น (บาท)</label>
+              <label>{t('cashier.openingCashLabel')}</label>
               <input
                 type="number"
                 min="0"
@@ -447,10 +449,10 @@ export default function CashierPage() {
                   setOpeningCash("");
                 }}
               >
-                ยกเลิก
+                {t('cashier.cancel')}
               </button>
               <button className="cashier-btn primary" onClick={handleOpenRound}>
-                เปิดรอบการขาย
+                {t('cashier.confirmOpenRound')}
               </button>
             </div>
           </div>
@@ -470,39 +472,39 @@ export default function CashierPage() {
               ×
             </button>
 
-            <h2 className="cashier-modal-title">ปิดยอดรอบการขาย</h2>
+            <h2 className="cashier-modal-title">{t('cashier.closeRoundModalTitle')}</h2>
             <p className="cashier-modal-subtitle">
-              สรุปยอดขายประจำวัน - กรุณาตรวจสอบความถูกต้องก่อนปิดรอบ
+              {t('cashier.closeRoundModalSubtitle')}
             </p>
 
             {error && <div className="cashier-error">{error}</div>}
 
             <div className="payment-breakdown">
-              <div className="payment-breakdown-title">รายละเอียดยอดขาย</div>
+              <div className="payment-breakdown-title">{t('cashier.salesDetails')}</div>
               
               <div className="payment-item">
-                <span className="payment-item-label">เงินสดเริ่มต้น</span>
+                <span className="payment-item-label">{t('cashier.startingCash')}</span>
                 <span className="payment-item-value">
                   {formatCurrency(currentRound?.opening_cash || 0)}
                 </span>
               </div>
 
               <div className="payment-item">
-                <span className="payment-item-label">ยอดขายเงินสด</span>
+                <span className="payment-item-label">{t('cashier.cashSales')}</span>
                 <span className="payment-item-value">
                   {formatCurrency(salesSummary.cashSales)}
                 </span>
               </div>
 
               <div className="payment-item">
-                <span className="payment-item-label">ยอดขายบัตรเครดิต</span>
+                <span className="payment-item-label">{t('cashier.creditSales')}</span>
                 <span className="payment-item-value">
                   {formatCurrency(salesSummary.creditCardSales)}
                 </span>
               </div>
 
               <div className="payment-item">
-                <span className="payment-item-label">ยอดขาย QR Code</span>
+                <span className="payment-item-label">{t('cashier.qrSales')}</span>
                 <span className="payment-item-value">
                   {formatCurrency(salesSummary.qrSales)}
                 </span>
@@ -510,7 +512,7 @@ export default function CashierPage() {
 
               <div className="payment-item" style={{ background: "#FDF0EC", marginTop: 12 }}>
                 <span className="payment-item-label" style={{ color: "var(--primary-orange)" }}>
-                  <strong>เงินสดที่ควรมีในลิ้นชัก</strong>
+                  <strong>{t('cashier.expectedDrawerCash')}</strong>
                 </span>
                 <span className="payment-item-value" style={{ color: "var(--primary-orange)" }}>
                   <strong>{formatCurrency(expectedCash)}</strong>
@@ -519,7 +521,7 @@ export default function CashierPage() {
 
               <div className="payment-item" style={{ background: "#E8F5E9", marginTop: 8 }}>
                 <span className="payment-item-label" style={{ color: "var(--primary-green)" }}>
-                  <strong>ยอดขายรวมทั้งหมด</strong>
+                  <strong>{t('cashier.totalSales')}</strong>
                 </span>
                 <span className="payment-item-value" style={{ color: "var(--primary-green)" }}>
                   <strong>{formatCurrency(salesSummary.totalSales)}</strong>
@@ -527,9 +529,9 @@ export default function CashierPage() {
               </div>
 
               <div className="payment-item">
-                <span className="payment-item-label">จำนวนธุรกรรม</span>
+                <span className="payment-item-label">{t('cashier.transactionsCount')}</span>
                 <span className="payment-item-value">
-                  {salesSummary.totalTransactions} รายการ
+                  {salesSummary.totalTransactions} {t('cashier.transactionsUnit')}
                 </span>
               </div>
             </div>
@@ -542,10 +544,10 @@ export default function CashierPage() {
                   setError("");
                 }}
               >
-                ยกเลิก
+                {t('cashier.cancel')}
               </button>
               <button className="cashier-btn success" onClick={handleCloseRound}>
-                ยืนยันปิดรอบการขาย
+                {t('cashier.confirmCloseRound')}
               </button>
             </div>
           </div>
