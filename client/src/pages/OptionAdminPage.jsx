@@ -43,15 +43,22 @@ export default function OptionAdminPage() {
     setError(""); setSuccess("");
     if (!groupName.trim()) return;
     try {
-      await api.post("/menu-options/groups", { 
+      const res = await api.post("/menu-options/groups", { 
         group_name: groupName,
         menu_ids: selectedMenus
       });
+      
+      const newGroup = {
+        ...res.data,
+        menu_ids: [...selectedMenus],
+        menu_option_item: []
+      };
+      setGroups(prev => [...prev, newGroup]);
+      
       setSuccess(t('optionAdmin.sucAddGroup'));
       setGroupName("");
       setSelectedMenus([]);
       setIsGroupModalOpen(false);
-      loadData(false);
     } catch (e) {
       setError(e?.response?.data?.message || t('optionAdmin.errDefault'));
     }
@@ -62,8 +69,8 @@ export default function OptionAdminPage() {
     setError(""); setSuccess("");
     try {
       await api.delete(`/menu-options/groups/${id}`);
+      setGroups(prev => prev.filter(g => g.group_id !== id));
       setSuccess(t('optionAdmin.sucDeleteGroup'));
-      loadData(false);
     } catch (e) {
       setError(e?.response?.data?.message || t('optionAdmin.errDefault'));
     }
@@ -74,15 +81,26 @@ export default function OptionAdminPage() {
     setError(""); setSuccess("");
     if (!itemForm.group_id || !itemForm.item_name) return;
     try {
-      await api.post("/menu-options/items", {
+      const res = await api.post("/menu-options/items", {
         group_id: Number(itemForm.group_id),
         item_name: itemForm.item_name,
         additional_price: Number(itemForm.additional_price || 0)
       });
+      
+      const newItem = res.data;
+      setGroups(prev => prev.map(g => {
+        if (g.group_id === Number(itemForm.group_id)) {
+          return {
+            ...g,
+            menu_option_item: [...(g.menu_option_item || []), newItem]
+          };
+        }
+        return g;
+      }));
+      
       setSuccess(t('optionAdmin.sucAddItem'));
       setItemForm({ ...itemForm, item_name: "", additional_price: 0 });
       setIsItemModalOpen(false);
-      loadData(false);
     } catch (e) {
       setError(e?.response?.data?.message || t('optionAdmin.errDefault'));
     }
@@ -92,8 +110,11 @@ export default function OptionAdminPage() {
     setError(""); setSuccess("");
     try {
       await api.delete(`/menu-options/items/${id}`);
+      setGroups(prev => prev.map(g => ({
+        ...g,
+        menu_option_item: (g.menu_option_item || []).filter(item => item.item_id !== id)
+      })));
       setSuccess(t('optionAdmin.sucDeleteItem'));
-      loadData(false);
     } catch (e) {
       setError(e?.response?.data?.message || t('optionAdmin.errDefault'));
     }
