@@ -30,8 +30,17 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use((response) => {
-  if (response.config.method === 'get' && typeof response.config.url === 'string' && response.config.url.includes('/menu')) {
-    cache[response.config.url] = { data: response.data, timestamp: Date.now() };
+  const method = response.config.method;
+  const url = typeof response.config.url === 'string' ? response.config.url : '';
+  
+  if (method === 'get' && url.includes('/menu')) {
+    cache[url] = { data: response.data, timestamp: Date.now() };
+  } else if (['post', 'put', 'patch', 'delete'].includes(method) && url.includes('/menu')) {
+    Object.keys(cache).forEach(key => {
+      if (key.includes('/menu')) {
+        delete cache[key];
+      }
+    });
   }
   return response;
 });

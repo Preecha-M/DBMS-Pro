@@ -18,9 +18,9 @@ export default function OptionAdminPage() {
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [itemForm, setItemForm] = useState({ group_id: "", item_name: "", additional_price: 0 });
 
-  const loadData = async () => {
+  const loadData = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const [groupsRes, menusRes] = await Promise.all([
         api.get("/menu-options/groups"),
         api.get("/menu")
@@ -30,12 +30,12 @@ export default function OptionAdminPage() {
     } catch (e) {
       setError(e?.response?.data?.message || t('optionAdmin.errLoadFailed'));
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    loadData(true);
   }, []);
 
   const handleAddGroup = async (e) => {
@@ -51,7 +51,7 @@ export default function OptionAdminPage() {
       setGroupName("");
       setSelectedMenus([]);
       setIsGroupModalOpen(false);
-      loadData();
+      loadData(false);
     } catch (e) {
       setError(e?.response?.data?.message || t('optionAdmin.errDefault'));
     }
@@ -63,7 +63,7 @@ export default function OptionAdminPage() {
     try {
       await api.delete(`/menu-options/groups/${id}`);
       setSuccess(t('optionAdmin.sucDeleteGroup'));
-      loadData();
+      loadData(false);
     } catch (e) {
       setError(e?.response?.data?.message || t('optionAdmin.errDefault'));
     }
@@ -82,7 +82,7 @@ export default function OptionAdminPage() {
       setSuccess(t('optionAdmin.sucAddItem'));
       setItemForm({ ...itemForm, item_name: "", additional_price: 0 });
       setIsItemModalOpen(false);
-      loadData();
+      loadData(false);
     } catch (e) {
       setError(e?.response?.data?.message || t('optionAdmin.errDefault'));
     }
@@ -93,7 +93,7 @@ export default function OptionAdminPage() {
     try {
       await api.delete(`/menu-options/items/${id}`);
       setSuccess(t('optionAdmin.sucDeleteItem'));
-      loadData();
+      loadData(false);
     } catch (e) {
       setError(e?.response?.data?.message || t('optionAdmin.errDefault'));
     }
