@@ -429,6 +429,10 @@ export default function InventoryPage() {
                 <label>{t('inventory.addInitialStockLabel')}</label>
                 <input type="number" value={addForm.quantity_on_hand} onChange={e => setAddForm(p => ({ ...p, quantity_on_hand: e.target.value }))} />
               </div>
+              <div className="input-group">
+                <label>{t('inventory.addExpireDateLabel', 'Expiration Date')}</label>
+                <input type="date" value={addForm.expire_date || ""} onChange={e => setAddForm(p => ({ ...p, expire_date: e.target.value }))} />
+              </div>
             </div>
             <button type="submit" className="pos-neworder-btn" style={{ width: "100%", marginTop: 20 }}>{t('inventory.btnSaveData')}</button>
           </form>

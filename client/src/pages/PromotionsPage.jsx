@@ -68,6 +68,8 @@ export default function PromotionsPage() {
         ...form,
         start_date: form.start_date || null,
         end_date: form.end_date || null,
+        discount_value: Number(form.discount_value) || 0,
+        min_quantity: Number(form.min_quantity) || 1,
       };
 
       if (editingId) await api.put(`/promotions/${editingId}`, payload);

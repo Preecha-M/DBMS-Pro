@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import api from "../db/api";
 import { Coffee, CupSoda, Croissant, CakeSlice, Utensils, Hash, LayoutGrid } from "lucide-react";
 import CustomSelect from "../components/CustomSelect";
+import { useAuth } from "../auth/useAuth";
+import "./NewOrderPage.css";
 
 // Helper to render lucide icon based on text input
 const renderCategoryIcon = (iconName, size = 24) => {
@@ -18,6 +20,7 @@ const renderCategoryIcon = (iconName, size = 24) => {
 
 export default function NewOrderPage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [params, setParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [menus, setMenus] = useState([]);
@@ -37,6 +40,7 @@ export default function NewOrderPage() {
   const [orderSnapshot, setOrderSnapshot] = useState(null);
   const [cashReceived, setCashReceived] = useState("");
   const [selectedPromoId, setSelectedPromoId] = useState("");
+  const [manualDiscount, setManualDiscount] = useState("");
   const [nextSaleId, setNextSaleId] = useState(1);
 
   const activeCatId = params.get("cat") ? Number(params.get("cat")) : null;
@@ -224,9 +228,15 @@ export default function NewOrderPage() {
   const changeAmount = useMemo(() => {
     if (paymentMethod !== "Cash") return 0;
     const cash = Number(cashReceived || 0);
-    const net = subtotal - Number(discountAmount || 0);
+    const promoD = Number(discountAmount || 0);
+    const manualD = Math.min(Number(manualDiscount || 0), subtotal); // can't exceed subtotal
+    const net = subtotal - promoD - manualD;
     return Math.max(cash - net, 0);
-  }, [cashReceived, subtotal, paymentMethod, discountAmount]);
+  }, [cashReceived, subtotal, paymentMethod, discountAmount, manualDiscount]);
+
+  const totalDiscountAmount = useMemo(() => {
+    return Number(discountAmount || 0) + Math.min(Number(manualDiscount || 0), subtotal);
+  }, [discountAmount, manualDiscount, subtotal]);
 
   const formatDateTime = (iso) => {
     if (!iso) return "";
@@ -276,7 +286,7 @@ export default function NewOrderPage() {
     setError("");
 
     if (paymentMethod === "Cash") {
-      const net = subtotal - Number(discountAmount || 0);
+      const net = subtotal - totalDiscountAmount;
       if (!cashReceived || cashReceived === "") {
         setError(t('newOrder.enterCashAmount'));
         return;
@@ -305,7 +315,7 @@ export default function NewOrderPage() {
         qty,
         earnedPoints,
         paymentMethod,
-        discountAmount: Number(discountAmount || 0),
+        discountAmount: totalDiscountAmount,
         selectedPromo,
         memberId: info?.member_id ?? null,
         memberName: info?.name ?? null,
@@ -363,7 +373,7 @@ export default function NewOrderPage() {
     }
   };
 
-  const closeAllModals = () => {
+    const closeAllModals = () => {
     if (saleInfo) {
       setNextSaleId(prev => prev + 1);
     }
@@ -371,23 +381,16 @@ export default function NewOrderPage() {
     setError("");
     setCashReceived("");
     setSelectedPromoId("");
+    setManualDiscount("");
     setSaleInfo(null);
     setOrderSnapshot(null);
   };
 
   return (
-    <div className="pos-page">
-      <div 
-        className="sub-nav hide-scrollbar" 
-        style={{ 
-          display: 'flex', 
-          overflowX: 'auto', 
-          padding: '8px 24px', 
-          gap: 10,
-          borderBottom: '1px solid var(--border-color)',
-          background: '#fff'
-        }}
-      >
+    <>
+      <div className="new-order-page">
+      {/* sub-nav: category pills */}
+      <div className="new-order-subnav">
         {pillCats.map((c) => {
           const isActive = (!c.category_id && !activeCatId) || Number(c.category_id) === activeCatId;
           return (
@@ -409,35 +412,34 @@ export default function NewOrderPage() {
         })}
       </div>
 
-      <div className="pos-order-grid">
-        <section className="pos-products">
-          {loading ? (
-            <div className="page-pad">Loading...</div>
-          ) : (
-            <div className="product-grid">
-              {visibleMenus.map((m) => (
-                <div key={m.menu_id} className="product-card" onClick={() => handleProductSelect(m)}>
-                  <img
-                    src={
-                      m.image_url ||
-                      "https://cdn-icons-png.flaticon.com/512/924/924514.png"
-                    }
-                    alt={m.menu_name}
-                    className="product-image"
-                  />
-                  <div className="product-name">{m.menu_name}</div>
-                  <div className="product-price">
-                    ฿ {Number(m.price || 0).toFixed(2)}
-                  </div>
+      {/* left: scrollable product grid */}
+      <section className="new-order-products">
+        {loading ? (
+          <div className="page-pad">Loading...</div>
+        ) : (
+          <div className="product-grid">
+            {visibleMenus.map((m) => (
+              <div key={m.menu_id} className="product-card" onClick={() => handleProductSelect(m)}>
+                <img
+                  src={m.image_url || "https://cdn-icons-png.flaticon.com/512/924/924514.png"}
+                  alt={m.menu_name}
+                  className="product-image"
+                />
+                <div className="product-name">{m.menu_name}</div>
+                <div className="product-price">
+                  ฿ {Number(m.price || 0).toFixed(2)}
                 </div>
-              ))}
-              {visibleMenus.length === 0 && (
-                <div className="page-pad">{t('newOrder.noMenuInCategory')}</div>
-              )}
-            </div>
-          )}
-        </section>
+              </div>
+            ))}
+            {visibleMenus.length === 0 && (
+              <div className="page-pad">{t('newOrder.noMenuInCategory')}</div>
+            )}
+          </div>
+        )}
+      </section>
 
+      {/* right: fixed cart column */}
+      <div className="new-order-cart-col">
         <aside className="cart-panel">
           <div className="cart-head">
             <div className="cart-invoice">{invoiceNo}</div>
@@ -446,7 +448,7 @@ export default function NewOrderPage() {
               <div className="cart-brand-logo">Ep</div>
               <div>
                 <div className="cart-brand-title">CP POS</div>
-                <div className="cart-brand-sub">cppos@gmail.com</div>
+                <div className="cart-brand-sub">{user?.username || 'cppos@gmail.com'}</div>
               </div>
             </div>
 
@@ -547,9 +549,11 @@ export default function NewOrderPage() {
             </button>
           </div>
         </aside>
-      </div>
+      </div>{/* /new-order-cart-col */}
+    </div>{/* /new-order-page */}
 
-      {selectingItem && (
+    {/* ── Modals rendered outside the grid, but still inside Fragment ── */}
+    {selectingItem && (
         <div className="modal-backdrop">
           <div className="modal-card">
             <button className="modal-x" onClick={() => setSelectingItem(null)}>
@@ -656,6 +660,24 @@ export default function NewOrderPage() {
                 </span>
               </div>
             )}
+
+            <div className="input-group" style={{ marginTop: 12 }}>
+              <label>ส่วนลดพิเศษ (บาท) <span style={{ fontWeight: 400, color: '#9EA3AE' }}>– สำหรับโปรฯ นอกระบบ</span></label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={manualDiscount}
+                onChange={(e) => setManualDiscount(e.target.value)}
+                placeholder="0.00"
+              />
+              {Number(manualDiscount) > 0 && (
+                <div className="modal-note" style={{ color: 'var(--primary-orange)' }}>
+                  ส่วนลดรวม: <b>-{totalDiscountAmount.toFixed(2)} บาท</b>
+                  &nbsp;|&nbsp; ยอดสุทธิ: <b>฿ {Math.max(0, subtotal - totalDiscountAmount).toFixed(2)}</b>
+                </div>
+              )}
+            </div>
 
             <div className="input-group" style={{ marginTop: 12 }}>
               <label>{t('newOrder.paymentMethod')}</label>
@@ -822,7 +844,7 @@ export default function NewOrderPage() {
                     )
                   : "-"}
               </div>
-              <div>Created by: -</div>
+              <div>Created by: {saleInfo?.employee_username || user?.first_name_th || user?.username || "-"}</div>
               <div>Payment: {paymentMethod}</div>
               <div>
                 Customer:{" "}
@@ -926,6 +948,6 @@ export default function NewOrderPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

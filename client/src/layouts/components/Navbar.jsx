@@ -22,7 +22,7 @@ export default function Navbar() {
   const [lowStockItems, setLowStockItems] = useState([]);
   const [expiringBatches, setExpiringBatches] = useState([]);
   
-  const isAdmin = ["admin", "manager"].includes(String(user?.role || "").toLowerCase());
+  const isAdmin = ["admin", "owner", "manager"].includes(String(user?.role || "").toLowerCase());
   
   useEffect(() => {
     const onDoc = (e) => {
@@ -109,6 +109,7 @@ export default function Navbar() {
                 <NavLink to="/settings/options" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.options')}</NavLink>
                 <NavLink to="/inventory" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.inventory')}</NavLink>
                 <NavLink to="/settings/promotions" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.promotions')}</NavLink>
+                <NavLink to="/settings/employees" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;จัดการพนักงาน</NavLink>
               </div>
             )}
           </div>

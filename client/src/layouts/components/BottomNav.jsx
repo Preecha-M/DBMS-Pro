@@ -10,7 +10,7 @@ export default function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const isAdmin = ["admin", "manager"].includes(String(user?.role || "").toLowerCase());
+  const isAdmin = ["admin", "owner", "manager"].includes(String(user?.role || "").toLowerCase());
   
   const [openSettings, setOpenSettings] = useState(false);
   const settingsRef = useRef(null);
