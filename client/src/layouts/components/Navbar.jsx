@@ -20,6 +20,7 @@ export default function Navbar() {
   const [openMenu, setOpenMenu] = useState(false);
   const [openSettings, setOpenSettings] = useState(false);
   const [lowStockItems, setLowStockItems] = useState([]);
+  const [expiringBatches, setExpiringBatches] = useState([]);
   
   const isAdmin = ["admin", "manager"].includes(String(user?.role || "").toLowerCase());
   
@@ -38,8 +39,14 @@ export default function Navbar() {
       api.get("/ingredients/low-stock?threshold=5")
         .then(res => setLowStockItems(res.data))
         .catch(err => console.error("Failed to load low stock alerts", err));
+      
+      api.get("/ingredients/alerts?days=7")
+        .then(res => setExpiringBatches(res.data))
+        .catch(err => console.error("Failed to load expiring batches", err));
     }
   }, [isAdmin]);
+  
+  const totalAlerts = lowStockItems.length + expiringBatches.length;
   
   const onLogout = async () => {
     setOpenUser(false);
@@ -143,7 +150,7 @@ export default function Navbar() {
               style={{ position: 'relative' }}
             >
               <Bell size={20} color="#19191C" />
-              {lowStockItems.length > 0 && (
+              {totalAlerts > 0 && (
                 <span style={{
                   position: 'absolute',
                   top: 4,
@@ -172,22 +179,34 @@ export default function Navbar() {
                 }}
               >
                 <div style={{ padding: '12px 16px', borderBottom: "1px solid var(--border-color)", fontWeight: 900, background: '#f9fafb' }}>
-                  {t('nav.notifications')} <span style={{ color: 'var(--primary-red, #E63946)' }}>({lowStockItems.length})</span>
+                  {t('nav.notifications')} <span style={{ color: 'var(--primary-red, #E63946)' }}>({totalAlerts})</span>
                 </div>
                 <div style={{ maxHeight: 300, overflowY: 'auto' }}>
-                  {lowStockItems.length === 0 ? (
+                  {totalAlerts === 0 ? (
                     <div style={{ padding: 20, textAlign: 'center', color: '#9EA3AE', fontSize: 13 }}>
                       {t('nav.noNotifications')}
                     </div>
                   ) : (
-                    lowStockItems.map(item => (
-                      <div key={item.ingredient_id} style={{ padding: '12px 16px', borderBottom: '1px solid #f1f3f5' }}>
-                        <div style={{ fontWeight: 700, fontSize: 14, color: '#19191C' }}>{item.ingredient_name || item.ingredient_id}</div>
-                        <div style={{ fontSize: 13, color: 'var(--primary-red, #E63946)', marginTop: 4 }}>
-                          {t('nav.stockRemaining')}: {item.quantity_on_hand} {item.unit || t('nav.unit')}
+                    <>
+                      {lowStockItems.map(item => (
+                        <div key={`low-${item.ingredient_id}`} style={{ padding: '12px 16px', borderBottom: '1px solid #f1f3f5' }}>
+                          <div style={{ fontWeight: 700, fontSize: 14, color: '#19191C' }}>{item.ingredient_name || item.ingredient_id}</div>
+                          <div style={{ fontSize: 13, color: 'var(--primary-red, #E63946)', marginTop: 4 }}>
+                            {t('nav.stockRemaining')}: {item.quantity_on_hand} {item.unit || t('nav.unit')}
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      ))}
+                      {expiringBatches.map(batch => (
+                        <div key={`exp-${batch.batch_id}`} style={{ padding: '12px 16px', borderBottom: '1px solid #f1f3f5', borderLeft: '3px solid #f29900' }}>
+                          <div style={{ fontWeight: 700, fontSize: 14, color: '#19191C' }}>{batch.ingredient?.ingredient_name || batch.ingredient_id}</div>
+                          <div style={{ fontSize: 13, color: '#f29900', marginTop: 4 }}>
+                            {t('inventory.alertExpiring', 'Expiring soon')} - {t('nav.stockRemaining')}: {batch.quantity_on_hand} {batch.ingredient?.unit}
+                            <br />
+                            Exp: {new Date(batch.expire_date).toLocaleDateString("th-TH")}
+                          </div>
+                        </div>
+                      ))}
+                    </>
                   )}
                 </div>
               </div>

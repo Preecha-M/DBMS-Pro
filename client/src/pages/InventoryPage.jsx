@@ -14,6 +14,7 @@ export default function InventoryPage() {
   const [suppliers, setSuppliers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [alerts, setAlerts] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   
@@ -71,12 +72,22 @@ export default function InventoryPage() {
     }
   };
 
+  const loadAlerts = async () => {
+    try {
+      const res = await api.get("/ingredients/alerts?days=7");
+      setAlerts(res.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     loadIngredients();
     loadOrders();
     loadCategories();
     loadSuppliers();
     loadTransactions();
+    loadAlerts();
   }, [tab]);
 
   // Withdraw State
@@ -120,12 +131,41 @@ export default function InventoryPage() {
   };
 
   // Update Order State
+  const [showReceiveModal, setShowReceiveModal] = useState(false);
+  const [receivingOrderId, setReceivingOrderId] = useState(null);
+  const [receivingItems, setReceivingItems] = useState([]);
+
   const handleUpdateOrderStatus = async (orderId, currentStatus) => {
     if (currentStatus.toLowerCase() === 'received') return;
+    
+    // Open receive modal to get expiration dates
+    const order = orders.find(o => o.order_id === orderId);
+    if (!order) return;
+    
+    setReceivingOrderId(orderId);
+    setReceivingItems(order.items.map(it => ({
+      order_item_id: it.order_item_id,
+      ingredient_name: it.ingredient_name || t('inventory.unknownIngredient'),
+      quantity: it.quantity,
+      unit: it.unit || "",
+      expire_date: ""
+    })));
+    setShowReceiveModal(true);
+  };
+
+  const submitReceiveOrder = async (e) => {
+    e.preventDefault();
     if (!window.confirm(t('inventory.confirmReceiveObject'))) return;
     try {
-      await api.put(`/orders/${orderId}/status`, { order_status: "Received" });
+      await api.put(`/orders/${receivingOrderId}/status`, { 
+        order_status: "Received",
+        itemExpiries: receivingItems.map(it => ({
+          order_item_id: it.order_item_id,
+          expire_date: it.expire_date || null
+        }))
+      });
       setSuccess(t('inventory.sucUpdateStatus'));
+      setShowReceiveModal(false);
       loadOrders();
       loadIngredients();
     } catch (e) {
@@ -210,6 +250,22 @@ export default function InventoryPage() {
       minute: "2-digit"
     });
 
+  const isExpired = (dateString) => {
+    if (!dateString) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return new Date(dateString) < today;
+  };
+
+  const getSortedWithdrawableIngredients = () => {
+    return ingredients.map(ig => ({
+      ...ig,
+      total_unexpired: (ig.ingredient_batch || [])
+        .filter(b => b.quantity_on_hand > 0 && !isExpired(b.expire_date))
+        .reduce((sum, b) => sum + b.quantity_on_hand, 0)
+    })).filter(ig => ig.total_unexpired > 0);
+  };
+
   return (
     <div className="page-pad">
       <div className="inventory-desktop-wrapper">
@@ -218,6 +274,9 @@ export default function InventoryPage() {
         <div className="inventory-tabs">
         <div className={`inv-tab ${tab === "withdraw" ? "active" : ""}`} onClick={() => { setTab("withdraw"); setError(""); setSuccess(""); }}>
           {t('inventory.tabWithdraw')}
+        </div>
+        <div className={`inv-tab ${tab === "list" ? "active" : ""}`} onClick={() => { setTab("list"); setError(""); setSuccess(""); }}>
+          {t('inventory.tabList')}
         </div>
         <div className={`inv-tab ${tab === "add" ? "active" : ""}`} onClick={() => { setTab("add"); setError(""); setSuccess(""); }}>
           {t('inventory.tabAdd')}
@@ -247,9 +306,9 @@ export default function InventoryPage() {
                 placeholder={t('inventory.optSelectIngredient')}
                 options={[
                   { value: '', label: t('inventory.optSelectIngredient') },
-                  ...ingredients.map(ig => ({
+                  ...getSortedWithdrawableIngredients().map(ig => ({
                     value: String(ig.ingredient_id),
-                    label: `${ig.ingredient_name} (${t('inventory.strRemaining')} ${ig.quantity_on_hand} ${ig.unit})`
+                    label: `${ig.ingredient_name} (${t('inventory.strRemaining')} ${ig.total_unexpired} ${ig.unit})`
                   }))
                 ]}
               />
@@ -274,6 +333,63 @@ export default function InventoryPage() {
             </div>
             <button type="submit" className="pos-neworder-btn" style={{ width: "100%", marginTop: 12 }}>{t('inventory.btnConfirmWithdraw')}</button>
           </form>
+        </div>
+      )}
+
+      {tab === "list" && (
+        <div className="card" style={{ padding: 24 }}>
+          <div className="overflow-x-auto">
+            <table className="inv-table">
+              <thead>
+                <tr>
+                  <th>{t('inventory.addIdLabel')}</th>
+                  <th>{t('inventory.colIgName')}</th>
+                  <th>{t('inventory.colIgCategory')}</th>
+                  <th>{t('inventory.colIgQty')}</th>
+                  <th>{t('inventory.colIgCost')}</th>
+                  <th>{t('inventory.colIgExpire')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ingredients.flatMap(ig => {
+                  const batches = ig.ingredient_batch?.length > 0 ? ig.ingredient_batch : [null];
+                  
+                  return batches.map((batch, bidx) => {
+                    const expired = batch ? isExpired(batch.expire_date) : false;
+                    const expiringSoon = batch ? alerts.some(a => a.batch_id === batch.batch_id) : false;
+                    const isFirstBatch = bidx === 0;
+
+                    return (
+                      <tr key={`${ig.ingredient_id}-${batch?.batch_id || 'no-batch'}`}>
+                        {isFirstBatch ? (
+                          <>
+                            <td rowSpan={batches.length}>{ig.ingredient_id}</td>
+                            <td rowSpan={batches.length}>{ig.ingredient_name}</td>
+                            <td rowSpan={batches.length}>{ig.category_name || "-"}</td>
+                          </>
+                        ) : null}
+                        <td style={{ fontWeight: 'bold' }}>
+                          {batch ? `${batch.quantity_on_hand} ${ig.unit}` : `${ig.quantity_on_hand || 0} ${ig.unit}`}
+                        </td>
+                        {isFirstBatch ? (
+                          <td rowSpan={batches.length}>{ig.cost_per_unit || "-"}</td>
+                        ) : null}
+                        <td style={{ 
+                          color: expired ? '#d93025' : (expiringSoon ? '#f29900' : 'inherit'),
+                          fontWeight: (expired || expiringSoon) ? 'bold' : 'normal'
+                        }}>
+                          {batch?.expire_date ? new Date(batch.expire_date).toLocaleDateString("th-TH") : t('inventory.expireNotSet')}
+                          {expired && <span style={{ marginLeft: 8, fontSize: 12, padding: '2px 6px', background: '#fce8e6', borderRadius: 4 }}>{t('inventory.alertExpired', 'Expired')}</span>}
+                          {!expired && expiringSoon && <span style={{ marginLeft: 8, fontSize: 12, padding: '2px 6px', background: '#fef7e0', borderRadius: 4 }}>{t('inventory.alertExpiring', 'Expiring Soon')}</span>}
+                        </td>
+                      </tr>
+                    )
+                  });
+                })}
+                {ingredients.length === 0 && <tr><td colSpan="6" style={{ textAlign: "center" }}>-</td></tr>}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -515,6 +631,47 @@ export default function InventoryPage() {
               <div className="modal-actions" style={{ marginTop: 24 }}>
                 <button type="button" className="btn-soft" onClick={() => setShowOrderModal(false)}>{t('inventory.btnCancel')}</button>
                 <button type="submit" className="btn-primary">{t('inventory.btnConfirmOrderSubmit')}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showReceiveModal && (
+        <div className="modal-backdrop">
+          <div className="modal-card wide">
+            <button className="modal-x" onClick={() => setShowReceiveModal(false)}>×</button>
+            <div className="modal-title">{t('inventory.receiveModalTitle', 'Receive Order Items')}</div>
+            <form onSubmit={submitReceiveOrder}>
+              <p style={{ marginBottom: 16, color: '#6c757d' }}>
+                {t('inventory.receiveModalDesc', 'Please enter the expiration date for each received item (if applicable).')}
+              </p>
+              
+              {receivingItems.map((item, index) => (
+                <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12, background: '#f8f9fa', padding: 12, borderRadius: 8 }}>
+                  <div style={{ fontWeight: 'bold' }}>{item.ingredient_name}</div>
+                  <div style={{ fontSize: 13, color: '#6c757d', marginBottom: 6 }}>
+                    {t('inventory.orderItemQty', 'Quantity')}: {item.quantity} {item.unit}
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 13 }}>{t('inventory.addExpireDateLabel', 'Expiration Date')}</label>
+                    <input 
+                      type="date" 
+                      value={item.expire_date} 
+                      onChange={e => {
+                        const newItems = [...receivingItems];
+                        newItems[index].expire_date = e.target.value;
+                        setReceivingItems(newItems);
+                      }}
+                      style={{ width: '100%', padding: 8, border: '1.5px solid var(--border-color)', borderRadius: 8, fontFamily: 'inherit', marginTop: 4 }}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              <div className="modal-actions" style={{ marginTop: 24 }}>
+                <button type="button" className="btn-soft" onClick={() => setShowReceiveModal(false)}>{t('inventory.btnCancel')}</button>
+                <button type="submit" className="btn-primary">{t('inventory.btnConfirmReceive', 'Confirm Receive')}</button>
               </div>
             </form>
           </div>

@@ -22,3 +22,28 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Testing
+/coverage
+/tests
+*.test.js
+*.test.jsx
+*.spec.ts
+*.spec.tsx
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Environment Variables
+.env
+.env.*
+
+# Caches
+.eslintcache
+
+# Specific test files
+setupTests.js
