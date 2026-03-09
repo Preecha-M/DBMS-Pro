@@ -83,7 +83,13 @@ export default function InventoryPage() {
   const loadAlerts = async () => {
     try {
       const res = await api.get("/ingredients/alerts?days=7");
-      setAlerts(res.data);
+      // API returns { expired: [...], expiringSoon: [...] } — flatten to one array
+      const data = res.data;
+      const combined = [
+        ...(Array.isArray(data?.expired) ? data.expired : []),
+        ...(Array.isArray(data?.expiringSoon) ? data.expiringSoon : []),
+      ];
+      setAlerts(combined);
     } catch (e) {
       console.error(e);
     }
