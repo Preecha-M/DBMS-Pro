@@ -20,6 +20,7 @@ export default function Navbar() {
   const [openMenu, setOpenMenu] = useState(false);
   const [openSettings, setOpenSettings] = useState(false);
   const [lowStockItems, setLowStockItems] = useState([]);
+  const [expiredBatches, setExpiredBatches] = useState([]);
   const [expiringBatches, setExpiringBatches] = useState([]);
   
   const isAdmin = ["admin", "owner", "manager"].includes(String(user?.role || "").toLowerCase());
@@ -41,12 +42,15 @@ export default function Navbar() {
         .catch(err => console.error("Failed to load low stock alerts", err));
       
       api.get("/ingredients/alerts?days=7")
-        .then(res => setExpiringBatches(res.data))
+        .then(res => {
+          setExpiredBatches(res.data.expired || []);
+          setExpiringBatches(res.data.expiringSoon || []);
+        })
         .catch(err => console.error("Failed to load expiring batches", err));
     }
   }, [isAdmin]);
   
-  const totalAlerts = lowStockItems.length + expiringBatches.length;
+  const totalAlerts = lowStockItems.length + expiredBatches.length + expiringBatches.length;
   
   const onLogout = async () => {
     setOpenUser(false);
@@ -197,11 +201,21 @@ export default function Navbar() {
                           </div>
                         </div>
                       ))}
+                      {expiredBatches.map(batch => (
+                        <div key={`expired-${batch.batch_id}`} style={{ padding: '12px 16px', borderBottom: '1px solid #f1f3f5', borderLeft: '3px solid var(--primary-red, #E63946)' }}>
+                          <div style={{ fontWeight: 700, fontSize: 14, color: '#19191C' }}>{batch.ingredient?.ingredient_name || batch.ingredient_id}</div>
+                          <div style={{ fontSize: 13, color: 'var(--primary-red, #E63946)', marginTop: 4 }}>
+                            ⚠️ {t('inventory.expired', 'หมดอายุแล้ว')} - {t('nav.stockRemaining')}: {batch.quantity_on_hand} {batch.ingredient?.unit}
+                            <br />
+                            Exp: {new Date(batch.expire_date).toLocaleDateString("th-TH")}
+                          </div>
+                        </div>
+                      ))}
                       {expiringBatches.map(batch => (
                         <div key={`exp-${batch.batch_id}`} style={{ padding: '12px 16px', borderBottom: '1px solid #f1f3f5', borderLeft: '3px solid #f29900' }}>
                           <div style={{ fontWeight: 700, fontSize: 14, color: '#19191C' }}>{batch.ingredient?.ingredient_name || batch.ingredient_id}</div>
                           <div style={{ fontSize: 13, color: '#f29900', marginTop: 4 }}>
-                            {t('inventory.alertExpiring', 'Expiring soon')} - {t('nav.stockRemaining')}: {batch.quantity_on_hand} {batch.ingredient?.unit}
+                            {t('inventory.alertExpiring', 'ใกล้หมดอายุ')} - {t('nav.stockRemaining')}: {batch.quantity_on_hand} {batch.ingredient?.unit}
                             <br />
                             Exp: {new Date(batch.expire_date).toLocaleDateString("th-TH")}
                           </div>
