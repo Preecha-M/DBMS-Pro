@@ -894,6 +894,8 @@ body {
     border-radius: 16px;
     box-shadow: 0 -8px 24px rgba(0,0,0,0.15);
     z-index: 900;
+    /* Ensure the panel itself is always clickable even if wrapper has pointer-events:none */
+    pointer-events: auto;
   }
 
   /* Hide massive header on mobile */

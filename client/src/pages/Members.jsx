@@ -113,7 +113,7 @@ export default function Members() {
               <input
                 placeholder={t('members.phonePlaceholder')}
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 style={{
                   width: '100%',
@@ -281,7 +281,8 @@ export default function Members() {
                   style={{ width: '100%' }}
                   placeholder={t('members.namePlaceholder')}
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => setName(e.target.value.slice(0, 100))}
+                  maxLength={100}
                 />
               </div>
 
@@ -291,7 +292,9 @@ export default function Members() {
                   style={{ width: '100%' }}
                   placeholder={t('members.phonePlaceholder')}
                   value={newPhone}
-                  onChange={(e) => setNewPhone(e.target.value)}
+                  inputMode="numeric"
+                  maxLength={10}
+                  onChange={(e) => setNewPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                 />
               </div>
 

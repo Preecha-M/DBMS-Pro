@@ -4,6 +4,11 @@ import { UploadCloud } from "lucide-react";
 import api from "../db/api";
 import CustomSelect from "../components/CustomSelect";
 
+// Block minus, e/E, + in numeric inputs
+const blockInvalidNumKey = (e) => {
+  if (["-", "e", "E", "+"].includes(e.key)) e.preventDefault();
+};
+
 const FALLBACK_IMG = "https://cdn-icons-png.flaticon.com/512/924/924514.png";
 
 export default function MenuManagePage() {
@@ -307,6 +312,7 @@ export default function MenuManagePage() {
                   onChange={(e) =>
                     setForm((p) => ({ ...p, price: e.target.value }))
                   }
+                  onKeyDown={blockInvalidNumKey}
                   placeholder={t('menuManage.placeholderPrice')}
                   min="0"
                   step="0.01"

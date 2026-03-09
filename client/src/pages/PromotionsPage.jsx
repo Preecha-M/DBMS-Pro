@@ -3,6 +3,11 @@ import { useTranslation } from "react-i18next";
 import api from "../db/api";
 import "./PromotionsPage.css";
 
+// Block minus, e/E, + in numeric inputs
+const blockInvalidNumKey = (e) => {
+  if (["-", "e", "E", "+"].includes(e.key)) e.preventDefault();
+};
+
 export default function PromotionsPage() {
   const { t } = useTranslation();
   const [promotions, setPromotions] = useState([]);
@@ -174,7 +179,7 @@ export default function PromotionsPage() {
             />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
             <div className="input-group">
               <label>{t('promotions.labelStartDate')}</label>
               <input
@@ -188,6 +193,7 @@ export default function PromotionsPage() {
               <input
                 type="date"
                 value={form.end_date}
+                min={form.start_date || undefined}
                 onChange={(e) => setForm((p) => ({ ...p, end_date: e.target.value }))}
               />
             </div>
@@ -211,7 +217,12 @@ export default function PromotionsPage() {
                 min="0"
                 step="0.01"
                 value={form.discount_value}
-                onChange={(e) => setForm((p) => ({ ...p, discount_value: e.target.value }))}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value);
+                  const max = form.discount_type === "PERCENTAGE" ? 100 : Infinity;
+                  setForm((p) => ({ ...p, discount_value: isNaN(v) ? "" : String(Math.min(max, Math.max(0, v))) }));
+                }}
+                onKeyDown={blockInvalidNumKey}
                 placeholder={form.discount_type === "PERCENTAGE" ? t('promotions.placeholderDiscountPercent') : t('promotions.placeholderDiscountAmount')}
                 required
               />
@@ -221,8 +232,13 @@ export default function PromotionsPage() {
               <input
                 type="number"
                 min="1"
+                step="1"
                 value={form.min_quantity}
-                onChange={(e) => setForm((p) => ({ ...p, min_quantity: e.target.value }))}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  setForm((p) => ({ ...p, min_quantity: isNaN(v) ? "1" : String(Math.max(1, v)) }));
+                }}
+                onKeyDown={blockInvalidNumKey}
                 placeholder={t('promotions.placeholderMinQty')}
                 required
               />

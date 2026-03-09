@@ -4,6 +4,14 @@ import api from "../db/api";
 import "./InventoryPage.css";
 import CustomSelect from "../components/CustomSelect";
 
+// Block minus, e/E, + in numeric inputs
+const blockInvalidNumKey = (e) => {
+  if (["-", "e", "E", "+"].includes(e.key)) e.preventDefault();
+};
+
+// Today's date string for date min validation
+const todayStr = () => new Date().toISOString().split("T")[0];
+
 export default function InventoryPage() {
   const { t } = useTranslation();
   const [tab, setTab] = useState("withdraw");
@@ -98,8 +106,10 @@ export default function InventoryPage() {
     e.preventDefault();
     setError(""); setSuccess("");
     if (!wdId || !wdQty) return setError(t('inventory.errWithdrawEmpty'));
+    const qty = Number(wdQty);
+    if (!qty || qty < 1) return setError(t('inventory.errWithdrawEmpty'));
     try {
-      await api.post(`/ingredients/${wdId}/withdraw`, { quantity: Number(wdQty) });
+      await api.post(`/ingredients/${wdId}/withdraw`, { quantity: qty });
       setSuccess(t('inventory.sucWithdraw'));
       setWdId(""); setWdQty("");
       loadIngredients();
@@ -116,11 +126,15 @@ export default function InventoryPage() {
   const handleAdd = async (e) => {
     e.preventDefault();
     setError(""); setSuccess("");
+    const cost = Number(addForm.cost_per_unit);
+    const qty = Number(addForm.quantity_on_hand);
+    if (cost < 0) return setError(t('inventory.errDefault') + " (ต้นทุนต้องไม่ติดลบ)");
+    if (qty < 0) return setError(t('inventory.errDefault') + " (จำนวนต้องไม่ติดลบ)");
     try {
       await api.post("/ingredients", {
         ...addForm,
-        cost_per_unit: Number(addForm.cost_per_unit),
-        quantity_on_hand: Number(addForm.quantity_on_hand)
+        cost_per_unit: cost,
+        quantity_on_hand: qty
       });
       setSuccess(t('inventory.sucAddIngredient'));
       setAddForm({ ingredient_id: "", ingredient_name: "", unit: "", cost_per_unit: "", quantity_on_hand: 0, expire_date: "", category_code: "" });
@@ -318,9 +332,14 @@ export default function InventoryPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input 
                   type="number" 
-                  min="1" 
+                  min="1"
+                  step="1"
                   value={wdQty} 
-                  onChange={e => setWdQty(e.target.value)} 
+                  onChange={e => {
+                    const v = parseInt(e.target.value, 10);
+                    setWdQty(isNaN(v) ? "" : String(Math.max(1, v)));
+                  }}
+                  onKeyDown={blockInvalidNumKey}
                   required 
                   style={{ flex: 1 }}
                 />
@@ -423,15 +442,31 @@ export default function InventoryPage() {
               </div>
               <div className="input-group">
                 <label>{t('inventory.addCostLabel')}</label>
-                <input type="number" step="0.01" value={addForm.cost_per_unit} onChange={e => setAddForm(p => ({ ...p, cost_per_unit: e.target.value }))} />
+                <input type="number" min="0" step="0.01"
+                  value={addForm.cost_per_unit}
+                  onChange={e => {
+                    const v = parseFloat(e.target.value);
+                    setAddForm(p => ({ ...p, cost_per_unit: isNaN(v) ? "" : String(Math.max(0, v)) }));
+                  }}
+                  onKeyDown={blockInvalidNumKey}
+                />
               </div>
               <div className="input-group">
                 <label>{t('inventory.addInitialStockLabel')}</label>
-                <input type="number" value={addForm.quantity_on_hand} onChange={e => setAddForm(p => ({ ...p, quantity_on_hand: e.target.value }))} />
+                <input type="number" min="0" step="1"
+                  value={addForm.quantity_on_hand}
+                  onChange={e => {
+                    const v = parseInt(e.target.value, 10);
+                    setAddForm(p => ({ ...p, quantity_on_hand: isNaN(v) ? 0 : Math.max(0, v) }));
+                  }}
+                  onKeyDown={blockInvalidNumKey}
+                />
               </div>
               <div className="input-group">
                 <label>{t('inventory.addExpireDateLabel', 'Expiration Date')}</label>
-                <input type="date" value={addForm.expire_date || ""} onChange={e => setAddForm(p => ({ ...p, expire_date: e.target.value }))} />
+                <input type="date" min={todayStr()} value={addForm.expire_date || ""}
+                  onChange={e => setAddForm(p => ({ ...p, expire_date: e.target.value }))}
+                />
               </div>
             </div>
             <button type="submit" className="pos-neworder-btn" style={{ width: "100%", marginTop: 20 }}>{t('inventory.btnSaveData')}</button>
@@ -600,9 +635,14 @@ export default function InventoryPage() {
                         <label style={{ fontSize: 12, color: '#6c757d' }}>{t('inventory.orderItemQty', { unit: unit ? `(${unit})` : '' })}</label>
                         <input 
                           type="number" 
-                          min="1" 
+                          min="1"
+                          step="1"
                           value={item.quantity} 
-                          onChange={e => handleUpdateOrderItem(index, 'quantity', e.target.value)}
+                          onChange={e => {
+                            const v = parseInt(e.target.value, 10);
+                            handleUpdateOrderItem(index, 'quantity', isNaN(v) ? 1 : Math.max(1, v));
+                          }}
+                          onKeyDown={blockInvalidNumKey}
                           required
                           style={{ width: '100%', padding: 8, border: '1.5px solid var(--border-color)', borderRadius: 8, fontFamily: 'inherit', fontSize: 14, boxSizing: 'border-box' }}
                         />
@@ -614,7 +654,11 @@ export default function InventoryPage() {
                           min="0" 
                           step="0.01"
                           value={item.unit_cost} 
-                          onChange={e => handleUpdateOrderItem(index, 'unit_cost', e.target.value)}
+                          onChange={e => {
+                            const v = parseFloat(e.target.value);
+                            handleUpdateOrderItem(index, 'unit_cost', isNaN(v) ? 0 : Math.max(0, v));
+                          }}
+                          onKeyDown={blockInvalidNumKey}
                           style={{ width: '100%', padding: 8, border: '1.5px solid var(--border-color)', borderRadius: 8, fontFamily: 'inherit', fontSize: 14, boxSizing: 'border-box' }}
                         />
                       </div>

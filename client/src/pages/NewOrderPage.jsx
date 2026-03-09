@@ -7,6 +7,11 @@ import CustomSelect from "../components/CustomSelect";
 import { useAuth } from "../auth/useAuth";
 import "./NewOrderPage.css";
 
+// Block minus, e/E, + in numeric inputs
+const blockInvalidNumKey = (e) => {
+  if (["-", "e", "E", "+"].includes(e.key)) e.preventDefault();
+};
+
 // Helper to render lucide icon based on text input
 const renderCategoryIcon = (iconName, size = 24) => {
   const name = String(iconName || "").toLowerCase();
@@ -627,7 +632,13 @@ export default function NewOrderPage() {
               <label>{t('newOrder.memberPhoneLabel')}</label>
               <input
                 value={memberId}
-                onChange={(e) => setMemberId(e.target.value)}
+                onChange={(e) => {
+                  // เฉพาะตัวเลข ไม่เกิน 10 หลัก
+                  const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                  setMemberId(val);
+                }}
+                inputMode="numeric"
+                maxLength={10}
                 placeholder={t('newOrder.memberPhonePlaceholder')}
               />
             </div>
@@ -668,7 +679,11 @@ export default function NewOrderPage() {
                 min="0"
                 step="0.01"
                 value={manualDiscount}
-                onChange={(e) => setManualDiscount(e.target.value)}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value);
+                  setManualDiscount(isNaN(v) ? "" : String(Math.max(0, v)));
+                }}
+                onKeyDown={blockInvalidNumKey}
                 placeholder="0.00"
               />
               {Number(manualDiscount) > 0 && (
@@ -698,7 +713,11 @@ export default function NewOrderPage() {
                   type="number"
                   min="0"
                   value={cashReceived}
-                  onChange={(e) => setCashReceived(e.target.value)}
+                  onChange={(e) => {
+                    const v = parseFloat(e.target.value);
+                    setCashReceived(isNaN(v) ? "" : String(Math.max(0, v)));
+                  }}
+                  onKeyDown={blockInvalidNumKey}
                   placeholder={t('newOrder.cashReceivedPlaceholder')}
                 />
                 <div className="modal-note">

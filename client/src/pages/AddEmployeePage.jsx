@@ -4,6 +4,9 @@ import { useAuth } from "../auth/useAuth";
 import api from "../db/api";
 import { User, ShieldAlert, ShieldCheck, ShieldHalf, UserCog } from "lucide-react";
 
+// Today's date for max date validation
+const todayStr = () => new Date().toISOString().split("T")[0];
+
 const getRoleIcon = (role, size = 32) => {
   const r = String(role || "").toLowerCase();
   if (r === "admin") return <ShieldAlert size={size} />;
@@ -91,10 +94,16 @@ export default function EmployeeManagementPage() {
     if (!form.username.trim()) {
       return setError(t('addEmployee.errMissingCredentials', 'Username is required'));
     }
+    if (form.username.trim().length < 3) {
+      return setError('Username ต้องมีความยาวอย่างน้อย 3 ตัวอักษร');
+    }
     
     // Require password only on create
     if (!editingId && !form.password) {
        return setError(t('addEmployee.errMissingCredentials', 'Password is required'));
+    }
+    if (!editingId && form.password.length < 6) {
+      return setError('Password ต้องมีความยาวอย่างน้อย 6 ตัวอักษร');
     }
 
     try {
@@ -328,6 +337,8 @@ export default function EmployeeManagementPage() {
                   name="username"
                   value={form.username}
                   onChange={(e) => setForm((p) => ({ ...p, username: e.target.value }))}
+                  minLength={3}
+                  maxLength={50}
                   required
                 />
               </div>
@@ -339,6 +350,7 @@ export default function EmployeeManagementPage() {
                   type="password"
                   value={form.password}
                   onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+                  minLength={!editingId ? 6 : undefined}
                   required={!editingId}
                 />
               </div>
@@ -396,7 +408,9 @@ export default function EmployeeManagementPage() {
                 <input
                   name="phone"
                   value={form.phone}
-                  onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+                  inputMode="numeric"
+                  maxLength={10}
+                  onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value.replace(/\D/g, "").slice(0, 10) }))}
                 />
               </div>
 
@@ -405,6 +419,7 @@ export default function EmployeeManagementPage() {
                 <input
                   name="birth_date"
                   type="date"
+                  max={todayStr()}
                   value={form.birth_date}
                   onChange={(e) => setForm((p) => ({ ...p, birth_date: e.target.value }))}
                 />

@@ -75,8 +75,15 @@
     height: auto;
     padding: 0;
     z-index: 900;
+    /* *** FIX: allow clicks to pass through the wrapper to product cards below *** */
+    pointer-events: none;
+  }
+  /* Re-enable clicks on the actual cart panel content */
+  .new-order-cart-col .cart-panel {
+    pointer-events: auto;
   }
   .new-order-products {
-    padding-bottom: 220px; /* space for fixed cart */
+    /* Ensure enough bottom space so the last row of cards is fully accessible */
+    padding-bottom: 300px;
   }
 }
