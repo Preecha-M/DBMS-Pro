@@ -1,11 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import api from "../db/api";
 import { Coffee, CupSoda, Croissant, CakeSlice, Utensils, Hash, LayoutGrid } from "lucide-react";
 import CustomSelect from "../components/CustomSelect";
 import { useAuth } from "../auth/useAuth";
+import generatePayload from "promptpay-qr";
+import QRCode from "qrcode";
 import "./NewOrderPage.css";
+
+const PROMPTPAY_ID = import.meta.env.VITE_PROMPTPAY_ID || "";
 
 // Block minus, e/E, + in numeric inputs
 const blockInvalidNumKey = (e) => {
@@ -46,6 +50,8 @@ export default function NewOrderPage() {
   const [cashReceived, setCashReceived] = useState("");
   const [selectedPromoId, setSelectedPromoId] = useState("");
   const [manualDiscount, setManualDiscount] = useState("");
+  const [qrDataUrl, setQrDataUrl] = useState("");
+  const [qrConfirming, setQrConfirming] = useState(false);
   const [nextSaleId, setNextSaleId] = useState(1);
 
   const activeCatId = params.get("cat") ? Number(params.get("cat")) : null;
@@ -378,7 +384,7 @@ export default function NewOrderPage() {
     }
   };
 
-    const closeAllModals = () => {
+  const closeAllModals = () => {
     if (saleInfo) {
       setNextSaleId(prev => prev + 1);
     }
@@ -389,6 +395,59 @@ export default function NewOrderPage() {
     setManualDiscount("");
     setSaleInfo(null);
     setOrderSnapshot(null);
+    setQrDataUrl("");
+    setQrConfirming(false);
+  };
+
+  const generateQR = useCallback(async (amount) => {
+    try {
+      const payload = generatePayload(PROMPTPAY_ID, { amount });
+      const url = await QRCode.toDataURL(payload, {
+        width: 280,
+        margin: 2,
+        color: { dark: "#19191C", light: "#ffffff" }
+      });
+      setQrDataUrl(url);
+    } catch (err) {
+      console.error("QR generation failed", err);
+      setError("ไม่สามารถสร้าง QR Code ได้ กรุณาตรวจสอบหมายเลขพร้อมเพย์");
+    }
+  }, []);
+
+  const goQrWait = useCallback(async () => {
+    setError("");
+    if (!orderSnapshot) return;
+    const net = orderSnapshot.subtotal - orderSnapshot.discountAmount;
+    await generateQR(net);
+    setStep("QR_WAIT");
+  }, [orderSnapshot, generateQR]);
+
+  const confirmQrPaid = async () => {
+    setQrConfirming(true);
+    setError("");
+    try {
+      const payload = {
+        payment_method: "QR",
+        discount_amount: orderSnapshot.discountAmount,
+        promotion_id: orderSnapshot.selectedPromo?.promotion_id ?? null,
+        member_id: orderSnapshot.memberId,
+        cash_received: null,
+        receipt_number: tempInvoice,
+        items: orderSnapshot.items.map((it) => ({
+          menu_id: it.menu_id,
+          quantity: it.qty,
+          options: it.options || []
+        })),
+      };
+      const res = await api.post("/sales", payload);
+      setSaleInfo(res.data);
+      setCart([]);
+      setStep("RECEIPT");
+    } catch (e) {
+      setError(e?.response?.data?.message || t('newOrder.saveFailed'));
+    } finally {
+      setQrConfirming(false);
+    }
   };
 
   return (
@@ -816,8 +875,81 @@ export default function NewOrderPage() {
               <button className="btn-soft" onClick={() => setStep("PAYMENT")}>
                 {t('newOrder.backBtn')}
               </button>
-              <button className="btn-primary" onClick={confirmPay}>
-                {t('newOrder.confirmBtn')}
+              {paymentMethod === "QR" ? (
+                <button className="btn-primary" onClick={goQrWait}>
+                  แสดง QR Code
+                </button>
+              ) : (
+                <button className="btn-primary" onClick={confirmPay}>
+                  {t('newOrder.confirmBtn')}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {step === "QR_WAIT" && orderSnapshot && (
+        <div className="modal-backdrop">
+          <div className="modal-card" style={{ textAlign: "center", maxWidth: 380 }}>
+            <button className="modal-x" onClick={closeAllModals}>×</button>
+
+            <div className="modal-title" style={{ marginBottom: 4 }}>สแกนเพื่อชำระเงิน</div>
+            <div style={{ fontSize: 13, color: "#9EA3AE", marginBottom: 16 }}>PromptPay · กรุณาสแกนและชำระก่อนกด ยืนยัน</div>
+
+            {qrDataUrl ? (
+              <img
+                src={qrDataUrl}
+                alt="PromptPay QR"
+                style={{
+                  width: 260,
+                  height: 260,
+                  borderRadius: 16,
+                  border: "2px solid var(--border-color)",
+                  padding: 8,
+                  background: "#fff",
+                  margin: "0 auto 16px",
+                  display: "block"
+                }}
+              />
+            ) : (
+              <div style={{ height: 260, display: "flex", alignItems: "center", justifyContent: "center", color: "#9EA3AE" }}>
+                กำลังสร้าง QR...
+              </div>
+            )}
+
+            <div style={{
+              fontSize: 28,
+              fontWeight: 900,
+              color: "var(--primary-orange)",
+              marginBottom: 4
+            }}>
+              ฿ {(orderSnapshot.subtotal - orderSnapshot.discountAmount).toFixed(2)}
+            </div>
+            <div style={{ fontSize: 13, color: "#9EA3AE", marginBottom: 8 }}>
+              พร้อมเพย์: {PROMPTPAY_ID}
+            </div>
+            {orderSnapshot.discountAmount > 0 && (
+              <div style={{ fontSize: 12, color: "var(--primary-orange)", marginBottom: 16 }}>
+                ส่วนลด -{orderSnapshot.discountAmount.toFixed(2)} บาท (จาก ฿{orderSnapshot.subtotal.toFixed(2)})
+              </div>
+            )}
+
+            {error && (
+              <div className="auth-error" style={{ marginBottom: 12 }}>{error}</div>
+            )}
+
+            <div className="modal-actions">
+              <button className="btn-soft" onClick={() => setStep("CONFIRM")}>
+                {t('newOrder.backBtn')}
+              </button>
+              <button
+                className="btn-primary"
+                onClick={confirmQrPaid}
+                disabled={qrConfirming}
+                style={{ background: "var(--primary-green, #2E7D52)" }}
+              >
+                {qrConfirming ? "กำลังบันทึก..." : "✓ ยืนยันรับชำระแล้ว"}
               </button>
             </div>
           </div>
