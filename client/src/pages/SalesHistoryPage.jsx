@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CalendarDays, History, ChevronRight, X } from "lucide-react";
 import api from "../db/api";
+import { useAuth } from "../auth/useAuth";
 import "./SalesHistoryPage.css";
 
 export default function SalesHistoryPage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -14,6 +16,22 @@ export default function SalesHistoryPage() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
 
   const [selectedSale, setSelectedSale] = useState(null);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [showTaxInvoice, setShowTaxInvoice] = useState(false);
+  const [showTaxInvoiceForm, setShowTaxInvoiceForm] = useState(false);
+  const [showFullTaxInvoice, setShowFullTaxInvoice] = useState(false);
+  const [showPrintMenu, setShowPrintMenu] = useState(false);
+  const [customerInfo, setCustomerInfo] = useState({ name: '', taxId: '', address: '' });
+
+  // Close everything when closing the modal
+  const handleCloseModal = () => {
+    setSelectedSale(null);
+    setShowReceipt(false);
+    setShowTaxInvoice(false);
+    setShowTaxInvoiceForm(false);
+    setShowFullTaxInvoice(false);
+    setShowPrintMenu(false);
+  };
 
   const loadSales = async () => {
     setLoading(true);
@@ -33,6 +51,20 @@ export default function SalesHistoryPage() {
   useEffect(() => {
     loadSales();
   }, [mode, month, date]);
+
+  const voidSale = async () => {
+    if (!selectedSale) return;
+    if (!window.confirm(t('salesHistory.confirmVoid', 'คุณแน่ใจหรือไม่ที่จะยกเลิกบิลนี้? ข้อมูลยอดขายและแต้มจะถูกหักกลับ'))) return;
+    
+    try {
+      await api.delete(`/sales/${selectedSale.sale_id}`);
+      alert(t('salesHistory.voidSuccess', 'ยกเลิกบิลสำเร็จ'));
+      setSelectedSale(null);
+      loadSales();
+    } catch (err) {
+      alert(err.response?.data?.message || t('salesHistory.voidFailed', 'ไม่สามารถยกเลิกบิลได้'));
+    }
+  };
 
   const formatDate = (dt) =>
     new Date(dt).toLocaleDateString("th-TH", {
@@ -54,7 +86,8 @@ export default function SalesHistoryPage() {
     { key: "custom", label: t('salesHistory.selectMonth') },
   ];
 
-  const totalRevenue = sales.reduce((s, r) => s + Number(r.net_total || 0), 0);
+  const totalRevenue = sales.reduce((s, r) => s + (r.status === 'VOIDED' ? 0 : Number(r.net_total || 0)), 0);
+  const activeSales = sales.filter(s => s.status !== 'VOIDED');
 
   return (
     <div className="pos-page sales-history-page">
@@ -72,7 +105,7 @@ export default function SalesHistoryPage() {
           <div>
             <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900 }}>{t('salesHistory.title')}</h2>
             <p style={{ margin: 0, fontSize: 13, color: '#9EA3AE' }}>
-              {sales.length} {t('salesHistory.totalItems', { count: '' }).replace('0', '').trim()} · ฿{totalRevenue.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+              {activeSales.length} {t('salesHistory.totalItems', { count: '' }).replace('0', '').trim()} · ฿{totalRevenue.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
             </p>
           </div>
         </div>
@@ -156,13 +189,21 @@ export default function SalesHistoryPage() {
                     <tr
                       key={s.sale_id}
                       onClick={() => setSelectedSale(s)}
-                      style={{ cursor: 'pointer' }}
+                      style={{ 
+                        cursor: 'pointer',
+                        opacity: s.status === 'VOIDED' ? 0.5 : 1
+                      }}
                       className="mobile-interactive-row"
                     >
                       <td data-label={t('salesHistory.receipt')} className="col-receipt">
                         <span style={{ fontWeight: 700, color: '#19191C' }}>
                           {s.receipt_number || `#${s.sale_id}`}
                         </span>
+                        {s.status === 'VOIDED' && (
+                          <span style={{ marginLeft: 6, fontSize: 10, background: '#fee2e2', color: '#dc2626', padding: '2px 6px', borderRadius: 4, fontWeight: 'bold' }}>
+                            {t('salesHistory.voided', 'ยกเลิก')}
+                          </span>
+                        )}
                       </td>
 
                       <td data-label={t('salesHistory.date')} className="col-date">
@@ -182,7 +223,12 @@ export default function SalesHistoryPage() {
                       </td>
 
                       <td className="col-right" data-label={t('salesHistory.netTotal')}
-                        style={{ fontWeight: 800, color: 'var(--primary-orange)', fontSize: 15 }}>
+                        style={{ 
+                          fontWeight: 800, 
+                          color: s.status === 'VOIDED' ? '#9EA3AE' : 'var(--primary-orange)', 
+                          textDecoration: s.status === 'VOIDED' ? 'line-through' : 'none',
+                          fontSize: 15 
+                        }}>
                         ฿{Number(s.net_total).toLocaleString('th-TH', { minimumFractionDigits: 2 })}
                       </td>
                       <td className="hide-on-mobile">
@@ -202,7 +248,7 @@ export default function SalesHistoryPage() {
               background: '#fafafa', borderRadius: '0 0 18px 18px'
             }}>
               <span style={{ fontSize: 13, color: '#9EA3AE' }}>
-                {t('salesHistory.totalItems', { count: sales.length })}
+                {t('salesHistory.totalItems', { count: activeSales.length })}
               </span>
               <span style={{ fontWeight: 900, fontSize: 18, color: 'var(--primary-orange)' }}>
                 ฿{totalRevenue.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
@@ -224,13 +270,22 @@ export default function SalesHistoryPage() {
             {/* Modal Header */}
             <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontWeight: 900, fontSize: 18 }}>{selectedSale.receipt_number || `#${selectedSale.sale_id}`}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ fontWeight: 900, fontSize: 18 }}>
+                    {selectedSale.receipt_number || `#${selectedSale.sale_id}`}
+                  </div>
+                  {selectedSale.status === 'VOIDED' && (
+                    <span style={{ fontSize: 11, background: '#fee2e2', color: '#dc2626', padding: '2px 8px', borderRadius: 4, fontWeight: 'bold' }}>
+                      {t('salesHistory.voidedBadge', 'บิลถูกยกเลิก')}
+                    </span>
+                  )}
+                </div>
                 <div style={{ fontSize: 12, color: '#9EA3AE', marginTop: 2 }}>
                   {formatDate(selectedSale.sale_datetime)} · {formatTime(selectedSale.sale_datetime)}
                 </div>
               </div>
               <button
-                onClick={() => setSelectedSale(null)}
+                onClick={handleCloseModal}
                 style={{
                   width: 32, height: 32, borderRadius: 8, border: '1.5px solid var(--border-color)',
                   background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
@@ -300,6 +355,418 @@ export default function SalesHistoryPage() {
                   ฿{Number(selectedSale.net_total).toLocaleString('th-TH', { minimumFractionDigits: 2 })}
                 </span>
               </div>
+              <div className="modal-actions" style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between' }}>
+                <div>
+                  {selectedSale.status !== 'VOIDED' && user && ['Manager', 'Owner', 'Admin'].includes(user.role) && (
+                    <button 
+                      className="btn-soft" 
+                      style={{ color: '#dc2626', borderColor: '#fca5a5', background: '#fef2f2' }} 
+                      onClick={voidSale}
+                    >
+                      {t('salesHistory.voidBtn', 'ยกเลิกบิล')}
+                    </button>
+                  )}
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <button 
+                    className="btn-primary" 
+                    onClick={() => setShowPrintMenu(!showPrintMenu)}
+                  >
+                    {t('salesHistory.printDoc', 'พิมพ์เอกสาร')} ▾
+                  </button>
+                  {showPrintMenu && (
+                    <div className="pos-dropdown-menu" style={{ right: 0, left: 'auto', bottom: '100%', top: 'auto', marginBottom: 8 }}>
+                      <a href="#!" className="pos-dropdown-link" style={{ fontSize: 13 }} onClick={(e) => { e.preventDefault(); setShowPrintMenu(false); setShowTaxInvoiceForm(true); }}>
+                        {t('salesHistory.printFullTaxInvoice', 'พิมพ์ใบกำกับภาษีเต็มรูป')}
+                      </a>
+                      <a href="#!" className="pos-dropdown-link" style={{ fontSize: 13 }} onClick={(e) => { e.preventDefault(); setShowPrintMenu(false); setShowTaxInvoice(true); }}>
+                        {t('salesHistory.printTaxInvoice', 'พิมพ์ใบกำกับภาษีอย่างย่อ')}
+                      </a>
+                      <a href="#!" className="pos-dropdown-link" style={{ fontSize: 13 }} onClick={(e) => { e.preventDefault(); setShowPrintMenu(false); setShowReceipt(true); }}>
+                        {t('salesHistory.printReceipt', 'พิมพ์ใบเสร็จ')}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Receipt Print Modal */}
+      {selectedSale && showReceipt && (
+        <div className="modal-backdrop" style={{ zIndex: 10000 }}>
+          <div className="modal-card receipt print-area">
+            <button className="modal-x no-print" onClick={() => setShowReceipt(false)}>
+              ×
+            </button>
+
+            <div className="receipt-brand" style={{ fontSize: 24, marginBottom: 4 }}>Nap's Coffee</div>
+            <div className="receipt-sub" style={{ fontSize: 16 }}>x Khon Kaen</div>
+
+            <div style={{ fontSize: 12, textAlign: 'center', color: '#6C727F', marginBottom: 14 }}>
+              ตลาด 62 บล็อก 157/89-91 ม.16 ต.ในเมือง อ.เมือง<br/>
+              จ.ขอนแก่น 40000<br/>
+              เบอร์โทร : 0844041113
+            </div>
+
+            <div className="receipt-block">
+              <div><b>Receipt</b></div>
+              <div>No: {selectedSale.receipt_number || selectedSale.sale_id}</div>
+              <div>
+                Date: {new Intl.DateTimeFormat("th-TH", {
+                  year: "numeric", month: "numeric", day: "numeric",
+                  hour: "numeric", minute: "numeric", second: "numeric",
+                  hour12: false, timeZone: "Asia/Bangkok",
+                }).format(new Date(selectedSale.sale_datetime.endsWith("Z") ? selectedSale.sale_datetime : selectedSale.sale_datetime + "Z"))}
+              </div>
+              <div>Created by: {selectedSale.employee_name || selectedSale.employee_username || "-"}</div>
+              <div>Payment: {selectedSale.payment_method}</div>
+              <div>Customer: {selectedSale.member_name || "Walk-in Customer"}</div>
+            </div>
+
+            <div className="receipt-table">
+              <div className="rt-head">
+                <div>Name</div>
+                <div className="center">Qty</div>
+                <div className="right">Subtotal</div>
+              </div>
+              {(selectedSale.items || []).map((it, idx) => (
+                <div className="rt-row" key={idx}>
+                  <div>{it.menu_name || it.menu_id}</div>
+                  <div className="center">{it.quantity}</div>
+                  <div className="right">{(Number(it.unit_price) * it.quantity).toFixed(2)}</div>
+                </div>
+              ))}
+              <div className="rt-total">
+                <div>Total</div>
+                <div className="right">{Number(selectedSale.subtotal || 0).toFixed(2)}</div>
+              </div>
+              {Number(selectedSale.discount_amount || 0) > 0 && (
+                <div className="rt-total" style={{ borderTop: "none", paddingTop: 0 }}>
+                  <div>Discount</div>
+                  <div className="right">-{Number(selectedSale.discount_amount).toFixed(2)}</div>
+                </div>
+              )}
+              <div className="rt-total" style={{ borderTop: "none", paddingTop: 0 }}>
+                <div><b>Grand Total</b></div>
+                <div className="right"><b>{Number(selectedSale.net_total).toFixed(2)}</b></div>
+              </div>
+              {selectedSale.payment_method === "Cash" && selectedSale.cash_received !== null && (
+                <>
+                  <div className="rt-total" style={{ borderTop: "none", paddingTop: 0 }}>
+                    <div>Cash received</div>
+                    <div className="right">{Number(selectedSale.cash_received).toFixed(2)}</div>
+                  </div>
+                  <div className="rt-total" style={{ borderTop: "none", paddingTop: 0 }}>
+                    <div>Change</div>
+                    <div className="right"><b>{(Number(selectedSale.cash_received) - Number(selectedSale.net_total)).toFixed(2)}</b></div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="modal-actions no-print">
+              <button className="btn-soft" onClick={() => setShowReceipt(false)}>{t('salesHistory.close', 'ปิด')}</button>
+              <button className="btn-primary" onClick={() => window.print()}>{t('salesHistory.print', 'พิมพ์')}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tax Invoice Print Modal */}
+      {selectedSale && showTaxInvoice && (
+        <div className="modal-backdrop" style={{ zIndex: 10000 }}>
+          <div className="modal-card receipt print-area">
+            <button className="modal-x no-print" onClick={() => setShowTaxInvoice(false)}>
+              ×
+            </button>
+
+            <div className="receipt-brand" style={{ fontSize: 24, marginBottom: 4 }}>Nap's Coffee</div>
+            <div className="receipt-sub" style={{ fontSize: 16 }}>x Khon Kaen</div>
+
+            <div style={{ fontSize: 12, textAlign: 'center', color: '#6C727F', marginBottom: 14 }}>
+              ตลาด 62 บล็อก 157/89-91 ม.16 ต.ในเมือง อ.เมือง<br/>
+              จ.ขอนแก่น 40000<br/>
+              เบอร์โทร : 0844041113
+            </div>
+
+            <div className="receipt-block">
+              <div style={{ textAlign: 'center', fontWeight: 'bold', marginBottom: 8 }}>ใบกำกับภาษีอย่างย่อ<br/>(Tax Invoice)</div>
+              <div>No: {selectedSale.receipt_number || selectedSale.sale_id}</div>
+              <div>
+                Date: {new Intl.DateTimeFormat("th-TH", {
+                  year: "numeric", month: "numeric", day: "numeric",
+                  hour: "numeric", minute: "numeric", second: "numeric",
+                  hour12: false, timeZone: "Asia/Bangkok",
+                }).format(new Date(selectedSale.sale_datetime.endsWith("Z") ? selectedSale.sale_datetime : selectedSale.sale_datetime + "Z"))}
+              </div>
+              <div>Customer: {selectedSale.member_name || "Walk-in Customer"}</div>
+              <div>TAX ID: 0123456789012</div>
+              <div>Staff: {selectedSale.employee_name || selectedSale.employee_username || "-"}</div>
+            </div>
+
+            <div className="receipt-table">
+              <div className="rt-head">
+                <div>Name</div>
+                <div className="center">Qty</div>
+                <div className="right">Subtotal</div>
+              </div>
+              {(selectedSale.items || []).map((it, idx) => (
+                <div className="rt-row" key={idx}>
+                  <div>{it.menu_name || it.menu_id}</div>
+                  <div className="center">{it.quantity}</div>
+                  <div className="right">{(Number(it.unit_price) * it.quantity).toFixed(2)}</div>
+                </div>
+              ))}
+              <div className="rt-total">
+                <div>Total</div>
+                <div className="right">{Number(selectedSale.subtotal || 0).toFixed(2)}</div>
+              </div>
+              {Number(selectedSale.discount_amount || 0) > 0 && (
+                <div className="rt-total" style={{ borderTop: "none", paddingTop: 0 }}>
+                  <div>Discount</div>
+                  <div className="right">-{Number(selectedSale.discount_amount).toFixed(2)}</div>
+                </div>
+              )}
+              
+              {/* Vatable and VAT details */}
+              {(() => {
+                const netAmount = Number(selectedSale.net_total);
+                const vatRate = 0.07;
+                const vatable = netAmount / (1 + vatRate);
+                const vatAmount = netAmount - vatable;
+                
+                return (
+                  <>
+                    <div className="rt-total" style={{ borderTop: "none", paddingTop: 0, paddingBottom: 0 }}>
+                      <div style={{ fontSize: 12, color: '#6C727F' }}>Vatable Amount</div>
+                      <div className="right" style={{ fontSize: 12, color: '#6C727F' }}>{vatable.toFixed(2)}</div>
+                    </div>
+                    <div className="rt-total" style={{ borderTop: "none", paddingTop: 0 }}>
+                      <div style={{ fontSize: 12, color: '#6C727F' }}>VAT 7%</div>
+                      <div className="right" style={{ fontSize: 12, color: '#6C727F' }}>{vatAmount.toFixed(2)}</div>
+                    </div>
+                  </>
+                );
+              })()}
+
+              <div className="rt-total" style={{ borderTop: "none", paddingTop: 0 }}>
+                <div><b>Grand Total</b> <span style={{fontSize: 10, fontWeight: 'normal', color: '#6C727F'}}>(VAT Included)</span></div>
+                <div className="right"><b>{Number(selectedSale.net_total).toFixed(2)}</b></div>
+              </div>
+            </div>
+
+            <div className="modal-actions no-print">
+              <button className="btn-soft" onClick={() => setShowTaxInvoice(false)}>{t('salesHistory.close', 'ปิด')}</button>
+              <button className="btn-primary" onClick={() => window.print()}>{t('salesHistory.print', 'พิมพ์')}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full Tax Invoice Form Modal */}
+      {selectedSale && showTaxInvoiceForm && (
+        <div className="modal-backdrop" style={{ zIndex: 10000 }}>
+          <div className="modal-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div className="modal-title">ข้อมูลลูกค้าสำหรับออกใบกำกับภาษีเต็มรูป</div>
+              <button className="modal-x" onClick={() => setShowTaxInvoiceForm(false)} style={{ position: 'relative', top: 0, right: 0 }}>×</button>
+            </div>
+            
+            <div className="input-group">
+              <label>ชื่อ-นามสกุล / ชื่อบริษัท (Customer Name / Company Name)</label>
+              <input 
+                type="text" 
+                value={customerInfo.name} 
+                onChange={e => setCustomerInfo({...customerInfo, name: e.target.value})} 
+                placeholder="กรอกชื่อลูกค้าหรือบริษัท"
+              />
+            </div>
+            
+            <div className="input-group">
+              <label>เลขประจำตัวผู้เสียภาษี (Tax ID)</label>
+              <input 
+                type="text" 
+                value={customerInfo.taxId} 
+                onChange={e => setCustomerInfo({...customerInfo, taxId: e.target.value})} 
+                placeholder="กรอกเลขประจำตัว 13 หลัก"
+              />
+            </div>
+            
+            <div className="input-group">
+              <label>ที่อยู่ (Address)</label>
+              <textarea 
+                value={customerInfo.address} 
+                onChange={e => setCustomerInfo({...customerInfo, address: e.target.value})} 
+                placeholder="กรอกที่อยู่สำหรับออกใบกำกับภาษี"
+                style={{
+                  width: '100%', padding: '12px 16px', borderRadius: 12,
+                  border: '1px solid var(--border-color)', boxSizing: 'border-box',
+                  fontFamily: 'inherit', resize: 'vertical', minHeight: 80
+                }}
+              />
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn-soft" onClick={() => setShowTaxInvoiceForm(false)}>{t('salesHistory.cancel', 'ยกเลิก')}</button>
+              <button 
+                className="btn-primary" 
+                disabled={!customerInfo.name || !customerInfo.taxId || !customerInfo.address}
+                onClick={() => {
+                  setShowTaxInvoiceForm(false);
+                  setShowFullTaxInvoice(true);
+                }}
+              >
+                ต่อไป (Next)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full Tax Invoice Print Modal */}
+      {selectedSale && showFullTaxInvoice && (
+        <div className="modal-backdrop" style={{ zIndex: 10000 }}>
+          <div className="modal-card wide print-area" style={{ padding: '40px' }}>
+            <button className="modal-x no-print" onClick={() => setShowFullTaxInvoice(false)}>
+              ×
+            </button>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #111', paddingBottom: 20, marginBottom: 20 }}>
+              <div>
+                <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--primary-orange)' }}>Nap's Coffee x Khon Kaen</div>
+                <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+                  ตลาด 62 บล็อก 157/89-91 ม.16 ต.ในเมือง อ.เมือง จ.ขอนแก่น 40000<br/>
+                  TAX ID: 0123456789012<br/>
+                  Tel: 0844041113
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 22, fontWeight: 900 }}>ใบกำกับภาษีเต็มรูป</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#666' }}>(TAX INVOICE)</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 30 }}>
+              <div style={{ flex: 1, paddingRight: 20 }}>
+                <div style={{ fontWeight: 800, marginBottom: 8, fontSize: 14 }}>ข้อมูลลูกค้า (Customer)</div>
+                <div style={{ fontSize: 13, lineHeight: 1.6 }}>
+                  <div><b>นาม (Name):</b> {customerInfo.name}</div>
+                  <div><b>เลขผู้เสียภาษี (Tax ID):</b> {customerInfo.taxId}</div>
+                  <div><b>ที่อยู่ (Address):</b> {customerInfo.address}</div>
+                </div>
+              </div>
+              <div style={{ width: 250 }}>
+                <div style={{ fontWeight: 800, marginBottom: 8, fontSize: 14 }}>ข้อมูลเอกสาร (Document Info)</div>
+                <div style={{ fontSize: 13, lineHeight: 1.6, background: '#f8f9fc', padding: 12, borderRadius: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>เลขที่ (No):</span>
+                    <b>{selectedSale.receipt_number || selectedSale.sale_id}</b>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>วันที่ (Date):</span>
+                    <b>{new Intl.DateTimeFormat("en-GB", { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(selectedSale.sale_datetime.endsWith("Z") ? selectedSale.sale_datetime : selectedSale.sale_datetime + "Z"))}</b>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>พนักงาน (Staff):</span>
+                    <b>{selectedSale.employee_name || selectedSale.employee_username || "-"}</b>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 20, fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: '#f4f7fe', borderTop: '1px solid #111', borderBottom: '1px solid #111' }}>
+                  <th style={{ padding: '10px 8px', textAlign: 'center', width: 50 }}>ลำดับ<br/>(Item)</th>
+                  <th style={{ padding: '10px 8px', textAlign: 'left' }}>รายการสินค้า<br/>(Description)</th>
+                  <th style={{ padding: '10px 8px', textAlign: 'center', width: 80 }}>จำนวน<br/>(Qty)</th>
+                  <th style={{ padding: '10px 8px', textAlign: 'right', width: 100 }}>ราคา/หน่วย<br/>(Unit Price)</th>
+                  <th style={{ padding: '10px 8px', textAlign: 'right', width: 120 }}>จำนวนเงิน<br/>(Amount)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(selectedSale.items || []).map((it, idx) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                    <td style={{ padding: '10px 8px', textAlign: 'center' }}>{idx + 1}</td>
+                    <td style={{ padding: '10px 8px' }}>
+                      {it.menu_name || it.menu_id}
+                      {it.options && it.options.length > 0 && (
+                        <div style={{ fontSize: 11, color: '#666' }}>
+                          {it.options.map(o => `+${o.option_name}`).join(', ')}
+                        </div>
+                      )}
+                    </td>
+                    <td style={{ padding: '10px 8px', textAlign: 'center' }}>{it.quantity}</td>
+                    <td style={{ padding: '10px 8px', textAlign: 'right' }}>{Number(it.unit_price).toFixed(2)}</td>
+                    <td style={{ padding: '10px 8px', textAlign: 'right' }}>{(Number(it.unit_price) * it.quantity).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
+              <div style={{ width: 300, fontSize: 13 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 8px' }}>
+                  <span>รวมเป็นเงิน (Sub total):</span>
+                  <span>{Number(selectedSale.subtotal || 0).toFixed(2)}</span>
+                </div>
+                {Number(selectedSale.discount_amount || 0) > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 8px' }}>
+                    <span>ส่วนลด (Discount):</span>
+                    <span>-{Number(selectedSale.discount_amount).toFixed(2)}</span>
+                  </div>
+                )}
+                
+                {(() => {
+                  const netAmount = Number(selectedSale.net_total);
+                  const vatRate = 0.07;
+                  const vatable = netAmount / (1 + vatRate);
+                  const vatAmount = netAmount - vatable;
+                  
+                  return (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 8px' }}>
+                        <span>มูลค่าสินค้าที่ไม่มี/ยกเว้นภาษี:</span>
+                        <span>0.00</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 8px' }}>
+                        <span>มูลค่าสินค้าที่เสียภาษี (Vatable):</span>
+                        <span>{vatable.toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 8px' }}>
+                        <span>ภาษีมูลค่าเพิ่ม 7% (VAT 7%):</span>
+                        <span>{vatAmount.toFixed(2)}</span>
+                      </div>
+                    </>
+                  );
+                })()}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 8px', background: '#f4f7fe', fontWeight: 900, borderTop: '2px solid #111', borderBottom: '2px solid #111', marginTop: 8, fontSize: 14 }}>
+                  <span>จำนวนเงินรวมทั้งสิ้น (Grand Total):</span>
+                  <span>{Number(selectedSale.net_total).toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ marginTop: 60, display: 'flex', justifyContent: 'space-between', textAlign: 'center', fontSize: 13 }}>
+              <div style={{ width: 200 }}>
+                <div style={{ borderBottom: '1px solid #333', height: 40 }}></div>
+                <div style={{ marginTop: 8 }}>ผู้รับเงิน / ผู้รับมอบอำนาจ</div>
+                <div style={{ marginTop: 4 }}>___/___/_____</div>
+              </div>
+              <div style={{ width: 200 }}>
+                <div style={{ borderBottom: '1px solid #333', height: 40 }}></div>
+                <div style={{ marginTop: 8 }}>ผู้จ่ายเงิน / ลูกค้า</div>
+                <div style={{ marginTop: 4 }}>___/___/_____</div>
+              </div>
+            </div>
+
+            <div className="modal-actions no-print" style={{ marginTop: 40 }}>
+              <button className="btn-soft" onClick={() => setShowFullTaxInvoice(false)}>{t('salesHistory.close', 'ปิด')}</button>
+              <button className="btn-primary" onClick={() => window.print()}>{t('salesHistory.print', 'พิมพ์')}</button>
             </div>
           </div>
         </div>

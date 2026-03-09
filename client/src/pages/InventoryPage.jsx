@@ -377,38 +377,38 @@ export default function InventoryPage() {
               </thead>
               <tbody>
                 {ingredients.flatMap(ig => {
-                  const batches = ig.ingredient_batch?.length > 0 ? ig.ingredient_batch : [null];
-                  
-                  return batches.map((batch, bidx) => {
-                    const expired = batch ? isExpired(batch.expire_date) : false;
-                    const expiringSoon = batch ? alerts.some(a => a.batch_id === batch.batch_id) : false;
+                  // Filter out zero-quantity batches; if none left, skip ingredient entirely
+                  const nonZeroBatches = (ig.ingredient_batch || []).filter(b => b.quantity_on_hand > 0);
+                  if (nonZeroBatches.length === 0) return [];
+
+                  return nonZeroBatches.map((batch, bidx) => {
+                    const expired = isExpired(batch.expire_date);
+                    const expiringSoon = alerts.some(a => a.batch_id === batch.batch_id);
                     const isFirstBatch = bidx === 0;
 
                     return (
-                      <tr key={`${ig.ingredient_id}-${batch?.batch_id || 'no-batch'}`}>
+                      <tr key={`${ig.ingredient_id}-${batch.batch_id}`}>
                         {isFirstBatch ? (
                           <>
-                            <td rowSpan={batches.length}>{ig.ingredient_id}</td>
-                            <td rowSpan={batches.length}>{ig.ingredient_name}</td>
-                            <td rowSpan={batches.length}>{ig.category_name || "-"}</td>
+                            <td rowSpan={nonZeroBatches.length}>{ig.ingredient_id}</td>
+                            <td rowSpan={nonZeroBatches.length}>{ig.ingredient_name}</td>
+                            <td rowSpan={nonZeroBatches.length}>{ig.category_name || "-"}</td>
                           </>
                         ) : null}
                         <td style={{ fontWeight: 'bold' }}>
-                          {batch ? `${batch.quantity_on_hand} ${ig.unit}` : `${ig.quantity_on_hand || 0} ${ig.unit}`}
+                          {`${batch.quantity_on_hand} ${ig.unit}`}
                         </td>
-                        {isFirstBatch ? (
-                          <td rowSpan={batches.length}>{ig.cost_per_unit || "-"}</td>
-                        ) : null}
+                        <td>{batch.cost_per_unit ?? ig.cost_per_unit ?? "-"}</td>
                         <td style={{ 
                           color: expired ? '#d93025' : (expiringSoon ? '#f29900' : 'inherit'),
                           fontWeight: (expired || expiringSoon) ? 'bold' : 'normal'
                         }}>
-                          {batch?.expire_date ? new Date(batch.expire_date).toLocaleDateString("th-TH") : t('inventory.expireNotSet')}
+                          {batch.expire_date ? new Date(batch.expire_date).toLocaleDateString("th-TH") : t('inventory.expireNotSet')}
                           {expired && <span style={{ marginLeft: 8, fontSize: 12, padding: '2px 6px', background: '#fce8e6', borderRadius: 4 }}>{t('inventory.alertExpired', 'Expired')}</span>}
                           {!expired && expiringSoon && <span style={{ marginLeft: 8, fontSize: 12, padding: '2px 6px', background: '#fef7e0', borderRadius: 4 }}>{t('inventory.alertExpiring', 'Expiring Soon')}</span>}
                         </td>
                       </tr>
-                    )
+                    );
                   });
                 })}
                 {ingredients.length === 0 && <tr><td colSpan="6" style={{ textAlign: "center" }}>-</td></tr>}
@@ -508,6 +508,7 @@ export default function InventoryPage() {
                 <th>{t('inventory.colOrderId')}</th>
                 <th>{t('inventory.colOrderDate')}</th>
                 <th>{t('inventory.colOrderSupplier')}</th>
+                <th>{t('inventory.colOrderPrice', 'ราคา')}</th>
                 <th>{t('inventory.colOrderStatus')}</th>
                 <th style={{ minWidth: 100 }}>{t('inventory.colOrderAction')}</th>
               </tr>
@@ -518,6 +519,9 @@ export default function InventoryPage() {
                   <td>#{o.order_id}</td>
                   <td>{new Date(o.order_date).toLocaleDateString("th-TH")}</td>
                   <td>{o.supplier_name || "-"}</td>
+                  <td>
+                    ฿{o.items?.reduce((sum, it) => sum + Number(it.unit_cost || 0), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
                   <td>
                     <span className={`inv-badge ${String(o.order_status).toLowerCase() === 'received' ? 'received' : 'pending'}`}>
                       {o.order_status}
@@ -532,7 +536,7 @@ export default function InventoryPage() {
                   </td>
                 </tr>
               ))}
-              {orders.length === 0 && <tr><td colSpan="5" style={{ textAlign: "center" }}>{t('inventory.noOrders')}</td></tr>}
+              {orders.length === 0 && <tr><td colSpan="6" style={{ textAlign: "center" }}>{t('inventory.noOrders')}</td></tr>}
             </tbody>
           </table>
           </div>
@@ -550,6 +554,7 @@ export default function InventoryPage() {
                 <th>{t('inventory.colTxIgName')}</th>
                 <th>{t('inventory.colTxType')}</th>
                 <th>{t('inventory.colTxQtyChange')}</th>
+                <th>{t('inventory.colTxEmployee', 'ผู้ทำรายการ')}</th>
                 <th>{t('inventory.colTxNote')}</th>
               </tr>
             </thead>
@@ -574,12 +579,15 @@ export default function InventoryPage() {
                   }}>
                     {t.quantity > 0 ? `+${t.quantity}` : t.quantity} {t.ingredient?.unit || ""}
                   </td>
+                  <td>
+                    {t.employee ? (t.employee.first_name_th ? `${t.employee.first_name_th} ${t.employee.last_name_th || ''}`.trim() : t.employee.username) : "-"}
+                  </td>
                   <td className="muted">
                     {t.notes} {t.reference_id ? `(#${t.reference_id})` : ''}
                   </td>
                 </tr>
               ))}
-              {transactions.length === 0 && <tr><td colSpan="6" style={{ textAlign: "center" }}>{t('inventory.noTransactions')}</td></tr>}
+              {transactions.length === 0 && <tr><td colSpan="7" style={{ textAlign: "center" }}>{t('inventory.noTransactions')}</td></tr>}
             </tbody>
           </table>
           </div>

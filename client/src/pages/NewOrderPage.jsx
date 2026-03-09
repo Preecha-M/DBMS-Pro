@@ -964,10 +964,14 @@ export default function NewOrderPage() {
               ×
             </button>
 
-            <div className="receipt-brand">
-              <span>CP</span> POS
+            <div className="receipt-brand" style={{ fontSize: 24, marginBottom: 4 }}>Nap's Coffee</div>
+            <div className="receipt-sub" style={{ fontSize: 16 }}>x Khon Kaen</div>
+
+            <div style={{ fontSize: 12, textAlign: 'center', color: '#6C727F', marginBottom: 14 }}>
+              ตลาด 62 บล็อก 157/89-91 ม.16 ต.ในเมือง อ.เมือง<br/>
+              จ.ขอนแก่น 40000<br/>
+              เบอร์โทร : 0844041113
             </div>
-            <div className="receipt-sub">Cafe POS Solution</div>
 
             <div className="receipt-block">
               <div>
@@ -995,7 +999,7 @@ export default function NewOrderPage() {
                     )
                   : "-"}
               </div>
-              <div>Created by: {saleInfo?.employee_username || user?.first_name_th || user?.username || "-"}</div>
+              <div>Created by: {saleInfo?.employee_name || (user?.first_name_th && user?.last_name_th ? `${user.first_name_th} ${user.last_name_th}` : user?.username) || "-"}</div>
               <div>Payment: {paymentMethod}</div>
               <div>
                 Customer:{" "}
