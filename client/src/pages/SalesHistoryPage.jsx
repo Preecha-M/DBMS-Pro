@@ -21,7 +21,24 @@ export default function SalesHistoryPage() {
   const [showTaxInvoiceForm, setShowTaxInvoiceForm] = useState(false);
   const [showFullTaxInvoice, setShowFullTaxInvoice] = useState(false);
   const [showPrintMenu, setShowPrintMenu] = useState(false);
-  const [customerInfo, setCustomerInfo] = useState({ name: '', taxId: '', address: '' });
+  const [customerInfo, setCustomerInfo] = useState({ name: '', taxId: '', address: '', branch: '', notes: '' });
+  const [savedInvoice, setSavedInvoice] = useState(null);
+  const [savingInvoice, setSavingInvoice] = useState(false);
+
+  const defaultStore = { name: "Nap's Coffee x Khon Kaen", address: "ตลาด 62 บล็อก 157/89-91 ม.16 ต.ในเมือง อ.เมือง จ.ขอนแก่น 40000", taxId: "0123456789012", phone: "0844041113" };
+  const [storeInfo, setStoreInfo] = useState(() => {
+    try {
+      const saved = localStorage.getItem('storeInfo');
+      return saved ? { ...defaultStore, ...JSON.parse(saved) } : defaultStore;
+    } catch { return defaultStore; }
+  });
+  const [showStoreEdit, setShowStoreEdit] = useState(false);
+
+  const updateStoreInfo = (updates) => {
+    const updated = { ...storeInfo, ...updates };
+    setStoreInfo(updated);
+    localStorage.setItem('storeInfo', JSON.stringify(updated));
+  };
 
   // Close everything when closing the modal
   const handleCloseModal = () => {
@@ -31,6 +48,8 @@ export default function SalesHistoryPage() {
     setShowTaxInvoiceForm(false);
     setShowFullTaxInvoice(false);
     setShowPrintMenu(false);
+    setSavedInvoice(null);
+    setCustomerInfo({ name: '', taxId: '', address: '', branch: '', notes: '' });
   };
 
   const loadSales = async () => {
@@ -367,6 +386,7 @@ export default function SalesHistoryPage() {
                     </button>
                   )}
                 </div>
+                {selectedSale.status !== 'VOIDED' && (
                 <div style={{ position: 'relative' }}>
                   <button 
                     className="btn-primary" 
@@ -388,6 +408,7 @@ export default function SalesHistoryPage() {
                     </div>
                   )}
                 </div>
+                )}
               </div>
             </div>
           </div>
@@ -402,13 +423,11 @@ export default function SalesHistoryPage() {
               ×
             </button>
 
-            <div className="receipt-brand" style={{ fontSize: 24, marginBottom: 4 }}>Nap's Coffee</div>
-            <div className="receipt-sub" style={{ fontSize: 16 }}>x Khon Kaen</div>
+            <div className="receipt-brand" style={{ fontSize: 24, marginBottom: 4 }}>{storeInfo.name}</div>
 
             <div style={{ fontSize: 12, textAlign: 'center', color: '#6C727F', marginBottom: 14 }}>
-              ตลาด 62 บล็อก 157/89-91 ม.16 ต.ในเมือง อ.เมือง<br/>
-              จ.ขอนแก่น 40000<br/>
-              เบอร์โทร : 0844041113
+              {storeInfo.address}<br/>
+              เบอร์โทร : {storeInfo.phone}
             </div>
 
             <div className="receipt-block">
@@ -483,13 +502,11 @@ export default function SalesHistoryPage() {
               ×
             </button>
 
-            <div className="receipt-brand" style={{ fontSize: 24, marginBottom: 4 }}>Nap's Coffee</div>
-            <div className="receipt-sub" style={{ fontSize: 16 }}>x Khon Kaen</div>
+            <div className="receipt-brand" style={{ fontSize: 24, marginBottom: 4 }}>{storeInfo.name}</div>
 
             <div style={{ fontSize: 12, textAlign: 'center', color: '#6C727F', marginBottom: 14 }}>
-              ตลาด 62 บล็อก 157/89-91 ม.16 ต.ในเมือง อ.เมือง<br/>
-              จ.ขอนแก่น 40000<br/>
-              เบอร์โทร : 0844041113
+              {storeInfo.address}<br/>
+              เบอร์โทร : {storeInfo.phone}
             </div>
 
             <div className="receipt-block">
@@ -503,7 +520,7 @@ export default function SalesHistoryPage() {
                 }).format(new Date(selectedSale.sale_datetime.endsWith("Z") ? selectedSale.sale_datetime : selectedSale.sale_datetime + "Z"))}
               </div>
               <div>Customer: {selectedSale.member_name || "Walk-in Customer"}</div>
-              <div>TAX ID: 0123456789012</div>
+              <div>TAX ID: {storeInfo.taxId}</div>
               <div>Staff: {selectedSale.employee_name || selectedSale.employee_username || "-"}</div>
             </div>
 
@@ -571,9 +588,52 @@ export default function SalesHistoryPage() {
         <div className="modal-backdrop" style={{ zIndex: 10000 }}>
           <div className="modal-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <div className="modal-title">ข้อมูลลูกค้าสำหรับออกใบกำกับภาษีเต็มรูป</div>
+              <div className="modal-title">ข้อมูลสำหรับออกใบกำกับภาษีเต็มรูป</div>
               <button className="modal-x" onClick={() => setShowTaxInvoiceForm(false)} style={{ position: 'relative', top: 0, right: 0 }}>×</button>
             </div>
+
+            {/* Store Info Section */}
+            <div style={{ marginBottom: 16, background: '#f8f9fc', borderRadius: 12, padding: '12px 16px' }}>
+              <div 
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                onClick={() => setShowStoreEdit(!showStoreEdit)}
+              >
+                <div style={{ fontWeight: 700, fontSize: 13, color: '#6C727F' }}>
+                  ข้อมูลร้าน (ผู้ออกใบกำกับภาษี) — {storeInfo.name}
+                </div>
+                <span style={{ fontSize: 12, color: 'var(--primary-orange)', fontWeight: 600 }}>
+                  {showStoreEdit ? 'ย่อ ▴' : 'แก้ไข ▾'}
+                </span>
+              </div>
+              {showStoreEdit && (
+                <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div className="input-group" style={{ marginBottom: 0 }}>
+                    <label>ชื่อร้าน (Store Name)</label>
+                    <input type="text" value={storeInfo.name} onChange={e => updateStoreInfo({ name: e.target.value })} />
+                  </div>
+                  <div className="input-group" style={{ marginBottom: 0 }}>
+                    <label>ที่อยู่ร้าน (Store Address)</label>
+                    <textarea 
+                      value={storeInfo.address} 
+                      onChange={e => updateStoreInfo({ address: e.target.value })}
+                      style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1px solid var(--border-color)', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'vertical', minHeight: 60 }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+                      <label>เลขประจำตัวผู้เสียภาษีร้าน (Tax ID)</label>
+                      <input type="text" value={storeInfo.taxId} onChange={e => updateStoreInfo({ taxId: e.target.value })} />
+                    </div>
+                    <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+                      <label>เบอร์โทรร้าน (Phone)</label>
+                      <input type="text" value={storeInfo.phone} onChange={e => updateStoreInfo({ phone: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ fontWeight: 700, fontSize: 13, color: '#6C727F', marginBottom: 10 }}>ข้อมูลลูกค้า</div>
             
             <div className="input-group">
               <label>ชื่อ-นามสกุล / ชื่อบริษัท (Customer Name / Company Name)</label>
@@ -609,17 +669,70 @@ export default function SalesHistoryPage() {
               />
             </div>
 
+            <div className="input-group">
+              <label>สาขา (Branch) <span style={{ color: '#9EA3AE', fontWeight: 400 }}>- ไม่บังคับ</span></label>
+              <input 
+                type="text" 
+                value={customerInfo.branch} 
+                onChange={e => setCustomerInfo({...customerInfo, branch: e.target.value})} 
+                placeholder="เช่น สำนักงานใหญ่ / สาขาที่ 1"
+              />
+            </div>
+
+            <div className="input-group">
+              <label>หมายเหตุ (Notes) <span style={{ color: '#9EA3AE', fontWeight: 400 }}>- ไม่บังคับ</span></label>
+              <textarea 
+                value={customerInfo.notes} 
+                onChange={e => setCustomerInfo({...customerInfo, notes: e.target.value})} 
+                placeholder="ระบุหมายเหตุเพิ่มเติม (ถ้ามี)"
+                style={{
+                  width: '100%', padding: '12px 16px', borderRadius: 12,
+                  border: '1px solid var(--border-color)', boxSizing: 'border-box',
+                  fontFamily: 'inherit', resize: 'vertical', minHeight: 60
+                }}
+              />
+            </div>
+
             <div className="modal-actions">
               <button className="btn-soft" onClick={() => setShowTaxInvoiceForm(false)}>{t('salesHistory.cancel', 'ยกเลิก')}</button>
               <button 
                 className="btn-primary" 
-                disabled={!customerInfo.name || !customerInfo.taxId || !customerInfo.address}
-                onClick={() => {
-                  setShowTaxInvoiceForm(false);
-                  setShowFullTaxInvoice(true);
+                disabled={!customerInfo.name || !customerInfo.taxId || !customerInfo.address || savingInvoice}
+                onClick={async () => {
+                  try {
+                    setSavingInvoice(true);
+                    const netAmount = Number(selectedSale.net_total);
+                    const vatRate = 7.00;
+                    const vatable = netAmount / (1 + vatRate / 100);
+                    const vatAmount = netAmount - vatable;
+
+                    const res = await api.post('/tax-invoices', {
+                      sale_id: selectedSale.sale_id,
+                      customer_name: customerInfo.name,
+                      customer_tax_id: customerInfo.taxId,
+                      customer_address: customerInfo.address,
+                      customer_branch: customerInfo.branch || null,
+                      store_name: storeInfo.name,
+                      store_address: storeInfo.address,
+                      store_tax_id: storeInfo.taxId,
+                      store_phone: storeInfo.phone,
+                      subtotal: vatable,
+                      vat_rate: vatRate,
+                      vat_amount: vatAmount,
+                      total_amount: netAmount,
+                      notes: customerInfo.notes || null,
+                    });
+                    setSavedInvoice(res.data);
+                    setShowTaxInvoiceForm(false);
+                    setShowFullTaxInvoice(true);
+                  } catch (err) {
+                    alert(err.response?.data?.message || 'ไม่สามารถบันทึกใบกำกับภาษีได้');
+                  } finally {
+                    setSavingInvoice(false);
+                  }
                 }}
               >
-                ต่อไป (Next)
+                {savingInvoice ? 'กำลังบันทึก...' : 'บันทึกและพิมพ์ (Save & Print)'}
               </button>
             </div>
           </div>
@@ -636,11 +749,11 @@ export default function SalesHistoryPage() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #111', paddingBottom: 20, marginBottom: 20 }}>
               <div>
-                <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--primary-orange)' }}>Nap's Coffee x Khon Kaen</div>
+                <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--primary-orange)' }}>{storeInfo.name}</div>
                 <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
-                  ตลาด 62 บล็อก 157/89-91 ม.16 ต.ในเมือง อ.เมือง จ.ขอนแก่น 40000<br/>
-                  TAX ID: 0123456789012<br/>
-                  Tel: 0844041113
+                  {storeInfo.address}<br/>
+                  TAX ID: {storeInfo.taxId}<br/>
+                  Tel: {storeInfo.phone}
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -663,7 +776,7 @@ export default function SalesHistoryPage() {
                 <div style={{ fontSize: 13, lineHeight: 1.6, background: '#f8f9fc', padding: 12, borderRadius: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>เลขที่ (No):</span>
-                    <b>{selectedSale.receipt_number || selectedSale.sale_id}</b>
+                    <b>{savedInvoice?.invoice_number || selectedSale.receipt_number || selectedSale.sale_id}</b>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>วันที่ (Date):</span>
