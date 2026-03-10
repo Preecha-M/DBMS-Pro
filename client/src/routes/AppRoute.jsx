@@ -10,6 +10,8 @@ import CashierPage from "../pages/CashierPage";
 import InventoryPage from "../pages/InventoryPage";
 import PromotionsPage from "../pages/PromotionsPage";
 import OptionAdminPage from "../pages/OptionAdminPage";
+import PurchaseOrderList from "../pages/PurchaseOrderList";
+import PurchaseOrderForm from "../pages/PurchaseOrderForm";
 
 import ProtectedRoute from "../routes/ProtectedRoute";
 import RequireRole from "../auth/RequireRole";
@@ -39,6 +41,8 @@ const AppRoute = () => {
             <Route path="/settings/promotions" element={<PromotionsPage />} />
             <Route path="/settings/options" element={<OptionAdminPage />} />
             <Route path="/settings/employees" element={<AddEmployeePage />} />
+            <Route path="/purchase-orders" element={<PurchaseOrderList />} />
+            <Route path="/purchase-orders/new" element={<PurchaseOrderForm />} />
           </Route>
           <Route path="/customers" element={<div className="page-pad">Customers (coming soon)</div>} />
           <Route path="/cashier" element={<CashierPage />} />

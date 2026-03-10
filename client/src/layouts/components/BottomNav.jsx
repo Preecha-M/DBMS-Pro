@@ -69,6 +69,7 @@ export default function BottomNav() {
               <NavLink to="/settings/categories" className={({ isActive }) => `bottom-dropdown-link ${isActive ? "active" : ""}`} onClick={() => setOpenSettings(false)}>• &nbsp;{t('nav.categories')}</NavLink>
               <NavLink to="/settings/options" className={({ isActive }) => `bottom-dropdown-link ${isActive ? "active" : ""}`} onClick={() => setOpenSettings(false)}>• &nbsp;{t('nav.options')}</NavLink>
               <NavLink to="/inventory" className={({ isActive }) => `bottom-dropdown-link ${isActive ? "active" : ""}`} onClick={() => setOpenSettings(false)}>• &nbsp;{t('nav.inventory')}</NavLink>
+              <NavLink to="/purchase-orders" className={({ isActive }) => `bottom-dropdown-link ${isActive ? "active" : ""}`} onClick={() => setOpenSettings(false)}>• &nbsp;{t('nav.purchaseOrders', 'ใบสั่งซื้อ')}</NavLink>
               <NavLink to="/settings/promotions" className={({ isActive }) => `bottom-dropdown-link ${isActive ? "active" : ""}`} onClick={() => setOpenSettings(false)}>• &nbsp;{t('nav.promotions')}</NavLink>
             </div>
           )}
