@@ -90,12 +90,14 @@ export default function SalesHistoryPage() {
       day: "2-digit",
       month: "short",
       year: "numeric",
+      timeZone: "Asia/Bangkok",
     });
 
   const formatTime = (dt) =>
     new Date(dt).toLocaleTimeString("th-TH", {
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: "Asia/Bangkok",
     });
 
   const FILTERS = [
@@ -780,7 +782,7 @@ export default function SalesHistoryPage() {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>วันที่ (Date):</span>
-                    <b>{new Intl.DateTimeFormat("en-GB", { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(selectedSale.sale_datetime.endsWith("Z") ? selectedSale.sale_datetime : selectedSale.sale_datetime + "Z"))}</b>
+                    <b>{new Intl.DateTimeFormat("en-GB", { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Bangkok' }).format(new Date(selectedSale.sale_datetime.endsWith("Z") ? selectedSale.sale_datetime : selectedSale.sale_datetime + "Z"))}</b>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>พนักงาน (Staff):</span>

@@ -100,7 +100,7 @@ export default function Navbar() {
         {isAdmin && (
           <div ref={settingsRef} style={{ position: "relative", display: "flex", alignItems: "center" }}>
             <button
-              className={`pos-toplink ${location.pathname.startsWith('/settings') || location.pathname === '/inventory' ? 'active' : ''}`}
+              className={`pos-toplink ${location.pathname.startsWith('/settings') || location.pathname === '/inventory' || location.pathname === '/tax-invoices' ? 'active' : ''}`}
               onClick={() => setOpenSettings(!openSettings)}
               style={{ display: "flex", alignItems: "center", gap: "6px", background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit" }}
             >
@@ -114,6 +114,7 @@ export default function Navbar() {
                 <NavLink to="/inventory" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.inventory')}</NavLink>
                 <NavLink to="/settings/promotions" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.promotions')}</NavLink>
                 <NavLink to="/settings/employees" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.employees')}</NavLink>
+                <NavLink to="/tax-invoices" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.taxInvoices', 'ใบกำกับภาษี')}</NavLink>
               </div>
             )}
           </div>
@@ -207,7 +208,7 @@ export default function Navbar() {
                           <div style={{ fontSize: 13, color: 'var(--primary-red, #E63946)', marginTop: 4 }}>
                             ⚠️ {t('inventory.expired', 'หมดอายุแล้ว')} - {t('nav.stockRemaining')}: {batch.quantity_on_hand} {batch.ingredient?.unit}
                             <br />
-                            Exp: {new Date(batch.expire_date).toLocaleDateString("th-TH")}
+                            Exp: {new Date(batch.expire_date).toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok" })}
                           </div>
                         </div>
                       ))}
@@ -217,7 +218,7 @@ export default function Navbar() {
                           <div style={{ fontSize: 13, color: '#f29900', marginTop: 4 }}>
                             {t('inventory.alertExpiring', 'ใกล้หมดอายุ')} - {t('nav.stockRemaining')}: {batch.quantity_on_hand} {batch.ingredient?.unit}
                             <br />
-                            Exp: {new Date(batch.expire_date).toLocaleDateString("th-TH")}
+                            Exp: {new Date(batch.expire_date).toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok" })}
                           </div>
                         </div>
                       ))}

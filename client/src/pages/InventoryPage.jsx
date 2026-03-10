@@ -267,7 +267,8 @@ export default function InventoryPage() {
       month: "short",
       year: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
+      timeZone: "Asia/Bangkok",
     });
 
   const isExpired = (dateString) => {
@@ -403,7 +404,7 @@ export default function InventoryPage() {
                           color: expired ? '#d93025' : (expiringSoon ? '#f29900' : 'inherit'),
                           fontWeight: (expired || expiringSoon) ? 'bold' : 'normal'
                         }}>
-                          {batch.expire_date ? new Date(batch.expire_date).toLocaleDateString("th-TH") : t('inventory.expireNotSet')}
+                          {batch.expire_date ? new Date(batch.expire_date).toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok" }) : t('inventory.expireNotSet')}
                           {expired && <span style={{ marginLeft: 8, fontSize: 12, padding: '2px 6px', background: '#fce8e6', borderRadius: 4 }}>{t('inventory.alertExpired', 'Expired')}</span>}
                           {!expired && expiringSoon && <span style={{ marginLeft: 8, fontSize: 12, padding: '2px 6px', background: '#fef7e0', borderRadius: 4 }}>{t('inventory.alertExpiring', 'Expiring Soon')}</span>}
                         </td>
@@ -517,7 +518,7 @@ export default function InventoryPage() {
               {orders.map(o => (
                 <tr key={o.order_id}>
                   <td>#{o.order_id}</td>
-                  <td>{new Date(o.order_date).toLocaleDateString("th-TH")}</td>
+                  <td>{new Date(o.order_date).toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok" })}</td>
                   <td>{o.supplier_name || "-"}</td>
                   <td>
                     ฿{o.items?.reduce((sum, it) => sum + Number(it.unit_cost || 0), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

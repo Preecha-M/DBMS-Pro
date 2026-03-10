@@ -16,7 +16,8 @@
     "stockRemaining": "Remaining",
     "unit": "unit(s)",
     "logout": "Logout",
-    "employees": "Manage Employees"
+    "employees": "Manage Employees",
+    "taxInvoices": "Tax Invoices"
   },
   "cashier": {
     "title": "Cashier",

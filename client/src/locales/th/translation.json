@@ -16,7 +16,8 @@
     "stockRemaining": "คงเหลือ",
     "unit": "หน่วย",
     "logout": "ออกจากระบบ",
-    "employees": "จัดการพนักงาน"
+    "employees": "จัดการพนักงาน",
+    "taxInvoices": "ใบกำกับภาษี"
   },
   "cashier": {
     "title": "แคชเชียร์",

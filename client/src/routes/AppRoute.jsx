@@ -17,6 +17,7 @@ import RequireRole from "../auth/RequireRole";
 import MainLayout from "../layouts/MainLayout";
 import Members from "../pages/Members";
 import SalesHistoryPage from "../pages/SalesHistoryPage";
+import TaxInvoiceHistoryPage from "../pages/TaxInvoiceHistoryPage";
 
 const AppRoute = () => {
   return (
@@ -43,6 +44,7 @@ const AppRoute = () => {
           <Route path="/cashier" element={<CashierPage />} />
           <Route path="/members" element={<Members />} />
           <Route path="/sales-history" element={<SalesHistoryPage />} />
+          <Route path="/tax-invoices" element={<TaxInvoiceHistoryPage />} />
         </Route>
       </Route>
 

@@ -291,9 +291,9 @@ export default function PromotionsPage() {
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <div className={`promo-status ${status.class}`}>{status.label}</div>
                         <div className="promo-dates">
-                          {p.start_date ? new Date(p.start_date).toLocaleDateString() : "-"}
+                          {p.start_date ? new Date(p.start_date).toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok" }) : "-"}
                           {t('promotions.textTo')}
-                          {p.end_date ? new Date(p.end_date).toLocaleDateString() : "-"}
+                          {p.end_date ? new Date(p.end_date).toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok" }) : "-"}
                         </div>
                       </div>
                       
