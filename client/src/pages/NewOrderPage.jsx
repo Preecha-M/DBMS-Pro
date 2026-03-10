@@ -192,15 +192,18 @@ export default function NewOrderPage() {
     [cart]
   );
   const qty = useMemo(() => cart.reduce((s, it) => s + it.qty, 0), [cart]);
-  const earnedPoints = useMemo(
-    () => cart.reduce((s, it) => s + Number(it.qty || 0), 0),
-    [cart]
-  );
+  const earnedPoints = useMemo(() => {
+    if (selectedPromoId) return 0;
+    return cart.reduce((s, it) => s + Number(it.qty || 0), 0);
+  }, [cart, selectedPromoId]);
 
   const selectedPromo = useMemo(() => {
     if (!selectedPromoId) return null;
     return promotions.find(p => p.promotion_id === Number(selectedPromoId)) || null;
   }, [promotions, selectedPromoId]);
+
+  const isPointsPromo = selectedPromo?.discount_type === 'POINTS';
+  const pointsRequired = isPointsPromo ? Number(selectedPromo.discount_value || 0) : 0;
 
   const discountAmount = useMemo(() => {
     if (!selectedPromo) return 0;
@@ -229,6 +232,9 @@ export default function NewOrderPage() {
     let discount = 0;
     if (dType === 'PERCENTAGE') {
       discount = applicableTotal * (dValue / 100);
+    } else if (dType === 'POINTS') {
+      // POINTS promo: discount = points value (1 point = 1 baht)
+      discount = dValue;
     } else {
       discount = dValue;
     }
@@ -313,6 +319,18 @@ export default function NewOrderPage() {
     try {
       const info = await checkMember();
 
+      // Validate POINTS promotion
+      if (isPointsPromo) {
+        if (!info) {
+          setError(t('newOrder.pointsPromoRequiresMember'));
+          return;
+        }
+        if ((info.points || 0) < pointsRequired) {
+          setError(t('newOrder.pointsNotEnough'));
+          return;
+        }
+      }
+
       const snapshot = {
         items: cart.map((it) => ({
           menu_id: it.menu_id,
@@ -328,6 +346,8 @@ export default function NewOrderPage() {
         paymentMethod,
         discountAmount: totalDiscountAmount,
         selectedPromo,
+        isPointsPromo,
+        pointsRequired,
         memberId: info?.member_id ?? null,
         memberName: info?.name ?? null,
       };
@@ -625,9 +645,13 @@ export default function NewOrderPage() {
             </button>
             <div className="modal-title">{t('newOrder.selectOptionsFor')} {selectingItem.menu_name}</div>
             <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: 8 }}>
-              {selectingItem.relevantOptionGroups?.map(group => (
+              {selectingItem.relevantOptionGroups?.map(group => {
+                const isSingleGroup = group.group_name.endsWith(' [SINGLE]');
+                const cleanGroupName = isSingleGroup ? group.group_name.replace(' [SINGLE]', '') : group.group_name;
+                
+                return (
                 <div key={group.group_id} style={{ marginBottom: 16 }}>
-                  <div style={{ fontWeight: 600, marginBottom: 8 }}>{group.group_name}</div>
+                  <div style={{ fontWeight: 600, marginBottom: 8 }}>{cleanGroupName}</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
                     {group.menu_option_item && group.menu_option_item.map(opt => {
                       const isSelected = selectingItem.selectedOptions.some(o => o.item_id === opt.item_id);
@@ -639,19 +663,37 @@ export default function NewOrderPage() {
                         }}>
                           <div>
                             <input 
-                              type="checkbox" 
+                              type={isSingleGroup ? "radio" : "checkbox"}
+                              name={`group_${group.group_id}`}
                               checked={isSelected}
                               onChange={(e) => {
                                 let newOpts = [...selectingItem.selectedOptions];
-                                if (e.target.checked) {
-                                  newOpts.push({
-                                    item_id: opt.item_id,
-                                    option_name: opt.item_name,
-                                    additional_price: Number(opt.additional_price || 0)
-                                  });
+                                
+                                if (isSingleGroup) {
+                                  // Remove any existing option from THIS group
+                                  const groupItemIds = group.menu_option_item.map(i => i.item_id);
+                                  newOpts = newOpts.filter(o => !groupItemIds.includes(o.item_id));
+                                  // Add the newly selected option
+                                  if (e.target.checked) {
+                                    newOpts.push({
+                                      item_id: opt.item_id,
+                                      option_name: opt.item_name,
+                                      additional_price: Number(opt.additional_price || 0)
+                                    });
+                                  }
                                 } else {
-                                  newOpts = newOpts.filter(o => o.item_id !== opt.item_id);
+                                  // Checkbox logic
+                                  if (e.target.checked) {
+                                    newOpts.push({
+                                      item_id: opt.item_id,
+                                      option_name: opt.item_name,
+                                      additional_price: Number(opt.additional_price || 0)
+                                    });
+                                  } else {
+                                    newOpts = newOpts.filter(o => o.item_id !== opt.item_id);
+                                  }
                                 }
+                                
                                 setSelectingItem({...selectingItem, selectedOptions: newOpts});
                               }}
                               style={{ marginRight: 8, transform: 'scale(1.2)' }}
@@ -666,7 +708,7 @@ export default function NewOrderPage() {
                     })}
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
             
             <div className="modal-actions" style={{ marginTop: 24 }}>
@@ -691,7 +733,9 @@ export default function NewOrderPage() {
               <label>{t('newOrder.memberPhoneLabel')}</label>
               <input
                 value={memberId}
+                onBlur={() => { if (memberId.trim()) checkMember().catch(() => {}); }}
                 onChange={(e) => {
+                  setMemberInfo(null);
                   // เฉพาะตัวเลข ไม่เกิน 10 หลัก
                   const val = e.target.value.replace(/\D/g, "").slice(0, 10);
                   setMemberId(val);
@@ -700,6 +744,12 @@ export default function NewOrderPage() {
                 maxLength={10}
                 placeholder={t('newOrder.memberPhonePlaceholder')}
               />
+              {memberInfo && (
+                <div style={{ marginTop: 6, fontSize: 13, display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <span style={{ color: 'var(--primary-green, #2E7D52)', fontWeight: 600 }}>✓ {t('newOrder.memberFound', { name: memberInfo.name })}</span>
+                  <span style={{ color: 'var(--primary-orange)', fontWeight: 700 }}>{t('newOrder.memberPointsBalance', { points: memberInfo.points || 0 })}</span>
+                </div>
+              )}
             </div>
 
             <div className="input-group">
@@ -725,6 +775,15 @@ export default function NewOrderPage() {
                 {t('newOrder.promoConditions')} {selectedPromo.discount_type === 'PERCENTAGE' ? t('newOrder.discountPercent', { amount: Number(selectedPromo.discount_value) }) : t('newOrder.discountAmount', { amount: Number(selectedPromo.discount_value) })} 
                 {` | ${t('newOrder.minCups', { amount: selectedPromo.min_quantity })}`}
                 {selectedPromo.menu_ids?.length > 0 && ` | ${t('newOrder.specificMenuOnly')}`}
+                {isPointsPromo && (
+                  <span style={{ display: 'block', color: '#7c3aed', marginTop: 4, fontWeight: 600 }}>
+                    {t('newOrder.pointsRequired', { points: pointsRequired })}
+                    {memberInfo ? ` | ${t('newOrder.memberPointsBalance', { points: memberInfo.points || 0 })}` : ` | ${t('newOrder.pointsPromoRequiresMember')}`}
+                    {memberInfo && (memberInfo.points || 0) < pointsRequired && (
+                      <span style={{ color: '#d93025', marginLeft: 8 }}>⚠ {t('newOrder.pointsNotEnough')}</span>
+                    )}
+                  </span>
+                )}
                 <span style={{ display: 'block', color: 'var(--primary-orange)', marginTop: 4 }}>
                   {t('newOrder.discountApplied')} <b>{discountAmount > 0 ? `-${discountAmount.toFixed(2)} บาท` : t('newOrder.discountNotMet')}</b>
                 </span>
@@ -850,9 +909,10 @@ export default function NewOrderPage() {
 
               {orderSnapshot.discountAmount > 0 && (
                 <div className="confirm-sum">
-                  <div className="muted">{t('newOrder.promoDiscount')}</div>
-                  <div className="right" style={{ color: "var(--primary-orange)" }}>
+                  <div className="muted">{orderSnapshot.isPointsPromo ? t('newOrder.pointsDiscount') : t('newOrder.promoDiscount')}</div>
+                  <div className="right" style={{ color: orderSnapshot.isPointsPromo ? '#7c3aed' : 'var(--primary-orange)' }}>
                     -฿ {orderSnapshot.discountAmount.toFixed(2)}
+                    {orderSnapshot.isPointsPromo && <span style={{ fontSize: 12, marginLeft: 4 }}>({orderSnapshot.pointsRequired} pts)</span>}
                   </div>
                 </div>
               )}
@@ -1032,9 +1092,10 @@ export default function NewOrderPage() {
               </div>
               {Number(saleInfo?.discount_amount || orderSnapshot?.discountAmount || 0) > 0 && (
                 <div className="rt-total" style={{ borderTop: "none", paddingTop: 0 }}>
-                  <div>Discount</div>
+                  <div>{orderSnapshot?.isPointsPromo ? 'Points Discount' : 'Discount'}</div>
                   <div className="right">
                     -{Number(saleInfo?.discount_amount || orderSnapshot?.discountAmount || 0).toFixed(2)}
+                    {orderSnapshot?.isPointsPromo && <span style={{ fontSize: 10 }}> ({orderSnapshot.pointsRequired} pts)</span>}
                   </div>
                 </div>
               )}

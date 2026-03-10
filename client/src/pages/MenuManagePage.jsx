@@ -165,8 +165,8 @@ export default function MenuManagePage() {
         await api.post("/menu", payload);
       }
 
-      await load();
       closeFormModal();
+      window.location.reload();
     } catch (e2) {
       setError(e2?.response?.data?.message || t('menuManage.errSaveFailed'));
     }

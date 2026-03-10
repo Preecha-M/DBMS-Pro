@@ -37,7 +37,7 @@ export default function Navbar() {
 
   useEffect(() => {
     if (isAdmin) {
-      api.get("/ingredients/low-stock?threshold=5")
+      api.get("/ingredients/low-stock?threshold=15")
         .then(res => setLowStockItems(res.data))
         .catch(err => console.error("Failed to load low stock alerts", err));
       

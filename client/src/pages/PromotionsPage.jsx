@@ -125,9 +125,14 @@ export default function PromotionsPage() {
   };
 
   const getStatus = (start, end) => {
-    const today = new Date().toISOString().split('T')[0];
-    const startDate = start ? new Date(start).toISOString().split('T')[0] : null;
-    const endDate = end ? new Date(end).toISOString().split('T')[0] : null;
+    const bkkTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" }));
+    const y = bkkTime.getFullYear();
+    const m = String(bkkTime.getMonth() + 1).padStart(2, '0');
+    const d = String(bkkTime.getDate()).padStart(2, '0');
+    const today = `${y}-${m}-${d}`;
+
+    const startDate = start ? start.split('T')[0] : null;
+    const endDate = end ? end.split('T')[0] : null;
 
     if (endDate && today > endDate) return { label: "EXPIRED", class: "expired" };
     if (startDate && today < startDate) return { label: "FUTURE", class: "future" };
@@ -208,6 +213,7 @@ export default function PromotionsPage() {
               >
                 <option value="AMOUNT">{t('promotions.optAmount')}</option>
                 <option value="PERCENTAGE">{t('promotions.optPercent')}</option>
+                <option value="POINTS">{t('promotions.optPoints')}</option>
               </select>
             </div>
             <div className="input-group">
@@ -223,7 +229,7 @@ export default function PromotionsPage() {
                   setForm((p) => ({ ...p, discount_value: isNaN(v) ? "" : String(Math.min(max, Math.max(0, v))) }));
                 }}
                 onKeyDown={blockInvalidNumKey}
-                placeholder={form.discount_type === "PERCENTAGE" ? t('promotions.placeholderDiscountPercent') : t('promotions.placeholderDiscountAmount')}
+                placeholder={form.discount_type === "PERCENTAGE" ? t('promotions.placeholderDiscountPercent') : form.discount_type === "POINTS" ? t('promotions.placeholderPointsCost') : t('promotions.placeholderDiscountAmount')}
                 required
               />
             </div>
@@ -304,7 +310,9 @@ export default function PromotionsPage() {
                       )}
                       
                       <div className="promo-sub" style={{ marginTop: 4, color: 'var(--primary-orange)', fontWeight: 600 }}>
-                        {t('promotions.textDiscount', { val: Number(p.discount_value), unit: p.discount_type === 'PERCENTAGE' ? '%' : '฿', min: p.min_quantity })}
+                        {p.discount_type === 'POINTS'
+                          ? `${t('promotions.optPoints')}: ${Number(p.discount_value)} ${t('members.colPoints')} (${t('promotions.textDiscount', { val: Number(p.discount_value), unit: '฿', min: p.min_quantity })})`
+                          : t('promotions.textDiscount', { val: Number(p.discount_value), unit: p.discount_type === 'PERCENTAGE' ? '%' : '฿', min: p.min_quantity })}
                       </div>
                     </div>
                     <div className="promo-actions">

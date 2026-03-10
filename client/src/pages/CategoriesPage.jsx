@@ -76,10 +76,8 @@ export default function CategoriesPage() {
       if (editingId) await api.put(`/categories/${editingId}`, payload);
       else await api.post("/categories", payload);
 
-      await load();
       closeFormModal();
-
-      window.dispatchEvent(new Event("cats:updated"));
+      window.location.reload();
     } catch (e2) {
       setError(e2?.response?.data?.message || t('categories.errSaveFailed'));
     }
