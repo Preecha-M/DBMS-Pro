@@ -1,0 +1,229 @@
+/* ซ่อน print-document ในหน้าจอปกติ (ใช้ใน PrintModal แทน) */
+.print-document {
+  font-family: 'MyCustomFont', 'Sarabun', 'Kanit', sans-serif;
+  font-size: 14px;
+  color: #000;
+  background: #fff;
+  line-height: 1.6;
+}
+
+.print-doc-page {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 15mm 18mm;
+  margin: 0 auto;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+/* ============ PRINT MEDIA ============ */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  /* ซ่อนทุกอย่างในหน้า */
+  body > * {
+    visibility: hidden !important;
+  }
+
+  /* แสดงเฉพาะ print-document */
+  #print-portal {
+    visibility: visible !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 99999 !important;
+    background: #fff !important;
+  }
+
+  #print-portal * {
+    visibility: visible !important;
+  }
+
+  .print-no-print {
+    display: none !important;
+  }
+
+  .print-doc-page {
+    width: 100%;
+    min-height: 100vh;
+    padding: 15mm 18mm;
+    margin: 0;
+    page-break-after: always;
+  }
+}
+
+/* ============ DOCUMENT STYLES ============ */
+.doc-header {
+  text-align: center;
+  margin-bottom: 6mm;
+  padding-bottom: 4mm;
+  border-bottom: 2px solid #000;
+}
+
+.doc-store-name {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 2px 0;
+}
+
+.doc-store-sub {
+  font-size: 12px;
+  margin: 0;
+  color: #333;
+}
+
+.doc-title {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  margin: 4mm 0 2mm 0;
+  letter-spacing: 1px;
+}
+
+.doc-title-en {
+  font-size: 13px;
+  text-align: center;
+  color: #555;
+  margin: 0 0 4mm 0;
+  letter-spacing: 1px;
+}
+
+/* Info grid: 2 columns */
+.doc-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3mm;
+  margin-bottom: 5mm;
+}
+
+.doc-info-box {
+  border: 1px solid #999;
+  padding: 3mm 4mm;
+  font-size: 13px;
+}
+
+.doc-info-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.doc-info-label {
+  font-weight: 700;
+  white-space: nowrap;
+  min-width: 90px;
+}
+
+.doc-info-value {
+  flex: 1;
+}
+
+/* Items Table */
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 4mm;
+  font-size: 13px;
+}
+
+.doc-table th,
+.doc-table td {
+  border: 1px solid #666;
+  padding: 4px 6px;
+  vertical-align: middle;
+}
+
+.doc-table thead th {
+  background: #f0f0f0;
+  font-weight: 700;
+  text-align: center;
+}
+
+.doc-table td.center { text-align: center; }
+.doc-table td.right  { text-align: right; }
+
+/* Summary Section */
+.doc-summary {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4mm;
+}
+
+.doc-summary-box {
+  width: 200px;
+  border: 1px solid #999;
+  font-size: 13px;
+}
+
+.doc-summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.doc-summary-row:last-child {
+  border-bottom: none;
+  font-weight: 700;
+  font-size: 14px;
+  background: #f5f5f5;
+}
+
+/* Amount in words */
+.doc-amount-words {
+  border: 1px solid #999;
+  padding: 3mm 4mm;
+  margin-bottom: 4mm;
+  font-size: 13px;
+}
+
+/* Notes */
+.doc-notes {
+  margin-bottom: 6mm;
+  font-size: 13px;
+}
+
+.doc-notes-label {
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.doc-notes-box {
+  border: 1px solid #ccc;
+  padding: 2mm 3mm;
+  min-height: 12mm;
+  background: #fafafa;
+}
+
+/* Signature Section */
+.doc-signatures {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5mm;
+  margin-top: 8mm;
+}
+
+.doc-sig-col {
+  text-align: center;
+  font-size: 13px;
+}
+
+.doc-sig-line {
+  border-bottom: 1px solid #000;
+  margin: 0 10px 3px 10px;
+  height: 12mm;
+}
+
+.doc-sig-name {
+  font-style: italic;
+  color: #555;
+  font-size: 12px;
+  min-height: 18px;
+}
+
+.doc-sig-date {
+  margin-top: 2px;
+  color: #333;
+}

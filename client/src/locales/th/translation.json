@@ -291,7 +291,18 @@
     "orderItemCost": "ราคา/หน่วย",
     "btnDelete": "ลบ",
     "btnCancel": "ยกเลิก",
-    "btnConfirmOrderSubmit": "ยืนยันการสั่งซื้อ"
+    "btnConfirmOrderSubmit": "ยืนยันการสั่งซื้อ",
+    "wdNotesLabel": "หมายเหตุ",
+    "wdNotesPlaceholder": "เช่น เบิกใช้สำหรับวันนี้",
+    "wdHistoryTitle": "ประวัติการเบิกวัตถุดิบ",
+    "wdHideHistory": "ซ่อนประวัติ",
+    "wdShowHistory": "แสดงประวัติ",
+    "wdDocNumber": "เลขที่เอกสาร",
+    "wdItems": "รายการที่เบิก",
+    "colTxEmployee": "ผู้ทำรายการ",
+    "colOrderPrice": "ราคา",
+    "btnViewAllOrders": "ดูรายละเอียดทั้งหมด",
+    "supEditTitle": "แก้ไขซัพพลายเออร์"
   },
   "menuManage": {
     "errLoadFailed": "โหลดข้อมูลไม่สำเร็จ",

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import api from "../db/api";
 import { Coffee, CupSoda, Croissant, CakeSlice, ShoppingBag, Utensils, Hash } from "lucide-react";
+import { blockInvalidNumKey, sanitizeNumberInput } from "../utils/bahtToText";
 
 // Helper to render lucide icon based on text input
 const renderCategoryIcon = (iconName, size = 32) => {
@@ -228,8 +229,10 @@ export default function CategoriesPage() {
                 <input
                   type="number"
                   value={form.position}
-                  onChange={(e) => setForm((p) => ({ ...p, position: e.target.value }))}
+                  onChange={(e) => setForm((p) => ({ ...p, position: sanitizeNumberInput(e.target.value, false) }))}
                   min="1"
+                  step="1"
+                  onKeyDown={blockInvalidNumKey}
                 />
               </div>
 

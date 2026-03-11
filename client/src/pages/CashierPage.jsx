@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import CashierDashboard from "./CashierDashboard";
 import { Circle } from "lucide-react";
 import "./CashierPage.css";
+import { blockInvalidNumKey, sanitizeNumberInput } from "../utils/bahtToText";
 
 export default function CashierPage() {
   const { t } = useTranslation();
@@ -51,13 +52,10 @@ export default function CashierPage() {
   useEffect(() => {
     if (!isRoundOpen || !currentRound || !socket) return;
 
-    // Optional legacy update
-    loadSalesSummary(currentRound.opened_at);
+    loadSalesSummary(currentRound.round_id);
 
-    const onNewSale = (saleData) => {
-
-      loadSalesSummary(currentRound.opened_at);
-      // CashierDashboard handles its own data fetching, but we can update our local summary
+    const onNewSale = () => {
+      loadSalesSummary(currentRound.round_id);
     };
 
     socket.on('new-sale', onNewSale);
@@ -76,7 +74,7 @@ export default function CashierPage() {
       if (res.data) {
         setCurrentRound(res.data);
         setIsRoundOpen(true);
-        await loadSalesSummary(res.data.opened_at);
+        await loadSalesSummary(res.data.round_id);
       } else {
         setIsRoundOpen(false);
         setCurrentRound(null);
@@ -106,17 +104,17 @@ export default function CashierPage() {
     }
   }, [activeTab]);
 
-  const loadSalesSummary = async (startDate) => {
+  const loadSalesSummary = async (roundId) => {
     try {
       const res = await api.get("/sales");
       const sales = Array.isArray(res.data) ? res.data : [];
-      
+      const filterRoundId = roundId ?? currentRound?.round_id;
+
       let todaySales = [];
-      
-      if (currentRound && currentRound.round_id) {
-        todaySales = sales.filter((sale) => {
-          return sale.round_id === currentRound.round_id;
-        });
+      if (filterRoundId != null) {
+        todaySales = sales.filter(
+          (sale) => sale.round_id === filterRoundId && sale.status !== 'VOIDED'
+        );
       }
 
       const summary = {
@@ -177,7 +175,7 @@ export default function CashierPage() {
       setOpeningCash("");
       setSuccess("เปิดรอบการขายสำเร็จ");
       
-      await loadSalesSummary(round.opened_at);
+      await loadSalesSummary(round.round_id);
     } catch (e) {
       setError(e?.response?.data?.message || "เปิดรอบการขายไม่สำเร็จ");
     }
@@ -439,7 +437,8 @@ export default function CashierPage() {
                 min="0"
                 step="0.01"
                 value={openingCash}
-                onChange={(e) => setOpeningCash(e.target.value)}
+                onChange={(e) => setOpeningCash(sanitizeNumberInput(e.target.value, true))}
+                onKeyDown={blockInvalidNumKey}
                 placeholder="เช่น 5000.00"
                 autoFocus
               />

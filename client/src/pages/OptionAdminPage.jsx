@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import api from "../db/api";
 import "./OptionAdminPage.css";
+import { blockInvalidNumKey, sanitizeNumberInput } from "../utils/bahtToText";
 
 const EditIcon = ({ size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -485,9 +486,11 @@ export default function OptionAdminPage() {
                 <label>{t('optionAdmin.labelAddPrice')}</label>
                 <input 
                   type="number" 
-                  step="0.5" 
+                  step="0.5"
+                  min="0"
                   value={itemForm.additional_price} 
-                  onChange={e => setItemForm({...itemForm, additional_price: e.target.value})} 
+                  onChange={e => setItemForm({...itemForm, additional_price: sanitizeNumberInput(e.target.value, true)})}
+                  onKeyDown={blockInvalidNumKey}
                 />
               </div>
 

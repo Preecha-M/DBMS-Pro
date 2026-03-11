@@ -363,6 +363,50 @@ body {
   border-color: var(--primary-orange);
 }
 
+/* ── Themed Number Input ── */
+.form-number-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  box-sizing: border-box;
+  outline: none;
+  background: #fff;
+  color: #19191C;
+  transition: border-color 0.15s;
+}
+.form-number-input:focus {
+  border-color: var(--primary-orange);
+}
+.form-number-input::-webkit-outer-spin-button,
+.form-number-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+.form-number-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* ── Themed File Upload Input ── */
+.form-file-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px dashed var(--border-color);
+  border-radius: 10px;
+  background: var(--grey-bg);
+  font-family: inherit;
+  font-size: 13px;
+  color: #6b7280;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.form-file-input:hover {
+  border-color: var(--primary-orange);
+  background: #fff9f7;
+}
+
 .pos-topbar{
   height:70px;
   background:#fff;

@@ -8,13 +8,9 @@ import { useAuth } from "../auth/useAuth";
 import generatePayload from "promptpay-qr";
 import QRCode from "qrcode";
 import "./NewOrderPage.css";
+import { blockInvalidNumKey, sanitizeNumberInput } from "../utils/bahtToText";
 
 const PROMPTPAY_ID = import.meta.env.VITE_PROMPTPAY_ID || "";
-
-// Block minus, e/E, + in numeric inputs
-const blockInvalidNumKey = (e) => {
-  if (["-", "e", "E", "+"].includes(e.key)) e.preventDefault();
-};
 
 // Helper to render lucide icon based on text input
 const renderCategoryIcon = (iconName, size = 24) => {
@@ -798,7 +794,8 @@ export default function NewOrderPage() {
                 step="0.01"
                 value={manualDiscount}
                 onChange={(e) => {
-                  const v = parseFloat(e.target.value);
+                  const sanitized = sanitizeNumberInput(e.target.value, true);
+                  const v = parseFloat(sanitized);
                   setManualDiscount(isNaN(v) ? "" : String(Math.max(0, v)));
                 }}
                 onKeyDown={blockInvalidNumKey}
@@ -832,7 +829,8 @@ export default function NewOrderPage() {
                   min="0"
                   value={cashReceived}
                   onChange={(e) => {
-                    const v = parseFloat(e.target.value);
+                    const sanitized = sanitizeNumberInput(e.target.value, true);
+                    const v = parseFloat(sanitized);
                     setCashReceived(isNaN(v) ? "" : String(Math.max(0, v)));
                   }}
                   onKeyDown={blockInvalidNumKey}

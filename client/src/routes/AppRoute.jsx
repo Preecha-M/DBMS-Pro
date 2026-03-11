@@ -20,6 +20,7 @@ import MainLayout from "../layouts/MainLayout";
 import Members from "../pages/Members";
 import SalesHistoryPage from "../pages/SalesHistoryPage";
 import TaxInvoiceHistoryPage from "../pages/TaxInvoiceHistoryPage";
+import StoreSettingsPage from "../pages/StoreSettingsPage";
 
 const AppRoute = () => {
   return (
@@ -41,6 +42,7 @@ const AppRoute = () => {
             <Route path="/settings/promotions" element={<PromotionsPage />} />
             <Route path="/settings/options" element={<OptionAdminPage />} />
             <Route path="/settings/employees" element={<AddEmployeePage />} />
+            <Route path="/settings/store" element={<StoreSettingsPage />} />
             <Route path="/purchase-orders" element={<PurchaseOrderList />} />
             <Route path="/purchase-orders/new" element={<PurchaseOrderForm />} />
           </Route>

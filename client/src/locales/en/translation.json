@@ -291,7 +291,18 @@
     "orderItemCost": "Cost/Unit",
     "btnDelete": "Delete",
     "btnCancel": "Cancel",
-    "btnConfirmOrderSubmit": "Confirm Order"
+    "btnConfirmOrderSubmit": "Confirm Order",
+    "wdNotesLabel": "Notes",
+    "wdNotesPlaceholder": "e.g. Withdraw for today's use",
+    "wdHistoryTitle": "Withdrawal History",
+    "wdHideHistory": "Hide History",
+    "wdShowHistory": "Show History",
+    "wdDocNumber": "Document No.",
+    "wdItems": "Items",
+    "colTxEmployee": "Employee",
+    "colOrderPrice": "Amount",
+    "btnViewAllOrders": "View All Details",
+    "supEditTitle": "Edit Supplier"
   },
   "menuManage": {
     "errLoadFailed": "Failed to load data",

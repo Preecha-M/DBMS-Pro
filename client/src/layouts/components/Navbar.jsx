@@ -116,6 +116,7 @@ export default function Navbar() {
                 <NavLink to="/settings/promotions" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.promotions')}</NavLink>
                 <NavLink to="/settings/employees" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.employees')}</NavLink>
                 <NavLink to="/tax-invoices" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.taxInvoices', 'ใบกำกับภาษี')}</NavLink>
+                <NavLink to="/settings/store" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.storeSettings', 'ข้อมูลร้านค้า')}</NavLink>
               </div>
             )}
           </div>

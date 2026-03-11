@@ -2,11 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import api from "../db/api";
 import "./PromotionsPage.css";
-
-// Block minus, e/E, + in numeric inputs
-const blockInvalidNumKey = (e) => {
-  if (["-", "e", "E", "+"].includes(e.key)) e.preventDefault();
-};
+import { blockInvalidNumKey, sanitizeNumberInput } from "../utils/bahtToText";
 
 export default function PromotionsPage() {
   const { t } = useTranslation();
@@ -224,7 +220,8 @@ export default function PromotionsPage() {
                 step="0.01"
                 value={form.discount_value}
                 onChange={(e) => {
-                  const v = parseFloat(e.target.value);
+                  const sanitized = sanitizeNumberInput(e.target.value, true);
+                  const v = parseFloat(sanitized);
                   const max = form.discount_type === "PERCENTAGE" ? 100 : Infinity;
                   setForm((p) => ({ ...p, discount_value: isNaN(v) ? "" : String(Math.min(max, Math.max(0, v))) }));
                 }}
@@ -241,7 +238,8 @@ export default function PromotionsPage() {
                 step="1"
                 value={form.min_quantity}
                 onChange={(e) => {
-                  const v = parseInt(e.target.value, 10);
+                  const sanitized = sanitizeNumberInput(e.target.value, false);
+                  const v = parseInt(sanitized, 10);
                   setForm((p) => ({ ...p, min_quantity: isNaN(v) ? "1" : String(Math.max(1, v)) }));
                 }}
                 onKeyDown={blockInvalidNumKey}
