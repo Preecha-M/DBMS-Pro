@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./useAuth";
+import { hasAnyRole } from "./roleUtils";
 import StartupLoader from "../components/StartupLoader";
 
 const RequireRole = ({ roles = [] }) => {
@@ -8,8 +9,7 @@ const RequireRole = ({ roles = [] }) => {
   if (loading) return <StartupLoader />;
   if (!user) return <Navigate to="/login" replace />;
 
-  const hasRole = roles.map(r => String(r).toLowerCase()).includes(String(user.role).toLowerCase());
-  if (roles.length > 0 && !hasRole) {
+  if (roles.length > 0 && !hasAnyRole(user, roles)) {
     return <Navigate to="/" replace />;
   }
 

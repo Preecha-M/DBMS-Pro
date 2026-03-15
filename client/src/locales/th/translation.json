@@ -18,7 +18,8 @@
     "unit": "หน่วย",
     "logout": "ออกจากระบบ",
     "employees": "จัดการพนักงาน",
-    "taxInvoices": "ใบกำกับภาษี"
+    "taxInvoices": "ใบกำกับภาษี",
+    "monthlySummary": "สรุปรายได้/ค่าใช้จ่าย"
   },
   "cashier": {
     "title": "แคชเชียร์",
@@ -442,7 +443,18 @@
     "labelPassword": "Password *",
     "labelRole": "Role",
     "labelStatus": "Status",
+    "labelSalary": "เงินเดือน (บาท/เดือน)",
     "btnSave": "บันทึก"
+  },
+  "monthlySummary": {
+    "pageTitle": "สรุปรายได้และค่าใช้จ่ายต่อเดือน",
+    "revenue": "รายได้ (ยอดขาย)",
+    "expenses": "ค่าใช้จ่าย",
+    "expensePurchase": "สั่งของ/ซื้อสินค้า",
+    "expenseSalary": "เงินเดือนพนักงาน",
+    "totalExpense": "รวมค่าใช้จ่าย",
+    "profit": "กำไร/ขาดทุน",
+    "errLoad": "โหลดสรุปไม่สำเร็จ"
   },
   "loginPage": {
     "errLoginFailed": "เข้าสู่ระบบไม่สำเร็จ",

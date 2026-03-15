@@ -1,0 +1,111 @@
+.monthly-summary-page .monthly-summary-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.monthly-summary-filters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.monthly-summary-filters .summary-select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.summary-loading {
+  text-align: center;
+  padding: 48px 16px;
+  color: #6b7280;
+}
+
+.summary-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 480px;
+}
+
+.summary-card {
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+.summary-card.revenue {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-color: #a7f3d0;
+}
+
+.summary-card.expense-section {
+  background: #fff;
+}
+
+.summary-card.expense-section .summary-card-label {
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+.summary-card-detail {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+.summary-card-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #111;
+}
+
+.summary-card.profit {
+  font-weight: 700;
+}
+
+.summary-card.profit.positive {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+.summary-card.profit.negative {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.summary-card-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.summary-card-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+@media (min-width: 640px) {
+  .summary-cards {
+    max-width: 560px;
+  }
+}

@@ -46,6 +46,7 @@ export default function EmployeeManagementPage() {
     password: "",
     role: "Staff",
     status: "Active",
+    salary: "",
   });
 
   const load = async () => {
@@ -77,6 +78,7 @@ export default function EmployeeManagementPage() {
       password: "",
       role: "Staff",
       status: "Active",
+      salary: "",
     });
     setEditingId(null);
   };
@@ -113,6 +115,7 @@ export default function EmployeeManagementPage() {
         phone: form.phone?.trim() || null,
         birth_date: form.birth_date || null,
         education: form.education || null,
+        salary: form.salary !== "" && form.salary != null ? Number(form.salary) : null,
       };
       
       // Don't send empty password on update
@@ -145,6 +148,7 @@ export default function EmployeeManagementPage() {
       password: "", // Leave blank for edit unless they want to change it
       role: emp.role || "Staff",
       status: emp.status || "Active",
+      salary: emp.salary != null ? String(emp.salary) : "",
     });
     setError("");
     setIsModalOpen(true);
@@ -255,8 +259,18 @@ export default function EmployeeManagementPage() {
                   </div>
                 </div>
 
-                {/* Stats row */}
-                <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                {/* Salary & Stats row */}
+                <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                  {emp.salary != null && (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      padding: '3px 10px', borderRadius: 20,
+                      background: '#ECFDF5', color: '#059669',
+                      fontSize: 12, fontWeight: 700,
+                    }}>
+                      💰 {Number(emp.salary).toLocaleString('th-TH')} บาท/เดือน
+                    </span>
+                  )}
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', gap: 4,
                     padding: '3px 10px', borderRadius: 20,
@@ -379,6 +393,19 @@ export default function EmployeeManagementPage() {
                   <option value="Active">Active</option>
                   <option value="Resigned">Resigned</option>
                 </select>
+              </div>
+
+              <div className="input-group">
+                <label>{t('addEmployee.labelSalary', 'เงินเดือน (บาท/เดือน)')}</label>
+                <input
+                  name="salary"
+                  type="number"
+                  min={0}
+                  step={100}
+                  placeholder="เช่น 15000"
+                  value={form.salary}
+                  onChange={(e) => setForm((p) => ({ ...p, salary: e.target.value }))}
+                />
               </div>
 
               <div style={{ gridColumn: "1 / -1", fontWeight: "bold", borderBottom: "1px solid #eee", paddingBottom: 4, marginTop: 12 }}>

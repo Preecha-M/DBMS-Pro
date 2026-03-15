@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../../auth/useAuth";
 import api from "../../db/api";
 import { Bell, Menu, X, ChevronDown } from "lucide-react";
+import { canSeeSettings } from "../../auth/roleUtils";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -23,7 +24,7 @@ export default function Navbar() {
   const [expiredBatches, setExpiredBatches] = useState([]);
   const [expiringBatches, setExpiringBatches] = useState([]);
   
-  const isAdmin = ["admin", "owner", "manager"].includes(String(user?.role || "").toLowerCase());
+  const showSettings = canSeeSettings(user);
   
   useEffect(() => {
     const onDoc = (e) => {
@@ -36,7 +37,7 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (showSettings) {
       api.get("/ingredients/low-stock?threshold=15")
         .then(res => setLowStockItems(res.data))
         .catch(err => console.error("Failed to load low stock alerts", err));
@@ -48,7 +49,7 @@ export default function Navbar() {
         })
         .catch(err => console.error("Failed to load expiring batches", err));
     }
-  }, [isAdmin]);
+  }, [showSettings]);
   
   const totalAlerts = lowStockItems.length + expiredBatches.length + expiringBatches.length;
   
@@ -97,14 +98,14 @@ export default function Navbar() {
           {t('nav.cashier')}
         </NavLink>
 
-        {isAdmin && (
+        {showSettings && (
           <div ref={settingsRef} style={{ position: "relative", display: "flex", alignItems: "center" }}>
             <button
-              className={`pos-toplink ${location.pathname.startsWith('/settings') || location.pathname === '/inventory' || location.pathname === '/tax-invoices' ? 'active' : ''}`}
+              className={`pos-toplink ${location.pathname.startsWith('/settings') || location.pathname === '/inventory' || location.pathname.startsWith('/reports') || location.pathname.startsWith('/purchase-orders') || location.pathname === '/tax-invoices' ? 'active' : ''}`}
               onClick={() => setOpenSettings(!openSettings)}
               style={{ display: "flex", alignItems: "center", gap: "6px", background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit" }}
             >
-              {t('nav.settings')} <ChevronDown size={16} color={location.pathname.startsWith('/settings') || location.pathname === '/inventory' ? "var(--primary-orange)" : "#8B90A0"} />
+              {t('nav.settings')} <ChevronDown size={16} color={location.pathname.startsWith('/settings') || location.pathname === '/inventory' || location.pathname.startsWith('/reports') || location.pathname.startsWith('/purchase-orders') ? "var(--primary-orange)" : "#8B90A0"} />
             </button>
             {openSettings && (
               <div className="pos-dropdown-menu">
@@ -113,6 +114,7 @@ export default function Navbar() {
                 <NavLink to="/settings/options" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.options')}</NavLink>
                 <NavLink to="/inventory" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.inventory')}</NavLink>
                 <NavLink to="/purchase-orders" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.purchaseOrders', 'ใบสั่งซื้อ')}</NavLink>
+                <NavLink to="/reports/monthly" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.monthlySummary', 'สรุปรายได้/ค่าใช้จ่าย')}</NavLink>
                 <NavLink to="/settings/promotions" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.promotions')}</NavLink>
                 <NavLink to="/settings/employees" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.employees')}</NavLink>
                 <NavLink to="/tax-invoices" className={({ isActive }) => `pos-dropdown-link ${isActive ? "active" : ""}`} onClick={() => { setOpenSettings(false); setOpenMenu(false); }}>• &nbsp;{t('nav.taxInvoices', 'ใบกำกับภาษี')}</NavLink>
@@ -148,7 +150,7 @@ export default function Navbar() {
           {t('nav.newOrder')}
         </button>
 
-        {isAdmin && (
+        {showSettings && (
           <div ref={notifRef} style={{ position: "relative", display: "flex", alignItems: "center" }}>
             <button 
               className="pos-icon-btn" 

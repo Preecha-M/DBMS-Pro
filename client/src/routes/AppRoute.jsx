@@ -21,6 +21,7 @@ import Members from "../pages/Members";
 import SalesHistoryPage from "../pages/SalesHistoryPage";
 import TaxInvoiceHistoryPage from "../pages/TaxInvoiceHistoryPage";
 import StoreSettingsPage from "../pages/StoreSettingsPage";
+import MonthlySummaryPage from "../pages/MonthlySummaryPage";
 
 const AppRoute = () => {
   return (
@@ -45,6 +46,7 @@ const AppRoute = () => {
             <Route path="/settings/store" element={<StoreSettingsPage />} />
             <Route path="/purchase-orders" element={<PurchaseOrderList />} />
             <Route path="/purchase-orders/new" element={<PurchaseOrderForm />} />
+            <Route path="/reports/monthly" element={<MonthlySummaryPage />} />
           </Route>
           <Route path="/customers" element={<div className="page-pad">Customers (coming soon)</div>} />
           <Route path="/cashier" element={<CashierPage />} />

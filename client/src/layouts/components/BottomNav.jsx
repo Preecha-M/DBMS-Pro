@@ -3,6 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Home, FileText, Search, Settings, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../auth/useAuth';
+import { canSeeSettings } from '../../auth/roleUtils';
 import './BottomNav.css';
 
 export default function BottomNav() {
@@ -10,7 +11,7 @@ export default function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const isAdmin = ["admin", "owner", "manager"].includes(String(user?.role || "").toLowerCase());
+  const showSettings = canSeeSettings(user);
   
   const [openSettings, setOpenSettings] = useState(false);
   const settingsRef = useRef(null);
@@ -49,12 +50,12 @@ export default function BottomNav() {
         <span>{t('nav.members') || 'สมาชิก'}</span>
       </NavLink>
 
-      {isAdmin && (
+      {showSettings && (
         <div ref={settingsRef} className="bottom-nav-settings-wrapper">
           <button 
             type="button"
             onClick={() => setOpenSettings(!openSettings)}
-            className={`bottom-nav-item ${location.pathname.startsWith('/settings') || location.pathname === '/inventory' ? 'active' : ''}`}
+            className={`bottom-nav-item ${location.pathname.startsWith('/settings') || location.pathname === '/inventory' || location.pathname.startsWith('/reports') || location.pathname.startsWith('/purchase-orders') ? 'active' : ''}`}
             style={{ background: 'transparent', border: 'none', fontFamily: 'inherit', width: '100%', padding: 0 }}
           >
             <Settings size={24} />
@@ -70,6 +71,7 @@ export default function BottomNav() {
               <NavLink to="/settings/options" className={({ isActive }) => `bottom-dropdown-link ${isActive ? "active" : ""}`} onClick={() => setOpenSettings(false)}>• &nbsp;{t('nav.options')}</NavLink>
               <NavLink to="/inventory" className={({ isActive }) => `bottom-dropdown-link ${isActive ? "active" : ""}`} onClick={() => setOpenSettings(false)}>• &nbsp;{t('nav.inventory')}</NavLink>
               <NavLink to="/purchase-orders" className={({ isActive }) => `bottom-dropdown-link ${isActive ? "active" : ""}`} onClick={() => setOpenSettings(false)}>• &nbsp;{t('nav.purchaseOrders', 'ใบสั่งซื้อ')}</NavLink>
+              <NavLink to="/reports/monthly" className={({ isActive }) => `bottom-dropdown-link ${isActive ? "active" : ""}`} onClick={() => setOpenSettings(false)}>• &nbsp;{t('nav.monthlySummary', 'สรุปรายได้/ค่าใช้จ่าย')}</NavLink>
               <NavLink to="/settings/promotions" className={({ isActive }) => `bottom-dropdown-link ${isActive ? "active" : ""}`} onClick={() => setOpenSettings(false)}>• &nbsp;{t('nav.promotions')}</NavLink>
             </div>
           )}

@@ -18,7 +18,8 @@
     "unit": "unit(s)",
     "logout": "Logout",
     "employees": "Manage Employees",
-    "taxInvoices": "Tax Invoices"
+    "taxInvoices": "Tax Invoices",
+    "monthlySummary": "Revenue & Expenses"
   },
   "cashier": {
     "title": "Cashier",
@@ -442,7 +443,18 @@
     "labelPassword": "Password *",
     "labelRole": "Role",
     "labelStatus": "Status",
+    "labelSalary": "Salary (THB/month)",
     "btnSave": "Save"
+  },
+  "monthlySummary": {
+    "pageTitle": "Monthly Revenue & Expense Summary",
+    "revenue": "Revenue (Sales)",
+    "expenses": "Expenses",
+    "expensePurchase": "Purchases / Cost of Goods",
+    "expenseSalary": "Employee Salaries",
+    "totalExpense": "Total Expenses",
+    "profit": "Profit / Loss",
+    "errLoad": "Failed to load summary"
   },
   "loginPage": {
     "errLoginFailed": "Login failed",
